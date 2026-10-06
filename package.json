@@ -1,0 +1,30 @@
+{
+  "name": "university-lms",
+  "version": "0.1.0",
+  "private": true,
+  "description": "University LMS — Multi-tenant SaaS platform (MERN + TypeScript)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev -w @university-lms/api",
+    "dev:web": "npm run dev -w @university-lms/web",
+    "build": "npm run build -w @university-lms/shared && npm run build --workspaces --if-present",
+    "build:shared": "npm run build -w @university-lms/shared",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  },
+  "author": "University LMS Team",
+  "license": "UNLICENSED"
+}
