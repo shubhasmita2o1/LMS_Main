@@ -30,7 +30,14 @@ export type SystemRole =
   | 'guest';
 
 /** Permission action */
-export type PermissionAction = 'create' | 'read' | 'update' | 'delete' | 'manage' | 'export' | 'import';
+export type PermissionAction =
+  | 'create'
+  | 'read'
+  | 'update'
+  | 'delete'
+  | 'manage'
+  | 'export'
+  | 'import';
 
 /** Resource types for fine-grained RBAC */
 export type ResourceType =
@@ -77,6 +84,43 @@ export interface AuthUser {
   lastName?: string;
 }
 
+/** JWT access token payload — keep minimal (no sensitive data) */
+export interface TokenPayload {
+  sub: UserId;
+  tenantId: TenantId | null;
+  roles: SystemRole[];
+  type: 'access' | 'refresh';
+  iat?: number;
+  exp?: number;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number; // seconds
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+  tenantId?: string; // optional: required for tenant users when not resolved from host
+}
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  /** Controlled: only super_admin or tenant_admin bootstrap */
+  role?: SystemRole;
+  tenantId?: string | null;
+}
+
+export interface LoginResponse {
+  user: AuthUser;
+  tokens: AuthTokens;
+}
+
 export interface TenantBranding {
   name: string;
   logoUrl?: string;
@@ -92,6 +136,7 @@ export interface ApiResponse<T = unknown> {
   message?: string;
   error?: {
     code: string;
+    message?: string;
     details?: unknown;
   };
   meta?: {
@@ -100,4 +145,12 @@ export interface ApiResponse<T = unknown> {
     total?: number;
     totalPages?: number;
   };
+}
+
+/** Login history entry (stored on User) */
+export interface LoginHistoryEntry {
+  at: Date;
+  ip?: string;
+  userAgent?: string;
+  success: boolean;
 }

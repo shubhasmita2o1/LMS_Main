@@ -1,6 +1,6 @@
 /**
- * Simple in-memory rate limiter skeleton for Phase 1.
- * Replace with Redis-backed limiter (e.g. rate-limiter-flexible) before production scale.
+ * Simple in-memory rate limiter.
+ * Replace with Redis-backed limiter before production scale.
  */
 
 import { Request, Response, NextFunction } from 'express';
@@ -49,4 +49,18 @@ export function rateLimit(options: RateLimitOptions) {
 export const defaultApiRateLimit = rateLimit({
   windowMs: 60 * 1000,
   max: 100,
+});
+
+/** Auth endpoints: 20 attempts per 15 minutes per IP */
+export const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  keyGenerator: (req) => `auth:${req.ip || 'unknown'}`,
+});
+
+/** Login: stricter — 10 per 15 minutes */
+export const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => `login:${req.ip || 'unknown'}`,
 });

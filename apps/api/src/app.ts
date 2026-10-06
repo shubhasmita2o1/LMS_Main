@@ -6,6 +6,8 @@ import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { defaultApiRateLimit } from './middleware/rateLimit';
 import { healthRouter } from './modules/health/health.routes';
+import { authRouter } from './modules/auth/auth.routes';
+import { userRouter } from './modules/users/user.routes';
 import { env } from './config/env';
 
 export function createApp() {
@@ -37,16 +39,15 @@ export function createApp() {
     res.json({
       success: true,
       message: 'University LMS API v1',
-      version: '0.1.0',
+      version: '0.2.0',
+      phase: 2,
       docs: '/api/v1 (OpenAPI coming in later phases)',
     });
   });
 
-  // Future modules will be mounted here (Phase 2+):
-  // app.use('/api/v1/auth', authRouter);
-  // app.use('/api/v1/tenants', tenantRouter);
-  // app.use('/api/v1/users', userRouter);
-  // ...
+  // Phase 2 modules
+  app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1/users', userRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);
