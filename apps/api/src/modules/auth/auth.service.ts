@@ -97,14 +97,14 @@ export async function registerUser(
     if (!['tenant_admin', 'university_admin', 'faculty', 'student', 'staff'].includes(requestedRole)) {
       throw new AppError(400, 'Invalid role for registration', 'VALIDATION_ERROR');
     }
-    roles = [requestedRole];
+        roles = [requestedRole];
     if (input.tenantId) {
       if (!mongoose.Types.ObjectId.isValid(input.tenantId)) {
         throw new AppError(400, 'Invalid tenantId', 'VALIDATION_ERROR');
       }
       tenantId = new mongoose.Types.ObjectId(input.tenantId);
-    } else if (requestedRole !== 'super_admin') {
-      // Generate a placeholder tenant ObjectId for demo tenant_admin (Phase 3 replaces with real Tenant)
+    } else {
+      // Generate a placeholder tenant ObjectId for demo tenant users (Phase 3 replaces with real Tenant)
       tenantId = new mongoose.Types.ObjectId();
     }
   }
