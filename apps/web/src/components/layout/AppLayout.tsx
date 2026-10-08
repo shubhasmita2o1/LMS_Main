@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -11,6 +11,9 @@ import {
   Menu,
   X,
   RefreshCw,
+  Settings,
+  CreditCard,
+  LayoutDashboard,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -20,6 +23,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout, logoutAll, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -65,6 +69,14 @@ export function AppLayout({ children }: AppLayoutProps) {
         : 'U';
 
   const isSuperAdmin = user?.roles?.includes('super_admin');
+  const isTenantAdmin = user?.roles?.some((r) =>
+    ['tenant_admin', 'university_admin'].includes(r)
+  );
+
+  const isActive = (path: string) => {
+    if (path === '/dashboard') return location.pathname === '/dashboard';
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
@@ -88,19 +100,63 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </div>
               </Link>
 
-              <nav className="hidden md:flex items-center gap-2 pl-4 border-l border-slate-200">
+              {/* Desktop Nav Items */}
+              <nav className="hidden md:flex items-center gap-1.5 pl-4 border-l border-slate-200">
                 <Link
                   to="/dashboard"
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 transition"
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
+                    isActive('/dashboard')
+                      ? 'text-primary-700 bg-primary-50 font-semibold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
                 >
-                  Dashboard
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Dashboard</span>
                 </Link>
-                <Link
-                  to="/"
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
-                >
-                  Landing Page
-                </Link>
+
+                {/* Super Admin Nav Item */}
+                {isSuperAdmin && (
+                  <Link
+                    to="/admin/tenants"
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
+                      isActive('/admin')
+                        ? 'text-purple-700 bg-purple-50 font-semibold'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Building className="w-4 h-4" />
+                    <span>Tenants</span>
+                  </Link>
+                )}
+
+                {/* Tenant Admin Nav Items */}
+                {(isTenantAdmin || (isSuperAdmin && user?.tenantId)) && (
+                  <>
+                    <Link
+                      to="/settings"
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
+                        isActive('/settings')
+                          ? 'text-primary-700 bg-primary-50 font-semibold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>Settings</span>
+                    </Link>
+
+                    <Link
+                      to="/billing"
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
+                        isActive('/billing')
+                          ? 'text-primary-700 bg-primary-50 font-semibold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      <span>Billing</span>
+                    </Link>
+                  </>
+                )}
               </nav>
             </div>
 
@@ -201,13 +257,36 @@ export function AppLayout({ children }: AppLayoutProps) {
               >
                 Dashboard
               </Link>
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100"
-              >
-                Landing Page
-              </Link>
+
+              {isSuperAdmin && (
+                <Link
+                  to="/admin/tenants"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm font-medium text-purple-700 hover:bg-purple-50"
+                >
+                  Tenants &amp; Platform
+                </Link>
+              )}
+
+              {(isTenantAdmin || (isSuperAdmin && user?.tenantId)) && (
+                <>
+                  <Link
+                    to="/settings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-800 hover:bg-slate-100"
+                  >
+                    Institution Settings
+                  </Link>
+
+                  <Link
+                    to="/billing"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-800 hover:bg-slate-100"
+                  >
+                    Billing &amp; Plans
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
@@ -249,7 +328,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <span className="inline-flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span> API Connected
             </span>
-            <span>Version 0.2.0</span>
+            <span>Version 0.3.0</span>
           </div>
         </div>
       </footer>

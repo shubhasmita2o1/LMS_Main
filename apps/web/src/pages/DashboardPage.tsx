@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { usePermission } from '../hooks/usePermission';
 import { AppLayout } from '../components/layout/AppLayout';
@@ -7,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
 import { Can } from '../components/auth/Can';
+import { Feature } from '../components/features/Feature';
 import { api } from '../lib/api';
 import {
   User,
@@ -20,6 +22,14 @@ import {
   Lock,
   Layers,
   Sparkles,
+  BarChart3,
+  TrendingUp,
+  Settings,
+  CreditCard,
+  ArrowRight,
+  Plus,
+  Users,
+  GraduationCap,
 } from 'lucide-react';
 import type { ApiResponse, AuthUser } from '@university-lms/shared';
 
@@ -32,6 +42,11 @@ export function DashboardPage() {
   const canManageUsers = usePermission('user', 'manage');
   const canReadCourses = usePermission('course', 'read');
   const canManageGrades = usePermission('grade', 'manage');
+
+  const isSuperAdmin = Boolean(user?.roles?.includes('super_admin'));
+  const isTenantAdmin = Boolean(
+    user?.roles?.some((r) => r === 'tenant_admin' || r === 'university_admin')
+  );
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -130,6 +145,90 @@ export function DashboardPage() {
           >
             {feedback.message}
           </Alert>
+        )}
+
+        {/* Phase 3 Super Admin Quick Launch */}
+        {isSuperAdmin && (
+          <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-md">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Badge variant="purple" size="sm" className="bg-purple-500/20 text-purple-200 border-purple-400/30">
+                    Super Admin Control Plane
+                  </Badge>
+                  <span className="text-xs text-purple-200/80">Phase 3 Tenant Governance</span>
+                </div>
+                <h2 className="text-xl font-bold tracking-tight">Institutional Tenant Provisioning &amp; Platform Control</h2>
+                <p className="text-sm text-purple-200/90 mt-1 max-w-2xl">
+                  Monitor system-wide multi-tenant instances, inspect quotas, suspend/activate tenants, or provision new universities.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                <Link to="/admin/tenants">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                    leftIcon={<Building className="w-4 h-4" />}
+                  >
+                    Tenant Directory
+                  </Button>
+                </Link>
+                <Link to="/admin/tenants/new">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-500 text-white border-none shadow-sm"
+                    leftIcon={<Plus className="w-4 h-4" />}
+                  >
+                    Provision Tenant
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Phase 3 Tenant Admin Quick Launch */}
+        {isTenantAdmin && (
+          <div className="bg-gradient-to-r from-primary-900 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-md">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Badge variant="primary" size="sm" className="bg-primary-500/20 text-primary-200 border-primary-400/30">
+                    Institution Administration
+                  </Badge>
+                  <span className="text-xs text-primary-200/80">Phase 3 Self-Service Portal</span>
+                </div>
+                <h2 className="text-xl font-bold tracking-tight">Institution Settings &amp; Subscription Management</h2>
+                <p className="text-sm text-primary-200/90 mt-1 max-w-2xl">
+                  Configure institutional branding and primary theme colors, inspect plan quotas, or upgrade your subscription tier.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                <Link to="/settings">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                    leftIcon={<Settings className="w-4 h-4" />}
+                  >
+                    Settings &amp; Branding
+                  </Button>
+                </Link>
+                <Link to="/billing">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="bg-primary-600 hover:bg-primary-500 text-white border-none shadow-sm"
+                    leftIcon={<CreditCard className="w-4 h-4" />}
+                  >
+                    Subscription &amp; Plans
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Top Grid: User Profile & Tenant Info */}
@@ -376,6 +475,161 @@ export function DashboardPage() {
                 </p>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Phase 3 Feature Flag System Demo: Advanced Analytics */}
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary-600" />
+                Advanced Analytics &amp; Reporting Module
+              </CardTitle>
+              <CardDescription>
+                Demonstrates the Phase 3 feature flag system with{' '}
+                <code className="text-xs bg-slate-100 px-1 py-0.5 rounded font-mono">
+                  &lt;Feature flag="advanced_analytics"&gt;
+                </code>
+              </CardDescription>
+            </div>
+            <Badge variant="default" size="sm">
+              Flag: advanced_analytics
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <Feature
+              flag="advanced_analytics"
+              fallback={
+                <div className="p-6 rounded-2xl border border-amber-200 bg-amber-50/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-sm font-semibold text-amber-900">
+                          Advanced Analytics is Locked on Your Current Plan
+                        </h4>
+                        <Badge variant="warning" size="sm">
+                          Requires Pro / Enterprise
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-amber-800 leading-relaxed max-w-2xl">
+                        Real-time cohort retention analytics, course completion drop-off funnels, and predictive grade distribution modeling are exclusive to Professional and Enterprise tiers.
+                      </p>
+                    </div>
+                  </div>
+                  <Link to="/billing" className="shrink-0">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      leftIcon={<TrendingUp className="w-4 h-4" />}
+                      rightIcon={<ArrowRight className="w-4 h-4" />}
+                    >
+                      Upgrade Subscription
+                    </Button>
+                  </Link>
+                </div>
+              }
+            >
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-semibold text-emerald-900">
+                      Feature Flag Active &mdash; Advanced Academic Insights Unlocked
+                    </span>
+                  </div>
+                  <Badge variant="success" size="sm">
+                    Active on Plan
+                  </Badge>
+                </div>
+
+                {/* Analytics KPIs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                      <span>Cohort Completion</span>
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900">94.2%</div>
+                    <div className="text-[11px] text-emerald-600 font-medium mt-1">
+                      +3.8% from prior semester
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                      <span>Active Cohorts</span>
+                      <Users className="w-4 h-4 text-primary-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900">42</div>
+                    <div className="text-[11px] text-slate-500 font-medium mt-1">
+                      Across 8 academic departments
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                      <span>Student Engagement</span>
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900">88.6 / 100</div>
+                    <div className="text-[11px] text-emerald-600 font-medium mt-1">
+                      High LMS platform activity
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                      <span>Projected Retention</span>
+                      <GraduationCap className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900">96.1%</div>
+                    <div className="text-[11px] text-slate-500 font-medium mt-1">
+                      Based on mid-term benchmarks
+                    </div>
+                  </div>
+                </div>
+
+                {/* Analytics Breakdown Visual */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                  <div className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    Department Performance Benchmarks
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex justify-between text-xs font-medium text-slate-700 mb-1">
+                        <span>Computer Science &amp; Engineering</span>
+                        <span>96% Pass Rate</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div className="bg-primary-600 h-2 rounded-full" style={{ width: '96%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-medium text-slate-700 mb-1">
+                        <span>Business Administration</span>
+                        <span>91% Pass Rate</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div className="bg-primary-600 h-2 rounded-full" style={{ width: '91%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-medium text-slate-700 mb-1">
+                        <span>Health Sciences</span>
+                        <span>88% Pass Rate</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div className="bg-primary-600 h-2 rounded-full" style={{ width: '88%' }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Feature>
           </CardContent>
         </Card>
       </div>
