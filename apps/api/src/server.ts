@@ -2,10 +2,21 @@ import { createApp } from './app';
 import { connectDatabase, disconnectDatabase } from './config/database';
 import { env } from './config/env';
 import { logger } from './utils/logger';
+import { seedPlans } from './modules/plans/plan.model';
 
 async function bootstrap() {
   try {
     await connectDatabase();
+
+    // Idempotent seed of plan catalog
+    try {
+      await seedPlans();
+      logger.info('Plan catalog seeded');
+    } catch (seedErr) {
+      logger.error('Plan seed failed (non-fatal)', {
+        error: seedErr instanceof Error ? seedErr.message : String(seedErr),
+      });
+    }
 
     const app = createApp();
 
@@ -13,6 +24,7 @@ async function bootstrap() {
       logger.info('University LMS API started', {
         port: env.PORT,
         environment: env.NODE_ENV,
+        phase: 3,
         health: `http://localhost:${env.PORT}/health`,
       });
     });

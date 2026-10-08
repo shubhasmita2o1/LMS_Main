@@ -7,6 +7,8 @@ declare global {
       tenantId?: string | null;
       /** Explicit tenant override by super_admin */
       tenantOverride?: string | null;
+      /** Resolved from subdomain / header before ObjectId lookup */
+      tenantSlug?: string;
     }
   }
 }

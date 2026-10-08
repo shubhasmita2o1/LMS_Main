@@ -8,6 +8,9 @@ import { defaultApiRateLimit } from './middleware/rateLimit';
 import { healthRouter } from './modules/health/health.routes';
 import { authRouter } from './modules/auth/auth.routes';
 import { userRouter } from './modules/users/user.routes';
+import { adminRouter } from './modules/admin/admin.routes';
+import { tenantRouter } from './modules/tenants/tenant.routes';
+import { billingRouter, webhookRouter } from './modules/billing/billing.routes';
 import { env } from './config/env';
 
 export function createApp() {
@@ -24,6 +27,9 @@ export function createApp() {
       credentials: true,
     })
   );
+
+  // Stripe webhooks need raw body for signature verification in production.
+  // For skeleton we accept JSON; mount raw parser selectively if needed later.
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
@@ -39,8 +45,8 @@ export function createApp() {
     res.json({
       success: true,
       message: 'University LMS API v1',
-      version: '0.2.0',
-      phase: 2,
+      version: '0.3.0',
+      phase: 3,
       docs: '/api/v1 (OpenAPI coming in later phases)',
     });
   });
@@ -48,6 +54,12 @@ export function createApp() {
   // Phase 2 modules
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', userRouter);
+
+  // Phase 3 modules
+  app.use('/api/v1/admin', adminRouter);
+  app.use('/api/v1/tenants', tenantRouter);
+  app.use('/api/v1/billing', billingRouter);
+  app.use('/api/v1/webhooks', webhookRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

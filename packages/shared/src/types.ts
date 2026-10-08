@@ -65,7 +65,9 @@ export type ResourceType =
   | 'analytics'
   | 'lab'
   | 'library'
-  | 'placement';
+  | 'placement'
+  | 'feature_flag'
+  | 'plan';
 
 export interface Permission {
   resource: ResourceType;
@@ -121,13 +123,122 @@ export interface LoginResponse {
   tokens: AuthTokens;
 }
 
+// ─── Phase 3: Tenant / Plan / Billing ───────────────────────────────────────
+
+export type TenantStatus =
+  | 'active'
+  | 'trialing'
+  | 'past_due'
+  | 'canceled'
+  | 'suspended';
+
+export type PlanTier = 'free' | 'starter' | 'professional' | 'enterprise';
+export type PlanId = PlanTier | string;
+
+export type BillingInterval = 'month' | 'year';
+export type BillingProvider = 'stripe' | 'razorpay' | 'none';
+
 export interface TenantBranding {
-  name: string;
+  name?: string;
   logoUrl?: string;
   primaryColor?: string;
   secondaryColor?: string;
   faviconUrl?: string;
   customDomain?: string;
+}
+
+export interface TenantLimits {
+  maxStudents: number;
+  maxFaculty: number;
+  maxStorageGB: number;
+  maxCourses: number;
+  maxAdmins: number;
+}
+
+export type UsageMetricKey =
+  | 'activeStudents'
+  | 'activeFaculty'
+  | 'storageBytes'
+  | 'apiCalls'
+  | 'courses'
+  | 'activeAdmins';
+
+export interface UsageMetric {
+  metric: UsageMetricKey;
+  value: number;
+  limit?: number;
+  periodStart?: Date | string;
+  periodEnd?: Date | string;
+}
+
+export interface FeatureFlagDefinition {
+  key: string;
+  name: string;
+  description?: string;
+  defaultValue: boolean;
+}
+
+export interface TenantFeatureFlags {
+  [key: string]: boolean;
+}
+
+export interface SubscriptionInfo {
+  provider: BillingProvider;
+  subscriptionId?: string | null;
+  customerId?: string | null;
+  status?: TenantStatus;
+  currentPeriodEnd?: Date | string | null;
+  trialEndsAt?: Date | string | null;
+  cancelAtPeriodEnd?: boolean;
+}
+
+export interface TenantPublic {
+  id: string;
+  name: string;
+  slug: string;
+  status: TenantStatus;
+  planId: PlanId;
+  planTier: PlanTier;
+  branding: TenantBranding;
+  limits: TenantLimits;
+  featureFlags: TenantFeatureFlags;
+  customDomain?: string | null;
+  subscription?: SubscriptionInfo;
+  trialEndsAt?: Date | string | null;
+  currentPeriodEnd?: Date | string | null;
+  ownerId?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface PlanPublic {
+  id: string;
+  key: PlanTier;
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  interval: BillingInterval;
+  features: string[];
+  featureFlags: TenantFeatureFlags;
+  limits: TenantLimits;
+  isActive: boolean;
+  isPublic: boolean;
+  trialDays: number;
+  sortOrder: number;
+}
+
+export interface PlatformStats {
+  totalTenants: number;
+  activeTenants: number;
+  trialingTenants: number;
+  suspendedTenants: number;
+  totalUsers: number;
+  revenueSkeleton: {
+    currency: string;
+    mrrEstimate: number;
+    note: string;
+  };
 }
 
 export interface ApiResponse<T = unknown> {
