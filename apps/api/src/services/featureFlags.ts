@@ -43,7 +43,7 @@ export function requireFeature(flagKey: string) {
         return;
       }
 
-      if (!isFeatureEnabled(tenant as ITenant, flagKey)) {
+      if (!isFeatureEnabled(tenant as unknown as ITenant, flagKey)) {
         next(
           new AppError(
             403,
