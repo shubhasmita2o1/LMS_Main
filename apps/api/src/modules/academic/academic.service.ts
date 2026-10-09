@@ -126,7 +126,7 @@ export async function softDeleteUniversity(tenantId: string, id: string, userId?
   return mapUniversity(doc);
 }
 
-function mapUniversity(d: Record<string, unknown>) {
+function mapUniversity(d: any) {
   return {
     id: String(d._id),
     tenantId: String(d.tenantId),
@@ -232,7 +232,7 @@ export async function softDeleteCampus(tenantId: string, id: string, userId?: st
   return mapCampus(doc);
 }
 
-function mapCampus(d: Record<string, unknown>) {
+function mapCampus(d: any) {
   return {
     id: String(d._id),
     tenantId: String(d.tenantId),
@@ -335,7 +335,7 @@ export async function softDeleteSchool(tenantId: string, id: string, userId?: st
   return mapSchool(doc);
 }
 
-function mapSchool(d: Record<string, unknown>) {
+function mapSchool(d: any) {
   return {
     id: String(d._id),
     tenantId: String(d.tenantId),
@@ -461,7 +461,7 @@ export async function assignHod(tenantId: string, id: string, userId: string | n
   return updateDepartment(tenantId, id, { hodUserId: userId }, actorId);
 }
 
-function mapDepartment(d: Record<string, unknown>) {
+function mapDepartment(d: any) {
   return {
     id: String(d._id),
     tenantId: String(d.tenantId),
@@ -595,7 +595,7 @@ export async function assignCoordinator(
   return updateProgram(tenantId, id, { coordinatorUserId: userId }, actorId);
 }
 
-function mapProgram(d: Record<string, unknown>) {
+function mapProgram(d: any) {
   return {
     id: String(d._id),
     tenantId: String(d.tenantId),
@@ -703,7 +703,7 @@ export async function softDeleteAcademicYear(tenantId: string, id: string, userI
   return mapAcademicYear(doc);
 }
 
-function mapAcademicYear(d: Record<string, unknown>) {
+function mapAcademicYear(d: any) {
   return {
     id: String(d._id),
     tenantId: String(d.tenantId),
@@ -816,7 +816,7 @@ export async function softDeleteSemester(tenantId: string, id: string, userId?: 
   return mapSemester(doc);
 }
 
-function mapSemester(d: Record<string, unknown>) {
+function mapSemester(d: any) {
   return {
     id: String(d._id),
     tenantId: String(d.tenantId),
@@ -926,7 +926,7 @@ export async function softDeleteBatch(tenantId: string, id: string, userId?: str
   return mapBatch(doc);
 }
 
-function mapBatch(d: Record<string, unknown>) {
+function mapBatch(d: any) {
   return {
     id: String(d._id),
     tenantId: String(d.tenantId),
@@ -1043,7 +1043,7 @@ export async function assignAdvisor(
   return updateSection(tenantId, id, { advisorUserId: userId }, actorId);
 }
 
-function mapSection(d: Record<string, unknown>) {
+function mapSection(d: any) {
   return {
     id: String(d._id),
     tenantId: String(d.tenantId),
@@ -1069,7 +1069,7 @@ export async function getAcademicConfig(tenantId: string) {
       attendanceRules: DEFAULT_ATTENDANCE_RULES,
       promotionRules: DEFAULT_PROMOTION_RULES,
     });
-    doc = created.toObject();
+    doc = created.toObject() as typeof doc;
   }
   return {
     tenantId,
