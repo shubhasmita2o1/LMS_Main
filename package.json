@@ -1,8 +1,8 @@
 {
   "name": "university-lms",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
-  "description": "University LMS — Multi-tenant SaaS platform (MERN + TypeScript)",
+  "description": "University LMS \u2014 Multi-tenant SaaS platform (MERN + TypeScript)",
   "workspaces": [
     "apps/*",
     "packages/*"

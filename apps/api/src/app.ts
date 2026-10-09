@@ -11,6 +11,7 @@ import { userRouter } from './modules/users/user.routes';
 import { adminRouter } from './modules/admin/admin.routes';
 import { tenantRouter } from './modules/tenants/tenant.routes';
 import { billingRouter, webhookRouter } from './modules/billing/billing.routes';
+import { academicRouter } from './modules/academic/academic.routes';
 import { env } from './config/env';
 
 export function createApp() {
@@ -45,8 +46,8 @@ export function createApp() {
     res.json({
       success: true,
       message: 'University LMS API v1',
-      version: '0.3.0',
-      phase: 3,
+      version: '0.4.0',
+      phase: 4,
       docs: '/api/v1 (OpenAPI coming in later phases)',
     });
   });
@@ -60,6 +61,9 @@ export function createApp() {
   app.use('/api/v1/tenants', tenantRouter);
   app.use('/api/v1/billing', billingRouter);
   app.use('/api/v1/webhooks', webhookRouter);
+
+  // Phase 4 — Academic hierarchy (universities, departments, programs, batches, …)
+  app.use('/api/v1/academic', academicRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

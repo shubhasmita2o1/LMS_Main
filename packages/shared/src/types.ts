@@ -265,3 +265,189 @@ export interface LoginHistoryEntry {
   userAgent?: string;
   success: boolean;
 }
+
+// ─── Phase 4: Academic hierarchy ────────────────────────────────────────────
+
+export type AcademicEntityStatus = 'active' | 'inactive' | 'archived';
+
+export type UniversityType =
+  | 'public'
+  | 'private'
+  | 'deemed'
+  | 'autonomous'
+  | 'other';
+
+export type DegreeType =
+  | 'certificate'
+  | 'diploma'
+  | 'ug'
+  | 'pg'
+  | 'doctoral'
+  | 'integrated'
+  | 'other';
+
+export interface GradeBand {
+  letter: string;
+  minPercent: number;
+  maxPercent: number;
+  gradePoint: number;
+}
+
+export interface GradingScheme {
+  name: string;
+  scaleMax: number;
+  bands: GradeBand[];
+}
+
+export interface CreditStructure {
+  minCreditsPerSemester: number;
+  maxCreditsPerSemester: number;
+  creditHoursPerLecture: number;
+  creditHoursPerLab: number;
+}
+
+export interface AttendanceRules {
+  minimumPercent: number;
+  considerMedicalLeave: boolean;
+}
+
+export interface PromotionRules {
+  minCgpaToPass: number;
+  maxBacklogsAllowed: number;
+}
+
+export interface AcademicConfig {
+  gradingScheme: GradingScheme;
+  creditStructure: CreditStructure;
+  attendanceRules: AttendanceRules;
+  promotionRules: PromotionRules;
+}
+
+export interface UniversityPublic {
+  id: string;
+  tenantId: string;
+  name: string;
+  code: string;
+  type: UniversityType;
+  address?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  logoUrl?: string;
+  status: AcademicEntityStatus;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface CampusPublic {
+  id: string;
+  tenantId: string;
+  universityId: string;
+  name: string;
+  code: string;
+  address?: string;
+  isMainCampus: boolean;
+  status: AcademicEntityStatus;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface SchoolPublic {
+  id: string;
+  tenantId: string;
+  universityId: string;
+  campusId?: string | null;
+  name: string;
+  code: string;
+  status: AcademicEntityStatus;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface DepartmentPublic {
+  id: string;
+  tenantId: string;
+  universityId: string;
+  campusId?: string | null;
+  schoolId?: string | null;
+  name: string;
+  code: string;
+  hodUserId?: string | null;
+  status: AcademicEntityStatus;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface ProgramPublic {
+  id: string;
+  tenantId: string;
+  departmentId: string;
+  name: string;
+  code: string;
+  degreeType: DegreeType;
+  durationYears: number;
+  totalCredits: number;
+  coordinatorUserId?: string | null;
+  status: AcademicEntityStatus;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface AcademicYearPublic {
+  id: string;
+  tenantId: string;
+  name: string;
+  startDate: Date | string;
+  endDate: Date | string;
+  isCurrent: boolean;
+  status: AcademicEntityStatus;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface SemesterPublic {
+  id: string;
+  tenantId: string;
+  academicYearId: string;
+  name: string;
+  sequence: number;
+  startDate?: Date | string | null;
+  endDate?: Date | string | null;
+  isCurrent: boolean;
+  status: AcademicEntityStatus;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface BatchPublic {
+  id: string;
+  tenantId: string;
+  programId: string;
+  academicYearId?: string | null;
+  name: string;
+  startYear: number;
+  endYear: number;
+  status: AcademicEntityStatus;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface SectionPublic {
+  id: string;
+  tenantId: string;
+  batchId: string;
+  name: string;
+  maxStudents: number;
+  advisorUserId?: string | null;
+  status: AcademicEntityStatus;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface AcademicTreeNode {
+  id: string;
+  type: 'university' | 'campus' | 'school' | 'department' | 'program' | 'batch' | 'section';
+  name: string;
+  code?: string;
+  status?: AcademicEntityStatus;
+  children?: AcademicTreeNode[];
+}

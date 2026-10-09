@@ -5,7 +5,7 @@
 import type { PlanTier, TenantFeatureFlags, TenantLimits } from './types';
 
 export const APP_NAME = 'University LMS';
-export const APP_VERSION = '0.3.0';
+export const APP_VERSION = '0.4.0';
 
 /** Default pagination */
 export const DEFAULT_PAGE = 1;
@@ -211,6 +211,12 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'user', action: 'manage' },
     { resource: 'role', action: 'manage' },
     { resource: 'university', action: 'manage' },
+    { resource: 'campus', action: 'manage' },
+    { resource: 'school', action: 'manage' },
+    { resource: 'department', action: 'manage' },
+    { resource: 'program', action: 'manage' },
+    { resource: 'batch', action: 'manage' },
+    { resource: 'section', action: 'manage' },
     { resource: 'course', action: 'manage' },
     { resource: 'student', action: 'manage' },
     { resource: 'faculty', action: 'manage' },
@@ -223,6 +229,12 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
   ],
   university_admin: [
     { resource: 'university', action: 'manage' },
+    { resource: 'campus', action: 'manage' },
+    { resource: 'school', action: 'manage' },
+    { resource: 'department', action: 'manage' },
+    { resource: 'program', action: 'manage' },
+    { resource: 'batch', action: 'manage' },
+    { resource: 'section', action: 'manage' },
     { resource: 'course', action: 'manage' },
     { resource: 'student', action: 'read' },
     { resource: 'faculty', action: 'read' },
@@ -246,3 +258,54 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
   parent: [{ resource: 'student', action: 'read' }],
   guest: [],
 };
+
+
+/** Default letter grading scheme (10-point) */
+export const DEFAULT_GRADING_SCHEME = {
+  name: '10-Point Letter Grade',
+  scaleMax: 10,
+  bands: [
+    { letter: 'O', minPercent: 90, maxPercent: 100, gradePoint: 10 },
+    { letter: 'A+', minPercent: 80, maxPercent: 89.99, gradePoint: 9 },
+    { letter: 'A', minPercent: 70, maxPercent: 79.99, gradePoint: 8 },
+    { letter: 'B+', minPercent: 60, maxPercent: 69.99, gradePoint: 7 },
+    { letter: 'B', minPercent: 50, maxPercent: 59.99, gradePoint: 6 },
+    { letter: 'C', minPercent: 40, maxPercent: 49.99, gradePoint: 5 },
+    { letter: 'F', minPercent: 0, maxPercent: 39.99, gradePoint: 0 },
+  ],
+};
+
+export const DEFAULT_CREDIT_STRUCTURE = {
+  minCreditsPerSemester: 12,
+  maxCreditsPerSemester: 28,
+  creditHoursPerLecture: 1,
+  creditHoursPerLab: 0.5,
+};
+
+export const DEFAULT_ATTENDANCE_RULES = {
+  minimumPercent: 75,
+  considerMedicalLeave: true,
+};
+
+export const DEFAULT_PROMOTION_RULES = {
+  minCgpaToPass: 5.0,
+  maxBacklogsAllowed: 4,
+};
+
+export const DEGREE_TYPES = [
+  'certificate',
+  'diploma',
+  'ug',
+  'pg',
+  'doctoral',
+  'integrated',
+  'other',
+] as const;
+
+export const UNIVERSITY_TYPES = [
+  'public',
+  'private',
+  'deemed',
+  'autonomous',
+  'other',
+] as const;
