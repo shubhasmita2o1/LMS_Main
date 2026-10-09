@@ -1060,17 +1060,28 @@ function mapSection(d: any) {
 // ─── Academic Config ────────────────────────────────────────────────────────
 
 export async function getAcademicConfig(tenantId: string) {
-  let doc = await AcademicConfigModel.findOne({ tenantId: tid(tenantId) }).lean();
-  if (!doc) {
-    const created = await AcademicConfigModel.create({
-      tenantId: tid(tenantId),
-      gradingScheme: DEFAULT_GRADING_SCHEME,
-      creditStructure: DEFAULT_CREDIT_STRUCTURE,
-      attendanceRules: DEFAULT_ATTENDANCE_RULES,
-      promotionRules: DEFAULT_PROMOTION_RULES,
-    });
-    doc = created.toObject() as typeof doc;
+  const existing = await AcademicConfigModel.findOne({ tenantId: tid(tenantId) }).lean();
+
+  if (existing) {
+    return {
+      tenantId,
+      gradingScheme: existing.gradingScheme,
+      creditStructure: existing.creditStructure,
+      attendanceRules: existing.attendanceRules,
+      promotionRules: existing.promotionRules,
+      updatedAt: existing.updatedAt,
+    };
   }
+
+  const created = await AcademicConfigModel.create({
+    tenantId: tid(tenantId),
+    gradingScheme: DEFAULT_GRADING_SCHEME,
+    creditStructure: DEFAULT_CREDIT_STRUCTURE,
+    attendanceRules: DEFAULT_ATTENDANCE_RULES,
+    promotionRules: DEFAULT_PROMOTION_RULES,
+  });
+
+  const doc = created.toObject();
   return {
     tenantId,
     gradingScheme: doc.gradingScheme,
@@ -1078,38 +1089,6 @@ export async function getAcademicConfig(tenantId: string) {
     attendanceRules: doc.attendanceRules,
     promotionRules: doc.promotionRules,
     updatedAt: doc.updatedAt,
-  };
-}
-
-export async function updateAcademicConfig(
-  tenantId: string,
-  body: Record<string, unknown>,
-  userId?: string
-) {
-  const doc = await AcademicConfigModel.findOneAndUpdate(
-    { tenantId: tid(tenantId) },
-    {
-      $set: {
-        ...body,
-        updatedBy: userId ? tid(userId) : null,
-      },
-      $setOnInsert: {
-        tenantId: tid(tenantId),
-        gradingScheme: DEFAULT_GRADING_SCHEME,
-        creditStructure: DEFAULT_CREDIT_STRUCTURE,
-        attendanceRules: DEFAULT_ATTENDANCE_RULES,
-        promotionRules: DEFAULT_PROMOTION_RULES,
-      },
-    },
-    { new: true, upsert: true }
-  ).lean();
-  return {
-    tenantId,
-    gradingScheme: doc!.gradingScheme,
-    creditStructure: doc!.creditStructure,
-    attendanceRules: doc!.attendanceRules,
-    promotionRules: doc!.promotionRules,
-    updatedAt: doc!.updatedAt,
   };
 }
 
