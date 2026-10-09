@@ -1092,6 +1092,45 @@ export async function getAcademicConfig(tenantId: string) {
   };
 }
 
+// ─── UpdateAcademic  ─────────────────────────────────────────────────────────
+
+export async function updateAcademicConfig(
+  tenantId: string,
+  body: Record<string, unknown>,
+  userId?: string
+) {
+  const doc = await AcademicConfigModel.findOneAndUpdate(
+    { tenantId: tid(tenantId) },
+    {
+      $set: {
+        ...body,
+        updatedBy: userId ? tid(userId) : null,
+      },
+      $setOnInsert: {
+        tenantId: tid(tenantId),
+        gradingScheme: DEFAULT_GRADING_SCHEME,
+        creditStructure: DEFAULT_CREDIT_STRUCTURE,
+        attendanceRules: DEFAULT_ATTENDANCE_RULES,
+        promotionRules: DEFAULT_PROMOTION_RULES,
+      },
+    },
+    { new: true, upsert: true }
+  ).lean();
+
+  if (!doc) {
+    throw new AppError(500, 'Failed to update academic config', 'CONFIG_ERROR');
+  }
+
+  return {
+    tenantId,
+    gradingScheme: doc.gradingScheme,
+    creditStructure: doc.creditStructure,
+    attendanceRules: doc.attendanceRules,
+    promotionRules: doc.promotionRules,
+    updatedAt: doc.updatedAt,
+  };
+}
+
 // ─── Hierarchy tree ─────────────────────────────────────────────────────────
 
 export async function getAcademicTree(tenantId: string): Promise<AcademicTreeNode[]> {
