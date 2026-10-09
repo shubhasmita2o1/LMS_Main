@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type { ApiResponse, AcademicTreeNode } from '@university-lms/shared';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuth } from '../../hooks/useAuth';
 import { Can } from '../../components/auth/Can';
 
 function TreeNode({ node, depth = 0 }: { node: AcademicTreeNode; depth?: number }) {
@@ -16,9 +16,7 @@ function TreeNode({ node, depth = 0 }: { node: AcademicTreeNode; depth?: number 
           {node.type}
         </span>
         <span className="font-medium text-slate-800">{node.name}</span>
-        {node.code && (
-          <span className="font-mono text-xs text-slate-400">{node.code}</span>
-        )}
+        {node.code && <span className="font-mono text-xs text-slate-400">{node.code}</span>}
         {node.status && (
           <span
             className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
@@ -39,8 +37,7 @@ function TreeNode({ node, depth = 0 }: { node: AcademicTreeNode; depth?: number 
 }
 
 export function AcademicTreePage() {
-  const user = useAuthStore((s) => s.user);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const { user, logout } = useAuth();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['academic', 'tree'],
@@ -63,7 +60,7 @@ export function AcademicTreePage() {
           <div className="flex items-center gap-3 text-sm">
             <span className="text-slate-500">{user?.email}</span>
             <button
-              onClick={() => clearAuth()}
+              onClick={() => logout()}
               className="text-slate-600 hover:text-slate-900 px-2 py-1 rounded hover:bg-slate-100"
             >
               Logout
@@ -103,9 +100,7 @@ export function AcademicTreePage() {
 
         <div className="bg-white border border-slate-200 rounded-xl p-5">
           {isLoading && <p className="text-slate-400 text-sm">Loading hierarchy…</p>}
-          {error && (
-            <p className="text-red-600 text-sm">Failed to load academic tree</p>
-          )}
+          {error && <p className="text-red-600 text-sm">Failed to load academic tree</p>}
           {!isLoading && data && data.length === 0 && (
             <div className="text-center py-10">
               <p className="text-slate-500 mb-3">No academic structure yet.</p>

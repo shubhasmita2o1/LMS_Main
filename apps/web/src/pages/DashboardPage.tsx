@@ -1,24 +1,17 @@
-import { Link } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { Can } from '../components/auth/Can';
 import { Feature } from '../components/features/Feature';
-import api from '../lib/api';
-import { useNavigate } from 'react-router-dom';
+import type { SystemRole } from '../types/auth';
 
 export function DashboardPage() {
-  const user = useAuthStore((s) => s.user);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const refreshToken = useAuthStore((s) => s.refreshToken);
-  const hasRole = useAuthStore((s) => s.hasRole);
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const hasRole = (role: SystemRole) => Boolean(user?.roles?.includes(role));
+
   const handleLogout = async () => {
-    try {
-      await api.post('/auth/logout', { refreshToken });
-    } catch {
-      // ignore
-    }
-    clearAuth();
+    await logout();
     navigate('/login');
   };
 
@@ -35,9 +28,7 @@ export function DashboardPage() {
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-600">
               {user?.firstName} {user?.lastName}
-              <span className="ml-2 text-xs text-slate-400">
-                ({user?.roles?.join(', ')})
-              </span>
+              <span className="ml-2 text-xs text-slate-400">({user?.roles?.join(', ')})</span>
             </span>
             <button
               onClick={handleLogout}
@@ -109,31 +100,9 @@ export function DashboardPage() {
                   </Link>
                 </li>
               )}
-              <Can resource="user" action="read">
-                <li>
-                  <Link to="/users" className="text-primary-600 hover:underline font-medium">
-                    Users
-                  </Link>
-                </li>
-              </Can>
             </ul>
           </div>
         </div>
-
-        <Can resource="user" action="read">
-          <div className="bg-white rounded-xl border border-slate-200 p-5 mb-4">
-            <h2 className="font-semibold text-slate-900 mb-2">User management</h2>
-            <p className="text-sm text-slate-500 mb-3">
-              You have permission to read users in your tenant scope.
-            </p>
-            <Link
-              to="/users"
-              className="inline-flex text-sm font-medium text-primary-600 hover:underline"
-            >
-              View users →
-            </Link>
-          </div>
-        </Can>
 
         <Feature
           flag="advanced_analytics"
