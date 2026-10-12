@@ -590,3 +590,82 @@ export interface StudentStats {
   byProgram: Array<{ programId: string; count: number }>;
   byBatch: Array<{ batchId: string; count: number }>;
 }
+
+// ─── Phase 6: Faculty Management ────────────────────────────────────────────
+
+export type FacultyStatus = 'active' | 'inactive' | 'on_leave' | 'retired' | 'terminated';
+
+export type EmploymentType =
+  | 'full_time'
+  | 'part_time'
+  | 'visiting'
+  | 'contract'
+  | 'adjunct';
+
+export type FacultyAssignmentRole =
+  | 'instructor'
+  | 'coordinator'
+  | 'lab_instructor'
+  | 'guest_lecturer'
+  | 'other';
+
+export interface FacultyQualification {
+  degree: string;
+  institution?: string;
+  year?: number;
+  specialization?: string;
+}
+
+export interface FacultyListItem {
+  id: string;
+  tenantId: string;
+  employeeId: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  designation?: string;
+  employmentType?: EmploymentType;
+  departmentId?: string | null;
+  status: FacultyStatus;
+  photoUrl?: string;
+  dateOfJoining?: Date | string | null;
+  createdAt: Date | string;
+}
+
+export interface FacultyPublic extends FacultyListItem {
+  userId?: string | null;
+  alternatePhone?: string;
+  dateOfBirth?: Date | string | null;
+  gender?: Gender;
+  additionalDepartmentIds: string[];
+  dateOfLeaving?: Date | string | null;
+  qualifications: FacultyQualification[];
+  specializations: string[];
+  experienceYears?: number;
+  bio?: string;
+  officeLocation?: string;
+  officeHours?: string;
+  updatedAt: Date | string;
+}
+
+export interface FacultyAssignmentPublic {
+  id: string;
+  tenantId: string;
+  facultyId: string;
+  courseId?: string | null;
+  sectionId?: string | null;
+  academicYearId?: string | null;
+  semesterId?: string | null;
+  role: FacultyAssignmentRole;
+  workloadHours?: number;
+  createdAt: Date | string;
+}
+
+export interface FacultyStats {
+  total: number;
+  byStatus: Record<string, number>;
+  byDepartment: Array<{ departmentId: string; count: number }>;
+  byEmploymentType: Record<string, number>;
+}
