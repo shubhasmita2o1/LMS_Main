@@ -43,7 +43,7 @@ export function requireFeature(flagKey: string) {
         return;
       }
 
-      if (!isFeatureEnabled(tenant as unknown as ITenant, flagKey)) {
+      if (!isFeatureEnabled(tenant as ITenant, flagKey)) {
         next(
           new AppError(
             403,
@@ -80,13 +80,22 @@ export async function getMetricUsage(
   const tid = new mongoose.Types.ObjectId(tenantId);
 
   switch (metric) {
-    case 'activeStudents':
+    case 'activeStudents': {
+      // Prefer SIS Student records when present; fall back to User roles
+      try {
+        const { countActiveStudents } = await import('../modules/students/student.service');
+        const fromSis = await countActiveStudents(tenantId);
+        if (fromSis > 0) return fromSis;
+      } catch {
+        // module not loaded yet during early boot — ignore
+      }
       return User.countDocuments({
         tenantId: tid,
         isDeleted: false,
         isActive: true,
         roles: 'student',
       });
+    }
     case 'activeFaculty':
       return User.countDocuments({
         tenantId: tid,
