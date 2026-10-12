@@ -277,94 +277,98 @@ export const DEFAULT_GRADING_SCHEME = {
   ],
 };
 
-export const DEFAULT_CREDIT_STRUCTURE = {
-  minCreditsPerSemester: 12,
-  maxCreditsPerSemester: 28,
-  creditHoursPerLecture: 1,
-  creditHoursPerLab: 0.5,
-};
+export interface AddressInfo {
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}
 
-export const DEFAULT_ATTENDANCE_RULES = {
-  minimumPercent: 75,
-  considerMedicalLeave: true,
-};
+export interface GuardianInfo {
+  name: string;
+  relation: string;
+  phone?: string;
+  email?: string;
+  occupation?: string;
+  address?: string;
+  isPrimary?: boolean;
+}
 
-export const DEFAULT_PROMOTION_RULES = {
-  minCgpaToPass: 5.0,
-  maxBacklogsAllowed: 4,
-};
+export interface EmergencyContactInfo {
+  name: string;
+  relation: string;
+  phone: string;
+}
 
-export const DEGREE_TYPES = [
-  'certificate',
-  'diploma',
-  'ug',
-  'pg',
-  'doctoral',
-  'integrated',
-  'other',
-] as const;
+export interface PreviousEducationInfo {
+  institution: string;
+  boardOrUniversity?: string;
+  year?: number;
+  percentageOrCgpa?: string;
+  qualification?: string;
+}
 
-export const UNIVERSITY_TYPES = [
-  'public',
-  'private',
-  'deemed',
-  'autonomous',
-  'other',
-] as const;
+export interface StudentDocumentPublic {
+  id: string;
+  studentId: string;
+  tenantId: string;
+  type: StudentDocumentType;
+  fileName: string;
+  fileUrl: string;
+  mimeType?: string;
+  size?: number;
+  verificationStatus: DocumentVerificationStatus;
+  uploadedAt: Date | string;
+  uploadedBy?: string | null;
+}
 
+export interface StudentListItem {
+  id: string;
+  tenantId: string;
+  enrollmentNumber: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  status: StudentStatus;
+  programId?: string | null;
+  batchId?: string | null;
+  sectionId?: string | null;
+  departmentId?: string | null;
+  admissionDate?: Date | string | null;
+  photoUrl?: string;
+  createdAt: Date | string;
+}
 
-export const STUDENT_STATUSES = [
-  'active',
-  'inactive',
-  'graduated',
-  'suspended',
-  'withdrawn',
-  'on_leave',
-  'alumni',
-] as const;
+export interface StudentPublic extends StudentListItem {
+  userId?: string | null;
+  rollNumber?: string;
+  registrationNumber?: string;
+  alternatePhone?: string;
+  dateOfBirth?: Date | string | null;
+  gender?: Gender;
+  bloodGroup?: BloodGroup;
+  nationality?: string;
+  category?: string;
+  permanentAddress?: AddressInfo;
+  currentAddress?: AddressInfo;
+  admissionType?: AdmissionType;
+  currentSemesterId?: string | null;
+  academicYearId?: string | null;
+  academicNotes?: string;
+  guardians: GuardianInfo[];
+  emergencyContacts: EmergencyContactInfo[];
+  previousEducation: PreviousEducationInfo[];
+  enrollmentStatus?: EnrollmentStatus;
+  updatedAt: Date | string;
+}
 
-export const ENROLLMENT_STATUSES = [
-  'enrolled',
-  'provisional',
-  'deferred',
-  'completed',
-  'cancelled',
-] as const;
-
-export const ADMISSION_TYPES = [
-  'regular',
-  'lateral',
-  'transfer',
-  'nri',
-  'management',
-  'other',
-] as const;
-
-
-export const FACULTY_STATUSES = [
-  'active',
-  'inactive',
-  'on_leave',
-  'retired',
-  'terminated',
-] as const;
-
-export const EMPLOYMENT_TYPES = [
-  'full_time',
-  'part_time',
-  'visiting',
-  'contract',
-  'adjunct',
-] as const;
-
-export const COMMON_DESIGNATIONS = [
-  'Professor',
-  'Associate Professor',
-  'Assistant Professor',
-  'Lecturer',
-  'Senior Lecturer',
-  'HOD',
-  'Dean',
-  'Visiting Faculty',
-  'Other',
-] as const;
+export interface StudentStats {
+  total: number;
+  byStatus: Record<string, number>;
+  byProgram: Array<{ programId: string; count: number }>;
+  byBatch: Array<{ batchId: string; count: number }>;
+}

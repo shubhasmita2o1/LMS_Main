@@ -5,7 +5,7 @@
 import type { PlanTier, TenantFeatureFlags, TenantLimits } from './types';
 
 export const APP_NAME = 'University LMS';
-export const APP_VERSION = '0.4.0';
+export const APP_VERSION = '0.6.0';
 
 /** Default pagination */
 export const DEFAULT_PAGE = 1;
@@ -236,10 +236,11 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'batch', action: 'manage' },
     { resource: 'section', action: 'manage' },
     { resource: 'course', action: 'manage' },
-    { resource: 'student', action: 'read' },
-    { resource: 'faculty', action: 'read' },
+    { resource: 'student', action: 'manage' },
+    { resource: 'faculty', action: 'manage' },
   ],
   faculty: [
+    { resource: 'faculty', action: 'read' },
     { resource: 'course', action: 'read' },
     { resource: 'assignment', action: 'manage' },
     { resource: 'quiz', action: 'manage' },
@@ -248,6 +249,7 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'student', action: 'read' },
   ],
   student: [
+    { resource: 'student', action: 'read' },
     { resource: 'course', action: 'read' },
     { resource: 'assignment', action: 'read' },
     { resource: 'quiz', action: 'read' },
@@ -308,4 +310,61 @@ export const UNIVERSITY_TYPES = [
   'deemed',
   'autonomous',
   'other',
+] as const;
+
+
+export const STUDENT_STATUSES = [
+  'active',
+  'inactive',
+  'graduated',
+  'suspended',
+  'withdrawn',
+  'on_leave',
+  'alumni',
+] as const;
+
+export const ENROLLMENT_STATUSES = [
+  'enrolled',
+  'provisional',
+  'deferred',
+  'completed',
+  'cancelled',
+] as const;
+
+export const ADMISSION_TYPES = [
+  'regular',
+  'lateral',
+  'transfer',
+  'nri',
+  'management',
+  'other',
+] as const;
+
+
+export const FACULTY_STATUSES = [
+  'active',
+  'inactive',
+  'on_leave',
+  'retired',
+  'terminated',
+] as const;
+
+export const EMPLOYMENT_TYPES = [
+  'full_time',
+  'part_time',
+  'visiting',
+  'contract',
+  'adjunct',
+] as const;
+
+export const COMMON_DESIGNATIONS = [
+  'Professor',
+  'Associate Professor',
+  'Assistant Professor',
+  'Lecturer',
+  'Senior Lecturer',
+  'HOD',
+  'Dean',
+  'Visiting Faculty',
+  'Other',
 ] as const;
