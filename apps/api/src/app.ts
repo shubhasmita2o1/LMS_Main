@@ -24,12 +24,35 @@ export function createApp() {
 
   // Security & basics
   app.use(helmet());
+
+  // CORS configuration
+  const allowedOrigins = env.CORS_ORIGIN
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin(origin, callback) {
+        // Allow requests without an Origin header, such as server-to-server calls.
+        if (!origin) {
+          return callback(null, true);
+        }
+
+        const normalizedOrigin = origin.replace(/\/+$/, '');
+
+        if (allowedOrigins.includes(normalizedOrigin)) {
+          return callback(null, true);
+        }
+
+        return callback(
+          new Error(`CORS blocked origin: ${origin}`)
+        );
+      },
       credentials: true,
     })
   );
+
 
   // Stripe webhooks need raw body for signature verification in production.
   // For skeleton we accept JSON; mount raw parser selectively if needed later.
