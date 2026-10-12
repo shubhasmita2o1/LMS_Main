@@ -452,7 +452,7 @@ export interface AcademicTreeNode {
   children?: AcademicTreeNode[];
 }
 
-/* Phase 5: Student Information System */
+// ─── Phase 5: Student Information System ────────────────────────────────────
 
 export type StudentStatus =
   | 'active'
@@ -470,11 +470,7 @@ export type EnrollmentStatus =
   | 'completed'
   | 'cancelled';
 
-export type Gender =
-  | 'male'
-  | 'female'
-  | 'other'
-  | 'prefer_not_to_say';
+export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 
 export type BloodGroup =
   | 'A+'
@@ -487,13 +483,17 @@ export type BloodGroup =
   | 'O-'
   | 'unknown';
 
-export type AdmissionType =
-  | 'regular'
-  | 'lateral'
-  | 'transfer'
-  | 'nri'
-  | 'management'
+export type AdmissionType = 'regular' | 'lateral' | 'transfer' | 'nri' | 'management' | 'other';
+
+export type StudentDocumentType =
+  | 'id_proof'
+  | 'marksheet'
+  | 'photo'
+  | 'certificate'
+  | 'address_proof'
   | 'other';
+
+export type DocumentVerificationStatus = 'pending' | 'verified' | 'rejected';
 
 export interface AddressInfo {
   line1?: string;
@@ -526,4 +526,67 @@ export interface PreviousEducationInfo {
   year?: number;
   percentageOrCgpa?: string;
   qualification?: string;
+}
+
+export interface StudentDocumentPublic {
+  id: string;
+  studentId: string;
+  tenantId: string;
+  type: StudentDocumentType;
+  fileName: string;
+  fileUrl: string;
+  mimeType?: string;
+  size?: number;
+  verificationStatus: DocumentVerificationStatus;
+  uploadedAt: Date | string;
+  uploadedBy?: string | null;
+}
+
+export interface StudentListItem {
+  id: string;
+  tenantId: string;
+  enrollmentNumber: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  status: StudentStatus;
+  programId?: string | null;
+  batchId?: string | null;
+  sectionId?: string | null;
+  departmentId?: string | null;
+  admissionDate?: Date | string | null;
+  photoUrl?: string;
+  createdAt: Date | string;
+}
+
+export interface StudentPublic extends StudentListItem {
+  userId?: string | null;
+  rollNumber?: string;
+  registrationNumber?: string;
+  alternatePhone?: string;
+  dateOfBirth?: Date | string | null;
+  gender?: Gender;
+  bloodGroup?: BloodGroup;
+  nationality?: string;
+  category?: string;
+  permanentAddress?: AddressInfo;
+  currentAddress?: AddressInfo;
+  admissionType?: AdmissionType;
+  currentSemesterId?: string | null;
+  academicYearId?: string | null;
+  academicNotes?: string;
+  guardians: GuardianInfo[];
+  emergencyContacts: EmergencyContactInfo[];
+  previousEducation: PreviousEducationInfo[];
+  enrollmentStatus?: EnrollmentStatus;
+  updatedAt: Date | string;
+}
+
+export interface StudentStats {
+  total: number;
+  byStatus: Record<string, number>;
+  byProgram: Array<{ programId: string; count: number }>;
+  byBatch: Array<{ batchId: string; count: number }>;
 }
