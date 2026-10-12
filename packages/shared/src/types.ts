@@ -1,592 +1,370 @@
 /**
- * Core shared types for multi-tenant University LMS
+ * Shared constants
  */
 
-export type TenantId = string;
-export type UserId = string;
-export type ObjectId = string;
+import type { PlanTier, TenantFeatureFlags, TenantLimits } from './types';
 
-/** Base document fields present on every MongoDB document */
-export interface BaseDocument {
-  _id: ObjectId;
-  tenantId: TenantId;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy?: UserId;
-  updatedBy?: UserId;
-  isDeleted?: boolean;
-  deletedAt?: Date | null;
-}
+export const APP_NAME = 'University LMS';
+export const APP_VERSION = '0.6.0';
 
-/** User roles (expandable via RBAC) */
-export type SystemRole =
-  | 'super_admin'
-  | 'tenant_admin'
-  | 'university_admin'
-  | 'faculty'
-  | 'student'
-  | 'staff'
-  | 'parent'
-  | 'guest';
+/** Default pagination */
+export const DEFAULT_PAGE = 1;
+export const DEFAULT_LIMIT = 20;
+export const MAX_LIMIT = 100;
 
-/** Permission action */
-export type PermissionAction =
-  | 'create'
-  | 'read'
-  | 'update'
-  | 'delete'
-  | 'manage'
-  | 'export'
-  | 'import';
+/** JWT related */
+export const ACCESS_TOKEN_EXPIRES_IN = '15m';
+export const REFRESH_TOKEN_EXPIRES_IN = '7d';
+/** Access token lifetime in seconds (for client) */
+export const ACCESS_TOKEN_EXPIRES_SECONDS = 15 * 60;
 
-/** Resource types for fine-grained RBAC */
-export type ResourceType =
-  | 'tenant'
-  | 'user'
-  | 'role'
-  | 'university'
-  | 'campus'
-  | 'school'
-  | 'department'
-  | 'program'
-  | 'batch'
-  | 'section'
-  | 'course'
-  | 'student'
-  | 'faculty'
-  | 'assignment'
-  | 'quiz'
-  | 'exam'
-  | 'grade'
-  | 'attendance'
-  | 'fee'
-  | 'billing'
-  | 'notification'
-  | 'analytics'
-  | 'lab'
-  | 'library'
-  | 'placement'
-  | 'feature_flag'
-  | 'plan';
+/** Tenant resolution headers / strategies */
+export const TENANT_HEADER = 'x-tenant-id';
+export const TENANT_SUBDOMAIN_HEADER = 'x-tenant-subdomain';
 
-export interface Permission {
-  resource: ResourceType;
-  action: PermissionAction;
-  /** Optional scope, e.g. own department only */
-  scope?: string;
-}
+/** Soft delete flag */
+export const SOFT_DELETE_FIELD = 'isDeleted';
 
-export interface AuthUser {
-  id: UserId;
-  tenantId: TenantId | null; // null for super_admin
-  email: string;
-  roles: SystemRole[];
-  permissions: Permission[];
-  firstName?: string;
-  lastName?: string;
-}
+/** Bcrypt cost factor */
+export const BCRYPT_ROUNDS = 12;
 
-/** JWT access token payload — keep minimal (no sensitive data) */
-export interface TokenPayload {
-  sub: UserId;
-  tenantId: TenantId | null;
-  roles: SystemRole[];
-  type: 'access' | 'refresh';
-  iat?: number;
-  exp?: number;
-}
+/** Max failed login attempts before temporary lock (Phase 2 basic) */
+export const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+export const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number; // seconds
-}
+/** Default trial period when creating a tenant (days) */
+export const DEFAULT_TRIAL_DAYS = 14;
 
-export interface LoginInput {
-  email: string;
-  password: string;
-  tenantId?: string; // optional: required for tenant users when not resolved from host
-}
+/** Known feature flag keys */
+export const FEATURE_FLAGS = {
+  ADVANCED_ANALYTICS: 'advanced_analytics',
+  CUSTOM_DOMAIN: 'custom_domain',
+  WHITE_LABEL: 'white_label',
+  LAB_MODULE: 'lab_module',
+  PLACEMENT_MODULE: 'placement_module',
+  LIBRARY_MODULE: 'library_module',
+  API_ACCESS: 'api_access',
+  SSO: 'sso',
+  PRIORITY_SUPPORT: 'priority_support',
+  UNLIMITED_STORAGE: 'unlimited_storage',
+} as const;
 
-export interface RegisterInput {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  /** Controlled: only super_admin or tenant_admin bootstrap */
-  role?: SystemRole;
-  tenantId?: string | null;
-}
+export type FeatureFlagKey = (typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS];
 
-export interface LoginResponse {
-  user: AuthUser;
-  tokens: AuthTokens;
-}
+/** Default plan limits by tier */
+export const DEFAULT_PLAN_LIMITS: Record<PlanTier, TenantLimits> = {
+  free: {
+    maxStudents: 50,
+    maxFaculty: 5,
+    maxStorageGB: 1,
+    maxCourses: 10,
+    maxAdmins: 1,
+  },
+  starter: {
+    maxStudents: 500,
+    maxFaculty: 50,
+    maxStorageGB: 20,
+    maxCourses: 100,
+    maxAdmins: 5,
+  },
+  professional: {
+    maxStudents: 5000,
+    maxFaculty: 500,
+    maxStorageGB: 200,
+    maxCourses: 1000,
+    maxAdmins: 25,
+  },
+  enterprise: {
+    maxStudents: 100000,
+    maxFaculty: 10000,
+    maxStorageGB: 2000,
+    maxCourses: 10000,
+    maxAdmins: 100,
+  },
+};
 
-// ─── Phase 3: Tenant / Plan / Billing ───────────────────────────────────────
+/** Default feature flags by tier */
+export const DEFAULT_PLAN_FEATURE_FLAGS: Record<PlanTier, TenantFeatureFlags> = {
+  free: {
+    [FEATURE_FLAGS.ADVANCED_ANALYTICS]: false,
+    [FEATURE_FLAGS.CUSTOM_DOMAIN]: false,
+    [FEATURE_FLAGS.WHITE_LABEL]: false,
+    [FEATURE_FLAGS.LAB_MODULE]: false,
+    [FEATURE_FLAGS.PLACEMENT_MODULE]: false,
+    [FEATURE_FLAGS.LIBRARY_MODULE]: true,
+    [FEATURE_FLAGS.API_ACCESS]: false,
+    [FEATURE_FLAGS.SSO]: false,
+    [FEATURE_FLAGS.PRIORITY_SUPPORT]: false,
+    [FEATURE_FLAGS.UNLIMITED_STORAGE]: false,
+  },
+  starter: {
+    [FEATURE_FLAGS.ADVANCED_ANALYTICS]: false,
+    [FEATURE_FLAGS.CUSTOM_DOMAIN]: false,
+    [FEATURE_FLAGS.WHITE_LABEL]: false,
+    [FEATURE_FLAGS.LAB_MODULE]: true,
+    [FEATURE_FLAGS.PLACEMENT_MODULE]: false,
+    [FEATURE_FLAGS.LIBRARY_MODULE]: true,
+    [FEATURE_FLAGS.API_ACCESS]: false,
+    [FEATURE_FLAGS.SSO]: false,
+    [FEATURE_FLAGS.PRIORITY_SUPPORT]: false,
+    [FEATURE_FLAGS.UNLIMITED_STORAGE]: false,
+  },
+  professional: {
+    [FEATURE_FLAGS.ADVANCED_ANALYTICS]: true,
+    [FEATURE_FLAGS.CUSTOM_DOMAIN]: true,
+    [FEATURE_FLAGS.WHITE_LABEL]: true,
+    [FEATURE_FLAGS.LAB_MODULE]: true,
+    [FEATURE_FLAGS.PLACEMENT_MODULE]: true,
+    [FEATURE_FLAGS.LIBRARY_MODULE]: true,
+    [FEATURE_FLAGS.API_ACCESS]: true,
+    [FEATURE_FLAGS.SSO]: false,
+    [FEATURE_FLAGS.PRIORITY_SUPPORT]: true,
+    [FEATURE_FLAGS.UNLIMITED_STORAGE]: false,
+  },
+  enterprise: {
+    [FEATURE_FLAGS.ADVANCED_ANALYTICS]: true,
+    [FEATURE_FLAGS.CUSTOM_DOMAIN]: true,
+    [FEATURE_FLAGS.WHITE_LABEL]: true,
+    [FEATURE_FLAGS.LAB_MODULE]: true,
+    [FEATURE_FLAGS.PLACEMENT_MODULE]: true,
+    [FEATURE_FLAGS.LIBRARY_MODULE]: true,
+    [FEATURE_FLAGS.API_ACCESS]: true,
+    [FEATURE_FLAGS.SSO]: true,
+    [FEATURE_FLAGS.PRIORITY_SUPPORT]: true,
+    [FEATURE_FLAGS.UNLIMITED_STORAGE]: true,
+  },
+};
 
-export type TenantStatus =
-  | 'active'
-  | 'trialing'
-  | 'past_due'
-  | 'canceled'
-  | 'suspended';
+/** Seed plan catalog (prices in smallest currency unit cents / paise representation for display) */
+export const SEED_PLANS = [
+  {
+    key: 'free' as PlanTier,
+    name: 'Free',
+    description: 'For small pilots and evaluation',
+    price: 0,
+    currency: 'USD',
+    interval: 'month' as const,
+    features: ['Up to 50 students', 'Basic LMS', 'Community support'],
+    trialDays: 0,
+    sortOrder: 0,
+  },
+  {
+    key: 'starter' as PlanTier,
+    name: 'Starter',
+    description: 'Growing departments and small colleges',
+    price: 99,
+    currency: 'USD',
+    interval: 'month' as const,
+    features: ['Up to 500 students', 'Lab module', 'Email support'],
+    trialDays: 14,
+    sortOrder: 1,
+  },
+  {
+    key: 'professional' as PlanTier,
+    name: 'Professional',
+    description: 'Full university departments',
+    price: 299,
+    currency: 'USD',
+    interval: 'month' as const,
+    features: [
+      'Up to 5,000 students',
+      'Custom domain',
+      'White-label',
+      'Advanced analytics',
+      'API access',
+    ],
+    trialDays: 14,
+    sortOrder: 2,
+  },
+  {
+    key: 'enterprise' as PlanTier,
+    name: 'Enterprise',
+    description: 'Multi-campus institutions',
+    price: 999,
+    currency: 'USD',
+    interval: 'month' as const,
+    features: [
+      'Unlimited scale',
+      'SSO',
+      'Priority support',
+      'Dedicated success manager',
+      'Custom SLAs',
+    ],
+    trialDays: 30,
+    sortOrder: 3,
+  },
+];
 
-export type PlanTier = 'free' | 'starter' | 'professional' | 'enterprise';
-export type PlanId = PlanTier | string;
+/** Default system role permission sets (seed reference) */
+export const SYSTEM_ROLE_PERMISSIONS: Record<
+  string,
+  Array<{ resource: string; action: string }>
+> = {
+  super_admin: [
+    { resource: 'tenant', action: 'manage' },
+    { resource: 'user', action: 'manage' },
+    { resource: 'billing', action: 'manage' },
+    { resource: 'feature_flag', action: 'manage' },
+    { resource: 'plan', action: 'manage' },
+  ],
+  tenant_admin: [
+    { resource: 'user', action: 'manage' },
+    { resource: 'role', action: 'manage' },
+    { resource: 'university', action: 'manage' },
+    { resource: 'campus', action: 'manage' },
+    { resource: 'school', action: 'manage' },
+    { resource: 'department', action: 'manage' },
+    { resource: 'program', action: 'manage' },
+    { resource: 'batch', action: 'manage' },
+    { resource: 'section', action: 'manage' },
+    { resource: 'course', action: 'manage' },
+    { resource: 'student', action: 'manage' },
+    { resource: 'faculty', action: 'manage' },
+    { resource: 'tenant', action: 'read' },
+    { resource: 'tenant', action: 'update' },
+    { resource: 'billing', action: 'read' },
+    { resource: 'billing', action: 'manage' },
+    { resource: 'feature_flag', action: 'read' },
+    { resource: 'plan', action: 'read' },
+  ],
+  university_admin: [
+    { resource: 'university', action: 'manage' },
+    { resource: 'campus', action: 'manage' },
+    { resource: 'school', action: 'manage' },
+    { resource: 'department', action: 'manage' },
+    { resource: 'program', action: 'manage' },
+    { resource: 'batch', action: 'manage' },
+    { resource: 'section', action: 'manage' },
+    { resource: 'course', action: 'manage' },
+    { resource: 'student', action: 'manage' },
+    { resource: 'faculty', action: 'manage' },
+  ],
+  faculty: [
+    { resource: 'faculty', action: 'read' },
+    { resource: 'course', action: 'read' },
+    { resource: 'assignment', action: 'manage' },
+    { resource: 'quiz', action: 'manage' },
+    { resource: 'grade', action: 'manage' },
+    { resource: 'attendance', action: 'manage' },
+    { resource: 'student', action: 'read' },
+  ],
+  student: [
+    { resource: 'student', action: 'read' },
+    { resource: 'course', action: 'read' },
+    { resource: 'assignment', action: 'read' },
+    { resource: 'quiz', action: 'read' },
+    { resource: 'grade', action: 'read' },
+    { resource: 'attendance', action: 'read' },
+  ],
+  staff: [{ resource: 'user', action: 'read' }],
+  parent: [{ resource: 'student', action: 'read' }],
+  guest: [],
+};
 
-export type BillingInterval = 'month' | 'year';
-export type BillingProvider = 'stripe' | 'razorpay' | 'none';
 
-export interface TenantBranding {
-  name?: string;
-  logoUrl?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  faviconUrl?: string;
-  customDomain?: string;
-}
+/** Default letter grading scheme (10-point) */
+export const DEFAULT_GRADING_SCHEME = {
+  name: '10-Point Letter Grade',
+  scaleMax: 10,
+  bands: [
+    { letter: 'O', minPercent: 90, maxPercent: 100, gradePoint: 10 },
+    { letter: 'A+', minPercent: 80, maxPercent: 89.99, gradePoint: 9 },
+    { letter: 'A', minPercent: 70, maxPercent: 79.99, gradePoint: 8 },
+    { letter: 'B+', minPercent: 60, maxPercent: 69.99, gradePoint: 7 },
+    { letter: 'B', minPercent: 50, maxPercent: 59.99, gradePoint: 6 },
+    { letter: 'C', minPercent: 40, maxPercent: 49.99, gradePoint: 5 },
+    { letter: 'F', minPercent: 0, maxPercent: 39.99, gradePoint: 0 },
+  ],
+};
 
-export interface TenantLimits {
-  maxStudents: number;
-  maxFaculty: number;
-  maxStorageGB: number;
-  maxCourses: number;
-  maxAdmins: number;
-}
+export const DEFAULT_CREDIT_STRUCTURE = {
+  minCreditsPerSemester: 12,
+  maxCreditsPerSemester: 28,
+  creditHoursPerLecture: 1,
+  creditHoursPerLab: 0.5,
+};
 
-export type UsageMetricKey =
-  | 'activeStudents'
-  | 'activeFaculty'
-  | 'storageBytes'
-  | 'apiCalls'
-  | 'courses'
-  | 'activeAdmins';
+export const DEFAULT_ATTENDANCE_RULES = {
+  minimumPercent: 75,
+  considerMedicalLeave: true,
+};
 
-export interface UsageMetric {
-  metric: UsageMetricKey;
-  value: number;
-  limit?: number;
-  periodStart?: Date | string;
-  periodEnd?: Date | string;
-}
+export const DEFAULT_PROMOTION_RULES = {
+  minCgpaToPass: 5.0,
+  maxBacklogsAllowed: 4,
+};
 
-export interface FeatureFlagDefinition {
-  key: string;
-  name: string;
-  description?: string;
-  defaultValue: boolean;
-}
+export const DEGREE_TYPES = [
+  'certificate',
+  'diploma',
+  'ug',
+  'pg',
+  'doctoral',
+  'integrated',
+  'other',
+] as const;
 
-export interface TenantFeatureFlags {
-  [key: string]: boolean;
-}
+export const UNIVERSITY_TYPES = [
+  'public',
+  'private',
+  'deemed',
+  'autonomous',
+  'other',
+] as const;
 
-export interface SubscriptionInfo {
-  provider: BillingProvider;
-  subscriptionId?: string | null;
-  customerId?: string | null;
-  status?: TenantStatus;
-  currentPeriodEnd?: Date | string | null;
-  trialEndsAt?: Date | string | null;
-  cancelAtPeriodEnd?: boolean;
-}
 
-export interface TenantPublic {
-  id: string;
-  name: string;
-  slug: string;
-  status: TenantStatus;
-  planId: PlanId;
-  planTier: PlanTier;
-  branding: TenantBranding;
-  limits: TenantLimits;
-  featureFlags: TenantFeatureFlags;
-  customDomain?: string | null;
-  subscription?: SubscriptionInfo;
-  trialEndsAt?: Date | string | null;
-  currentPeriodEnd?: Date | string | null;
-  ownerId?: string | null;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
+export const STUDENT_STATUSES = [
+  'active',
+  'inactive',
+  'graduated',
+  'suspended',
+  'withdrawn',
+  'on_leave',
+  'alumni',
+] as const;
 
-export interface PlanPublic {
-  id: string;
-  key: PlanTier;
-  name: string;
-  description?: string;
-  price: number;
-  currency: string;
-  interval: BillingInterval;
-  features: string[];
-  featureFlags: TenantFeatureFlags;
-  limits: TenantLimits;
-  isActive: boolean;
-  isPublic: boolean;
-  trialDays: number;
-  sortOrder: number;
-}
+export const ENROLLMENT_STATUSES = [
+  'enrolled',
+  'provisional',
+  'deferred',
+  'completed',
+  'cancelled',
+] as const;
 
-export interface PlatformStats {
-  totalTenants: number;
-  activeTenants: number;
-  trialingTenants: number;
-  suspendedTenants: number;
-  totalUsers: number;
-  revenueSkeleton: {
-    currency: string;
-    mrrEstimate: number;
-    note: string;
-  };
-}
+export const ADMISSION_TYPES = [
+  'regular',
+  'lateral',
+  'transfer',
+  'nri',
+  'management',
+  'other',
+] as const;
 
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: {
-    code: string;
-    message?: string;
-    details?: unknown;
-  };
-  meta?: {
-    page?: number;
-    limit?: number;
-    total?: number;
-    totalPages?: number;
-  };
-}
 
-/** Login history entry (stored on User) */
-export interface LoginHistoryEntry {
-  at: Date;
-  ip?: string;
-  userAgent?: string;
-  success: boolean;
-}
+export const FACULTY_STATUSES = [
+  'active',
+  'inactive',
+  'on_leave',
+  'retired',
+  'terminated',
+] as const;
 
-// ─── Phase 4: Academic hierarchy ────────────────────────────────────────────
+export const EMPLOYMENT_TYPES = [
+  'full_time',
+  'part_time',
+  'visiting',
+  'contract',
+  'adjunct',
+] as const;
 
-export type AcademicEntityStatus = 'active' | 'inactive' | 'archived';
-
-export type UniversityType =
-  | 'public'
-  | 'private'
-  | 'deemed'
-  | 'autonomous'
-  | 'other';
-
-export type DegreeType =
-  | 'certificate'
-  | 'diploma'
-  | 'ug'
-  | 'pg'
-  | 'doctoral'
-  | 'integrated'
-  | 'other';
-
-export interface GradeBand {
-  letter: string;
-  minPercent: number;
-  maxPercent: number;
-  gradePoint: number;
-}
-
-export interface GradingScheme {
-  name: string;
-  scaleMax: number;
-  bands: GradeBand[];
-}
-
-export interface CreditStructure {
-  minCreditsPerSemester: number;
-  maxCreditsPerSemester: number;
-  creditHoursPerLecture: number;
-  creditHoursPerLab: number;
-}
-
-export interface AttendanceRules {
-  minimumPercent: number;
-  considerMedicalLeave: boolean;
-}
-
-export interface PromotionRules {
-  minCgpaToPass: number;
-  maxBacklogsAllowed: number;
-}
-
-export interface AcademicConfig {
-  gradingScheme: GradingScheme;
-  creditStructure: CreditStructure;
-  attendanceRules: AttendanceRules;
-  promotionRules: PromotionRules;
-}
-
-export interface UniversityPublic {
-  id: string;
-  tenantId: string;
-  name: string;
-  code: string;
-  type: UniversityType;
-  address?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  logoUrl?: string;
-  status: AcademicEntityStatus;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-export interface CampusPublic {
-  id: string;
-  tenantId: string;
-  universityId: string;
-  name: string;
-  code: string;
-  address?: string;
-  isMainCampus: boolean;
-  status: AcademicEntityStatus;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-export interface SchoolPublic {
-  id: string;
-  tenantId: string;
-  universityId: string;
-  campusId?: string | null;
-  name: string;
-  code: string;
-  status: AcademicEntityStatus;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-export interface DepartmentPublic {
-  id: string;
-  tenantId: string;
-  universityId: string;
-  campusId?: string | null;
-  schoolId?: string | null;
-  name: string;
-  code: string;
-  hodUserId?: string | null;
-  status: AcademicEntityStatus;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-export interface ProgramPublic {
-  id: string;
-  tenantId: string;
-  departmentId: string;
-  name: string;
-  code: string;
-  degreeType: DegreeType;
-  durationYears: number;
-  totalCredits: number;
-  coordinatorUserId?: string | null;
-  status: AcademicEntityStatus;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-export interface AcademicYearPublic {
-  id: string;
-  tenantId: string;
-  name: string;
-  startDate: Date | string;
-  endDate: Date | string;
-  isCurrent: boolean;
-  status: AcademicEntityStatus;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-export interface SemesterPublic {
-  id: string;
-  tenantId: string;
-  academicYearId: string;
-  name: string;
-  sequence: number;
-  startDate?: Date | string | null;
-  endDate?: Date | string | null;
-  isCurrent: boolean;
-  status: AcademicEntityStatus;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-export interface BatchPublic {
-  id: string;
-  tenantId: string;
-  programId: string;
-  academicYearId?: string | null;
-  name: string;
-  startYear: number;
-  endYear: number;
-  status: AcademicEntityStatus;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-export interface SectionPublic {
-  id: string;
-  tenantId: string;
-  batchId: string;
-  name: string;
-  maxStudents: number;
-  advisorUserId?: string | null;
-  status: AcademicEntityStatus;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-export interface AcademicTreeNode {
-  id: string;
-  type: 'university' | 'campus' | 'school' | 'department' | 'program' | 'batch' | 'section';
-  name: string;
-  code?: string;
-  status?: AcademicEntityStatus;
-  children?: AcademicTreeNode[];
-}
-
-// ─── Phase 5: Student Information System ────────────────────────────────────
-
-export type StudentStatus =
-  | 'active'
-  | 'inactive'
-  | 'graduated'
-  | 'suspended'
-  | 'withdrawn'
-  | 'on_leave'
-  | 'alumni';
-
-export type EnrollmentStatus =
-  | 'enrolled'
-  | 'provisional'
-  | 'deferred'
-  | 'completed'
-  | 'cancelled';
-
-export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
-
-export type BloodGroup =
-  | 'A+'
-  | 'A-'
-  | 'B+'
-  | 'B-'
-  | 'AB+'
-  | 'AB-'
-  | 'O+'
-  | 'O-'
-  | 'unknown';
-
-export type AdmissionType = 'regular' | 'lateral' | 'transfer' | 'nri' | 'management' | 'other';
-
-export type StudentDocumentType =
-  | 'id_proof'
-  | 'marksheet'
-  | 'photo'
-  | 'certificate'
-  | 'address_proof'
-  | 'other';
-
-export type DocumentVerificationStatus = 'pending' | 'verified' | 'rejected';
-
-export interface AddressInfo {
-  line1?: string;
-  line2?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
-  country?: string;
-}
-
-export interface GuardianInfo {
-  name: string;
-  relation: string;
-  phone?: string;
-  email?: string;
-  occupation?: string;
-  address?: string;
-  isPrimary?: boolean;
-}
-
-export interface EmergencyContactInfo {
-  name: string;
-  relation: string;
-  phone: string;
-}
-
-export interface PreviousEducationInfo {
-  institution: string;
-  boardOrUniversity?: string;
-  year?: number;
-  percentageOrCgpa?: string;
-  qualification?: string;
-}
-
-export interface StudentDocumentPublic {
-  id: string;
-  studentId: string;
-  tenantId: string;
-  type: StudentDocumentType;
-  fileName: string;
-  fileUrl: string;
-  mimeType?: string;
-  size?: number;
-  verificationStatus: DocumentVerificationStatus;
-  uploadedAt: Date | string;
-  uploadedBy?: string | null;
-}
-
-export interface StudentListItem {
-  id: string;
-  tenantId: string;
-  enrollmentNumber: string;
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  email?: string;
-  phone?: string;
-  status: StudentStatus;
-  programId?: string | null;
-  batchId?: string | null;
-  sectionId?: string | null;
-  departmentId?: string | null;
-  admissionDate?: Date | string | null;
-  photoUrl?: string;
-  createdAt: Date | string;
-}
-
-export interface StudentPublic extends StudentListItem {
-  userId?: string | null;
-  rollNumber?: string;
-  registrationNumber?: string;
-  alternatePhone?: string;
-  dateOfBirth?: Date | string | null;
-  gender?: Gender;
-  bloodGroup?: BloodGroup;
-  nationality?: string;
-  category?: string;
-  permanentAddress?: AddressInfo;
-  currentAddress?: AddressInfo;
-  admissionType?: AdmissionType;
-  currentSemesterId?: string | null;
-  academicYearId?: string | null;
-  academicNotes?: string;
-  guardians: GuardianInfo[];
-  emergencyContacts: EmergencyContactInfo[];
-  previousEducation: PreviousEducationInfo[];
-  enrollmentStatus?: EnrollmentStatus;
-  updatedAt: Date | string;
-}
-
-export interface StudentStats {
-  total: number;
-  byStatus: Record<string, number>;
-  byProgram: Array<{ programId: string; count: number }>;
-  byBatch: Array<{ batchId: string; count: number }>;
-}
+export const COMMON_DESIGNATIONS = [
+  'Professor',
+  'Associate Professor',
+  'Assistant Professor',
+  'Lecturer',
+  'Senior Lecturer',
+  'HOD',
+  'Dean',
+  'Visiting Faculty',
+  'Other',
+] as const;
