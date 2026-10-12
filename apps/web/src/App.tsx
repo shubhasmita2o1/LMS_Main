@@ -19,6 +19,10 @@ import { StudentsListPage } from './pages/students/StudentsListPage';
 import { StudentFormPage } from './pages/students/StudentFormPage';
 import { StudentDetailPage } from './pages/students/StudentDetailPage';
 import { StudentMePage } from './pages/students/StudentMePage';
+import { FacultyListPage } from './pages/faculty/FacultyListPage';
+import { FacultyFormPage } from './pages/faculty/FacultyFormPage';
+import { FacultyDetailPage } from './pages/faculty/FacultyDetailPage';
+import { FacultyMePage } from './pages/faculty/FacultyMePage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuthStore } from './stores/authStore';
 
@@ -33,7 +37,7 @@ function HomePage() {
         </div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">University LMS</h1>
         <p className="text-slate-500 mb-8">
-          Multi-tenant SaaS platform • Phase 4: University & Academic Structure
+          Multi-tenant SaaS platform • Phase 6: Faculty Management
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
           {isAuthenticated() ? (
@@ -61,7 +65,7 @@ function HomePage() {
           )}
         </div>
         <p className="mt-10 text-xs text-slate-400">
-          Phase 4 • Hierarchy · Departments · Programs · Batches · Academic config
+          Phase 6 • Students · Faculty · Academic hierarchy
         </p>
       </div>
     </div>
@@ -95,6 +99,13 @@ export default function App() {
       <Route path="/students/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><StudentFormPage /></ProtectedRoute>} />
       <Route path="/students/:id" element={<ProtectedRoute><StudentDetailPage /></ProtectedRoute>} />
       <Route path="/students/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><StudentFormPage /></ProtectedRoute>} />
+
+      {/* Phase 6 — Faculty */}
+      <Route path="/faculty" element={<ProtectedRoute><FacultyListPage /></ProtectedRoute>} />
+      <Route path="/faculty/me" element={<ProtectedRoute roles={['faculty', 'tenant_admin', 'university_admin', 'super_admin']}><FacultyMePage /></ProtectedRoute>} />
+      <Route path="/faculty/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><FacultyFormPage /></ProtectedRoute>} />
+      <Route path="/faculty/:id" element={<ProtectedRoute><FacultyDetailPage /></ProtectedRoute>} />
+      <Route path="/faculty/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><FacultyFormPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
