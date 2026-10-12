@@ -132,13 +132,26 @@ export async function getMetricUsage(
       });
     }
 
-    case 'activeFaculty':
+    case 'activeFaculty': {
+      try {
+        const { countActiveFaculty } = await import(
+          '../modules/faculty/faculty.service'
+        );
+        const fromModule = await countActiveFaculty(tenantId);
+        if (fromModule > 0) {
+          return fromModule;
+        }
+      } catch {
+        // Fall back to User records if the faculty module lookup fails.
+      }
+
       return User.countDocuments({
         tenantId: tid,
         isDeleted: false,
         isActive: true,
         roles: 'faculty',
       });
+    }
 
     case 'activeAdmins':
       return User.countDocuments({
