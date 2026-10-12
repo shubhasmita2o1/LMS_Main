@@ -451,3 +451,79 @@ export interface AcademicTreeNode {
   status?: AcademicEntityStatus;
   children?: AcademicTreeNode[];
 }
+
+/* Phase 5: Student Information System */
+
+export type StudentStatus =
+  | 'active'
+  | 'inactive'
+  | 'graduated'
+  | 'suspended'
+  | 'withdrawn'
+  | 'on_leave'
+  | 'alumni';
+
+export type EnrollmentStatus =
+  | 'enrolled'
+  | 'provisional'
+  | 'deferred'
+  | 'completed'
+  | 'cancelled';
+
+export type Gender =
+  | 'male'
+  | 'female'
+  | 'other'
+  | 'prefer_not_to_say';
+
+export type BloodGroup =
+  | 'A+'
+  | 'A-'
+  | 'B+'
+  | 'B-'
+  | 'AB+'
+  | 'AB-'
+  | 'O+'
+  | 'O-'
+  | 'unknown';
+
+export type AdmissionType =
+  | 'regular'
+  | 'lateral'
+  | 'transfer'
+  | 'nri'
+  | 'management'
+  | 'other';
+
+export interface AddressInfo {
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+export interface GuardianInfo {
+  name: string;
+  relation: string;
+  phone?: string;
+  email?: string;
+  occupation?: string;
+  address?: string;
+  isPrimary?: boolean;
+}
+
+export interface EmergencyContactInfo {
+  name: string;
+  relation: string;
+  phone: string;
+}
+
+export interface PreviousEducationInfo {
+  institution: string;
+  boardOrUniversity?: string;
+  year?: number;
+  percentageOrCgpa?: string;
+  qualification?: string;
+}

@@ -1,35 +1,30 @@
 {
-  "name": "@university-lms/web",
-  "version": "0.1.0",
+  "name": "university-lms",
+  "version": "0.5.1",
   "private": true,
-  "type": "module",
+  "description": "University LMS — Multi-tenant SaaS platform (MERN + TypeScript)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "lint": "echo \"Add ESLint later\""
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev -w @university-lms/api",
+    "dev:web": "npm run dev -w @university-lms/web",
+    "build": "npm run build -w @university-lms/shared && npm run build --workspaces --if-present",
+    "build:shared": "npm run build -w @university-lms/shared",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
-  "dependencies": {
-    "@university-lms/shared": "*",
-    "@tanstack/react-query": "^5.59.0",
-    "axios": "^1.7.7",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-hook-form": "^7.53.0",
-    "react-router-dom": "^6.26.2",
-    "zod": "^3.23.8",
-    "zustand": "^5.0.0"
+  "engines": {
+    "node": ">=20"
   },
   "devDependencies": {
-    "@hookform/resolvers": "^3.9.0",
-    "@types/react": "^18.3.11",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.2",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.47",
-    "tailwindcss": "^3.4.13",
-    "typescript": "^5.6.3",
-    "vite": "^5.4.8"
-  }
+    "prettier": "^3.3.3"
+  },
+  "author": "University LMS Team",
+  "license": "UNLICENSED"
 }
