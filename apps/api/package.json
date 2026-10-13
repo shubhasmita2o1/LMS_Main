@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "lint": "echo \"Add ESLint later\""
+    "lint": "echo \"Add ESLint later\"",
+    "seed:users": "tsx src/scripts/seedDemoUsers.ts",
+    "seed:demo": "tsx src/scripts/seedDemoTenant.ts"
   },
   "dependencies": {
     "@university-lms/shared": "*",

@@ -18,7 +18,19 @@ export function ProgramsPage() {
     coordinatorUserId: '',
   });
   const [error, setError] = useState<string | null>(null);
+  const [coordSearch, setCoordSearch] = useState('');
   const qc = useQueryClient();
+
+  const { data: facultyOptions } = useQuery({
+    queryKey: ['faculty', 'coord-options', coordSearch],
+    queryFn: async () => {
+      const { data } = await api.get('/faculty', {
+        params: { search: coordSearch || undefined, limit: 30, status: 'active' },
+      });
+      return data.data || [];
+    },
+  });
+
 
   const { data: departments } = useQuery({
     queryKey: ['academic', 'departments', 'all'],
@@ -156,12 +168,28 @@ export function ProgramsPage() {
                 onChange={(e) => setForm({ ...form, totalCredits: Number(e.target.value) })}
                 className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
               />
-              <input
-                placeholder="Coordinator user id (optional)"
-                value={form.coordinatorUserId}
-                onChange={(e) => setForm({ ...form, coordinatorUserId: e.target.value })}
-                className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono sm:col-span-2"
-              />
+                            <div className="sm:col-span-2 space-y-1">
+                <input
+                  placeholder="Search faculty for coordinator…"
+                  value={coordSearch}
+                  onChange={(e) => setCoordSearch(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                />
+                <select
+                  value={form.coordinatorUserId}
+                  onChange={(e) => setForm({ ...form, coordinatorUserId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                >
+                  <option value="">No coordinator (optional)</option>
+                  {(facultyOptions || []).map((f: any) => (
+                    <option key={f.id} value={f.userId || f.id}>
+                      {f.firstName} {f.lastName}
+                      {f.employeeId ? ` (${f.employeeId})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
             </div>
             <button
               onClick={() => createMut.mutate()}

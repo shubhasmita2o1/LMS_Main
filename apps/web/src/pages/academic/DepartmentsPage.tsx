@@ -14,6 +14,18 @@ export function DepartmentsPage() {
     universityId: '',
     hodUserId: '',
   });
+
+  const [hodSearch, setHodSearch] = useState('');
+  const { data: facultyOptions } = useQuery({
+    queryKey: ['faculty', 'hod-options', hodSearch],
+    queryFn: async () => {
+      const { data } = await api.get('/faculty', {
+        params: { search: hodSearch || undefined, limit: 30, status: 'active' },
+      });
+      return data.data || [];
+    },
+  });
+
   const [error, setError] = useState<string | null>(null);
   const qc = useQueryClient();
 
@@ -122,12 +134,27 @@ export function DepartmentsPage() {
                   </option>
                 ))}
               </select>
-              <input
-                placeholder="HOD user id (optional)"
-                value={form.hodUserId}
-                onChange={(e) => setForm({ ...form, hodUserId: e.target.value })}
-                className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono"
-              />
+              <div className="space-y-1">
+                <input
+                  placeholder="Search faculty for HOD…"
+                  value={hodSearch}
+                  onChange={(e) => setHodSearch(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                />
+                <select
+                  value={form.hodUserId}
+                  onChange={(e) => setForm({ ...form, hodUserId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                >
+                  <option value="">No HOD (optional)</option>
+                  {(facultyOptions || []).map((f: any) => (
+                    <option key={f.id} value={f.userId || f.id}>
+                      {f.firstName} {f.lastName}
+                      {f.employeeId ? ` (${f.employeeId})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <button
               onClick={() => createMut.mutate()}

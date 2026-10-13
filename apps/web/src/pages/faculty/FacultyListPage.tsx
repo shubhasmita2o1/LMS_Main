@@ -2,23 +2,39 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
-import type { ApiResponse, FacultyListItem, FacultyStats } from '@university-lms/shared';
+import type {
+  ApiResponse,
+  FacultyListItem,
+  FacultyStats,
+  DepartmentPublic,
+} from '@university-lms/shared';
 import { Can } from '../../components/auth/Can';
-import { useAuth } from '../../hooks/useAuth';
+import { AppLayout } from '../../components/layout/AppLayout';
 
 export function FacultyListPage() {
-  const { user, logout } = useAuth();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
   const [page, setPage] = useState(1);
 
+  const { data: departments } = useQuery({
+    queryKey: ['academic', 'departments', 'filter'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<DepartmentPublic[]>>('/academic/departments', {
+        params: { limit: 200 },
+      });
+      return data.data || [];
+    },
+  });
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['faculty', search, status, page],
+    queryKey: ['faculty', search, status, departmentId, page],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<FacultyListItem[]>>('/faculty', {
         params: {
           search: search || undefined,
           status: status || undefined,
+          departmentId: departmentId || undefined,
           page,
           limit: 20,
         },
@@ -36,28 +52,7 @@ export function FacultyListPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="text-sm text-slate-600 hover:text-slate-900">
-              ← Dashboard
-            </Link>
-            <span className="font-semibold text-slate-900">Faculty</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-slate-500">{user?.email}</span>
-            <button
-              onClick={() => logout()}
-              className="text-slate-600 hover:text-slate-900 px-2 py-1 rounded hover:bg-slate-100"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8">
+    <AppLayout>
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <StatCard label="Total" value={stats.total} />
@@ -91,6 +86,21 @@ export function FacultyListPage() {
             <option value="on_leave">On leave</option>
             <option value="retired">Retired</option>
             <option value="terminated">Terminated</option>
+          </select>
+          <select
+            value={departmentId}
+            onChange={(e) => {
+              setDepartmentId(e.target.value);
+              setPage(1);
+            }}
+            className="px-3 py-2 border border-slate-200 rounded-lg text-sm max-w-[200px]"
+          >
+            <option value="">All departments</option>
+            {(departments || []).map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
           </select>
           <Can resource="faculty" action="create">
             <Link
@@ -174,8 +184,7 @@ export function FacultyListPage() {
             </button>
           </div>
         )}
-      </main>
-    </div>
+    </AppLayout>
   );
 }
 

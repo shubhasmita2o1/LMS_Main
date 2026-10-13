@@ -733,6 +733,19 @@ export async function enrollStudent(
   const course = await Course.findOne(baseFilter(tenantId, { _id: tid(body.courseId) })).lean();
   if (!course) throw new AppError(404, 'Course not found', 'NOT_FOUND');
 
+  // Capacity: course.maxSeats (when set)
+  if (course.maxSeats != null) {
+    const enrolledOnCourse = await CourseEnrollment.countDocuments(
+      baseFilter(tenantId, {
+        courseId: tid(body.courseId),
+        status: 'enrolled',
+      })
+    );
+    if (enrolledOnCourse >= course.maxSeats) {
+      throw new AppError(403, 'Course is at capacity (maxSeats)', 'CAPACITY_EXCEEDED');
+    }
+  }
+
   // Capacity check if offering has maxStudents
   if (body.offeringId) {
     const offering = await CourseOffering.findOne(

@@ -27,6 +27,8 @@ export function CourseDetailPage() {
   const [lessonContentType, setLessonContentType] = useState('text');
   const [lessonVideoUrl, setLessonVideoUrl] = useState('');
   const [lessonTextBody, setLessonTextBody] = useState('');
+  const [attachLessonId, setAttachLessonId] = useState<string | null>(null);
+  const [attachBusy, setAttachBusy] = useState(false);
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   const [enrollStudentId, setEnrollStudentId] = useState('');
   const [enrollOfferingId, setEnrollOfferingId] = useState('');
@@ -113,7 +115,7 @@ export function CourseDetailPage() {
       if (lessonContentType === 'text' && lessonTextBody.trim()) {
         payload.textBody = lessonTextBody.trim();
       }
-      if (lessonContentType === 'link' && lessonVideoUrl.trim()) {
+      if ((lessonContentType === 'link' || lessonContentType === 'pdf') && lessonVideoUrl.trim()) {
         payload.contentUrl = lessonVideoUrl.trim();
       }
       const { data } = await api.post(`/courses/modules/${activeModuleId}/lessons`, payload);
@@ -129,6 +131,45 @@ export function CourseDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['courses', id, 'modules'] });
     },
   });
+
+  const attachFileToLesson = async (lessonId: string, file: File) => {
+    setAttachBusy(true);
+    setAttachLessonId(lessonId);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || '');
+          const b64 = result.includes(',') ? result.split(',')[1] : result;
+          resolve(b64);
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      const mime = file.type || 'application/pdf';
+      const { data: up } = await api.post('/learn/content/upload', {
+        fileName: file.name,
+        mimeType: mime,
+        base64,
+      });
+      const uploaded = up.data || up;
+      const contentType =
+        mime.includes('pdf') ? 'pdf' : mime.startsWith('image/') ? 'image' : mime.includes('presentation') || file.name.endsWith('.pptx') || file.name.endsWith('.ppt') ? 'pptx' : 'other';
+      await api.post(`/learn/lessons/${lessonId}/content`, {
+        contentType,
+        fileKey: uploaded.fileKey,
+        contentUrl: uploaded.contentUrl,
+        fileName: uploaded.fileName || file.name,
+        mimeType: uploaded.mimeType || mime,
+        fileSize: uploaded.fileSize || file.size,
+      });
+      queryClient.invalidateQueries({ queryKey: ['courses', 'modules', activeModuleId, 'lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['courses', id, 'modules'] });
+    } finally {
+      setAttachBusy(false);
+      setAttachLessonId(null);
+    }
+  };
 
   const createOffering = useMutation({
     mutationFn: async () => {
@@ -351,13 +392,29 @@ export function CourseDetailPage() {
                       {(lessons || []).map((l) => (
                         <div
                           key={l.id}
-                          className="flex items-center gap-2 text-sm text-slate-700 py-1"
+                          className="flex flex-wrap items-center gap-2 text-sm text-slate-700 py-1"
                         >
                           <span className="text-xs text-slate-400 w-6">#{l.order}</span>
-                          <span className="flex-1">{l.title}</span>
+                          <span className="flex-1 min-w-[120px]">{l.title}</span>
                           <span className="text-xs text-slate-400 capitalize">
                             {l.contentType}
                           </span>
+                          <Can resource="course" action="update">
+                            <label className="text-xs text-primary-600 hover:underline cursor-pointer font-medium">
+                              {attachBusy && attachLessonId === l.id ? 'Uploading…' : 'Attach file'}
+                              <input
+                                type="file"
+                                accept=".pdf,application/pdf,image/*,.ppt,.pptx,.doc,.docx"
+                                className="hidden"
+                                disabled={attachBusy}
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) void attachFileToLesson(l.id, f);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                          </Can>
                         </div>
                       ))}
                       <Can resource="course" action="update">
@@ -387,11 +444,17 @@ export function CourseDetailPage() {
                               Add lesson
                             </button>
                           </div>
-                          {(lessonContentType === 'video' || lessonContentType === 'link') && (
+                          {(lessonContentType === 'video' || lessonContentType === 'link' || lessonContentType === 'pdf') && (
                             <input
                               value={lessonVideoUrl}
                               onChange={(e) => setLessonVideoUrl(e.target.value)}
-                              placeholder={lessonContentType === 'video' ? 'Video URL (YouTube / Vimeo / MP4)' : 'External URL'}
+                              placeholder={
+                                lessonContentType === 'video'
+                                  ? 'Video URL (YouTube / Vimeo / MP4)'
+                                  : lessonContentType === 'pdf'
+                                    ? 'PDF URL (or attach file after creating)'
+                                    : 'External URL'
+                              }
                               className="w-full px-3 py-1.5 rounded border border-slate-300 text-sm"
                             />
                           )}
