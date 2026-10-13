@@ -12,7 +12,7 @@ import { Can } from '../../components/auth/Can';
 import { useAuth } from '../../hooks/useAuth';
 
 export function CurriculumPage() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const queryClient = useQueryClient();
   const [programId, setProgramId] = useState('');
   const [courseId, setCourseId] = useState('');

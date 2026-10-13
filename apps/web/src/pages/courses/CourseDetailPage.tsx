@@ -17,7 +17,7 @@ type Tab = 'overview' | 'structure' | 'offerings' | 'enrollments';
 
 export function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('overview');
   const [moduleTitle, setModuleTitle] = useState('');

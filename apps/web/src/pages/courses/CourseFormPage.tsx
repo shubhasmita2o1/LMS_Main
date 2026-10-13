@@ -31,7 +31,7 @@ export function CourseFormPage() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [form, setForm] = useState(emptyForm);
   const [outcomeText, setOutcomeText] = useState('');
   const [error, setError] = useState('');
