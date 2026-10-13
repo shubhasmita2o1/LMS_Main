@@ -84,12 +84,10 @@ export function AppLayout({ children, fullWidth }: AppLayoutProps) {
       const { data } = await api.get('/auth/me');
       const me = data?.data;
       if (me) {
-        const tokens = {
-          accessToken: useAuthStore.getState().accessToken || '',
-          refreshToken: useAuthStore.getState().refreshToken || '',
-          expiresIn: 0,
-        };
-        useAuthStore.getState().setAuth(me, tokens);
+        const state = useAuthStore.getState();
+        // Preserve existing tokens; only refresh profile fields
+        useAuthStore.setState({ user: me });
+        void state;
       }
     } catch (e) {
       console.error(e);
