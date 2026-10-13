@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthStore } from '../../stores/authStore';
+import api from '../../lib/api';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import {
@@ -36,7 +37,9 @@ type NavItem = {
 };
 
 export function AppLayout({ children, fullWidth }: AppLayoutProps) {
-  const { user, logout, logoutAll, refreshUser } = useAuth();
+  const user = useAuthStore((s) => s.user);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const refreshToken = useAuthStore((s) => s.refreshToken);
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -46,7 +49,12 @@ export function AppLayout({ children, fullWidth }: AppLayoutProps) {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      await logout();
+      try {
+        await api.post('/auth/logout', { refreshToken });
+      } catch {
+        /* ignore */
+      }
+      clearAuth();
       navigate('/login');
     } finally {
       setIsLoggingOut(false);
@@ -57,7 +65,12 @@ export function AppLayout({ children, fullWidth }: AppLayoutProps) {
     if (confirm('Are you sure you want to sign out from all devices?')) {
       try {
         setIsLoggingOut(true);
-        await logoutAll();
+        try {
+          await api.post('/auth/logout-all');
+        } catch {
+          /* ignore */
+        }
+        clearAuth();
         navigate('/login');
       } finally {
         setIsLoggingOut(false);
@@ -68,7 +81,16 @@ export function AppLayout({ children, fullWidth }: AppLayoutProps) {
   const handleRefreshUser = async () => {
     try {
       setIsRefreshing(true);
-      await refreshUser();
+      const { data } = await api.get('/auth/me');
+      const me = data?.data;
+      if (me) {
+        const tokens = {
+          accessToken: useAuthStore.getState().accessToken || '',
+          refreshToken: useAuthStore.getState().refreshToken || '',
+          expiresIn: 0,
+        };
+        useAuthStore.getState().setAuth(me, tokens);
+      }
     } catch (e) {
       console.error(e);
     } finally {
