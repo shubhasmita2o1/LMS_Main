@@ -1,32 +1,20 @@
 import type { ReactNode } from 'react';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 
-export interface FeatureProps {
+interface FeatureProps {
   flag: string;
-  fallback?: ReactNode;
   children: ReactNode;
+  fallback?: ReactNode;
 }
 
 /**
- * Conditional feature rendering driven by tenant plan feature flags.
- *
- * Example:
- *   <Feature flag="advanced_analytics" fallback={<UpgradeNotice />}>
- *     <AnalyticsCharts />
- *   </Feature>
+ * Conditionally render children based on tenant feature flag.
+ * Example: <Feature flag="advanced_analytics">...</Feature>
  */
-export function Feature({ flag, fallback = null, children }: FeatureProps) {
+export function Feature({ flag, children, fallback = null }: FeatureProps) {
   const { enabled, loading } = useFeatureFlag(flag);
 
-  if (loading) {
-    return null;
-  }
-
-  if (!enabled) {
-    return <>{fallback}</>;
-  }
-
+  if (loading) return null;
+  if (!enabled) return <>{fallback}</>;
   return <>{children}</>;
 }
-
-export default Feature;

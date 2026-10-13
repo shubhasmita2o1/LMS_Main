@@ -1,46 +1,26 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { UsageMetricKey, TenantLimits } from '@university-lms/shared';
 import { AppError } from '../middleware/errorHandler';
-import { Tenant } from '../modules/tenants/tenant.model';
+import { Tenant, type ITenant } from '../modules/tenants/tenant.model';
 import { User } from '../modules/users/user.model';
 import mongoose from 'mongoose';
 
 /**
- * Minimal tenant shape required to evaluate feature flags.
- * Works with both Mongoose documents and lean query results.
+ * Resolve effective feature flags for a tenant document
+ * (plan defaults already merged into tenant.featureFlags on create/update)
  */
-type FeatureFlagTenant = {
-  status: string;
-  featureFlags?: Record<string, boolean> | null;
-};
-
-/**
- * Resolve effective feature flags for a tenant.
- * Plan defaults should already be merged into tenant.featureFlags.
- */
-export function isFeatureEnabled(
-  tenant: FeatureFlagTenant | null | undefined,
-  flagKey: string
-): boolean {
+export function isFeatureEnabled(tenant: ITenant | null | undefined, flagKey: string): boolean {
   if (!tenant) return false;
-
-  if (tenant.status === 'suspended' || tenant.status === 'canceled') {
-    return false;
-  }
-
+  if (tenant.status === 'suspended' || tenant.status === 'canceled') return false;
   return Boolean(tenant.featureFlags?.[flagKey]);
 }
 
 /**
  * Middleware: require a feature flag for the current tenant.
- * Super Admin bypasses this check.
+ * Super Admin bypasses.
  */
 export function requireFeature(flagKey: string) {
-  return async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       if (req.user?.roles.includes('super_admin')) {
         next();
@@ -48,15 +28,8 @@ export function requireFeature(flagKey: string) {
       }
 
       const tenantId = req.tenantId || req.user?.tenantId;
-
       if (!tenantId) {
-        next(
-          new AppError(
-            400,
-            'Tenant context required',
-            'TENANT_REQUIRED'
-          )
-        );
+        next(new AppError(400, 'Tenant context required', 'TENANT_REQUIRED'));
         return;
       }
 
@@ -70,7 +43,7 @@ export function requireFeature(flagKey: string) {
         return;
       }
 
-      if (!isFeatureEnabled(tenant, flagKey)) {
+      if (!isFeatureEnabled(tenant as ITenant, flagKey)) {
         next(
           new AppError(
             403,
@@ -88,10 +61,8 @@ export function requireFeature(flagKey: string) {
   };
 }
 
-/** Map usage metrics to tenant plan-limit fields. */
-const METRIC_TO_LIMIT: Partial<
-  Record<UsageMetricKey, keyof TenantLimits>
-> = {
+/** Map usage metric keys to tenant limit fields */
+const METRIC_TO_LIMIT: Partial<Record<UsageMetricKey, keyof TenantLimits>> = {
   activeStudents: 'maxStudents',
   activeFaculty: 'maxFaculty',
   courses: 'maxCourses',
@@ -100,7 +71,7 @@ const METRIC_TO_LIMIT: Partial<
 
 /**
  * Count current usage for a metric within a tenant.
- * Student counts prefer SIS records, falling back to User roles.
+ * Skeleton: counts Users by role for student/faculty/admin metrics.
  */
 export async function getMetricUsage(
   tenantId: string,
@@ -110,20 +81,14 @@ export async function getMetricUsage(
 
   switch (metric) {
     case 'activeStudents': {
+      // Prefer SIS Student records when present; fall back to User roles
       try {
-        const { countActiveStudents } = await import(
-          '../modules/students/student.service'
-        );
-
+        const { countActiveStudents } = await import('../modules/students/student.service');
         const fromSis = await countActiveStudents(tenantId);
-
-        if (fromSis > 0) {
-          return fromSis;
-        }
+        if (fromSis > 0) return fromSis;
       } catch {
-        // Fall back to User records if the SIS lookup fails.
+        // module not loaded yet during early boot — ignore
       }
-
       return User.countDocuments({
         tenantId: tid,
         isDeleted: false,
@@ -131,20 +96,14 @@ export async function getMetricUsage(
         roles: 'student',
       });
     }
-
     case 'activeFaculty': {
       try {
-        const { countActiveFaculty } = await import(
-          '../modules/faculty/faculty.service'
-        );
+        const { countActiveFaculty } = await import('../modules/faculty/faculty.service');
         const fromModule = await countActiveFaculty(tenantId);
-        if (fromModule > 0) {
-          return fromModule;
-        }
+        if (fromModule > 0) return fromModule;
       } catch {
-        // Fall back to User records if the faculty module lookup fails.
+        // ignore if module unavailable
       }
-
       return User.countDocuments({
         tenantId: tid,
         isDeleted: false,
@@ -152,17 +111,13 @@ export async function getMetricUsage(
         roles: 'faculty',
       });
     }
-
     case 'activeAdmins':
       return User.countDocuments({
         tenantId: tid,
         isDeleted: false,
         isActive: true,
-        roles: {
-          $in: ['tenant_admin', 'university_admin'],
-        },
+        roles: { $in: ['tenant_admin', 'university_admin'] },
       });
-
     case 'courses': {
       try {
         const { countCourses } = await import('../modules/courses/course.service');
@@ -171,95 +126,55 @@ export async function getMetricUsage(
         return 0;
       }
     }
-
     case 'storageBytes':
     case 'apiCalls':
-      // Placeholder until storage / API usage metering exists.
+      // Placeholder until storage metering exists
       return 0;
-
     default:
       return 0;
   }
 }
 
 /**
- * Check whether adding delta units would exceed a plan limit.
+ * Check whether adding `delta` more of a metric would exceed the plan limit.
+ * Returns { allowed, current, limit }.
  */
 export async function checkLimit(
   tenantId: string,
   metric: UsageMetricKey,
   delta = 1
-): Promise<{
-  allowed: boolean;
-  current: number;
-  limit: number;
-  remaining: number;
-}> {
-  const tenant = await Tenant.findOne({
-    _id: tenantId,
-    isDeleted: false,
-  }).lean();
-
+): Promise<{ allowed: boolean; current: number; limit: number; remaining: number }> {
+  const tenant = await Tenant.findOne({ _id: tenantId, isDeleted: false }).lean();
   if (!tenant) {
     throw new AppError(404, 'Tenant not found', 'NOT_FOUND');
   }
 
-  if (
-    tenant.status === 'suspended' ||
-    tenant.status === 'canceled'
-  ) {
-    return {
-      allowed: false,
-      current: 0,
-      limit: 0,
-      remaining: 0,
-    };
+  if (tenant.status === 'suspended' || tenant.status === 'canceled') {
+    return { allowed: false, current: 0, limit: 0, remaining: 0 };
   }
 
   const limitKey = METRIC_TO_LIMIT[metric];
-
   const limit =
-    limitKey && tenant.limits
-      ? Number(tenant.limits[limitKey])
-      : Number.MAX_SAFE_INTEGER;
+    limitKey && tenant.limits ? Number(tenant.limits[limitKey]) : Number.MAX_SAFE_INTEGER;
 
-  // Allow unlimited storage when the tenant's plan enables it.
-  if (
-    metric === 'storageBytes' &&
-    tenant.featureFlags?.unlimited_storage
-  ) {
-    return {
-      allowed: true,
-      current: 0,
-      limit: Number.MAX_SAFE_INTEGER,
-      remaining: Number.MAX_SAFE_INTEGER,
-    };
+  // Unlimited storage flag
+  if (metric === 'storageBytes' && tenant.featureFlags?.unlimited_storage) {
+    return { allowed: true, current: 0, limit: Number.MAX_SAFE_INTEGER, remaining: Number.MAX_SAFE_INTEGER };
   }
 
   const current = await getMetricUsage(tenantId, metric);
   const remaining = Math.max(0, limit - current);
   const allowed = current + delta <= limit;
 
-  return {
-    allowed,
-    current,
-    limit,
-    remaining,
-  };
+  return { allowed, current, limit, remaining };
 }
 
 /**
  * Middleware factory: enforce a plan limit before proceeding.
+ * Example: requireLimit('activeStudents') on user create routes.
  */
-export function requireLimit(
-  metric: UsageMetricKey,
-  delta = 1
-) {
-  return async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+export function requireLimit(metric: UsageMetricKey, delta = 1) {
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       if (req.user?.roles.includes('super_admin')) {
         next();
@@ -267,20 +182,12 @@ export function requireLimit(
       }
 
       const tenantId = req.tenantId || req.user?.tenantId;
-
       if (!tenantId) {
-        next(
-          new AppError(
-            400,
-            'Tenant context required',
-            'TENANT_REQUIRED'
-          )
-        );
+        next(new AppError(400, 'Tenant context required', 'TENANT_REQUIRED'));
         return;
       }
 
       const result = await checkLimit(tenantId, metric, delta);
-
       if (!result.allowed) {
         next(
           new AppError(
@@ -301,14 +208,10 @@ export function requireLimit(
 }
 
 /**
- * Build a usage snapshot for the tenant settings UI.
+ * Build usage snapshot vs limits for tenant settings UI
  */
 export async function getUsageSnapshot(tenantId: string) {
-  const tenant = await Tenant.findOne({
-    _id: tenantId,
-    isDeleted: false,
-  }).lean();
-
+  const tenant = await Tenant.findOne({ _id: tenantId, isDeleted: false }).lean();
   if (!tenant) {
     throw new AppError(404, 'Tenant not found', 'NOT_FOUND');
   }
@@ -325,31 +228,15 @@ export async function getUsageSnapshot(tenantId: string) {
     metrics.map(async (metric) => {
       const current = await getMetricUsage(tenantId, metric);
       const limitKey = METRIC_TO_LIMIT[metric];
-
-      let limit =
-        limitKey && tenant.limits
-          ? Number(tenant.limits[limitKey])
-          : 0;
-
+      let limit = limitKey && tenant.limits ? Number(tenant.limits[limitKey]) : 0;
       if (metric === 'storageBytes') {
-        limit =
-          (tenant.limits?.maxStorageGB ?? 0) *
-          1024 *
-          1024 *
-          1024;
+        limit = (tenant.limits?.maxStorageGB ?? 0) * 1024 * 1024 * 1024;
       }
-
       return {
         metric,
         value: current,
         limit,
-        percent:
-          limit > 0
-            ? Math.min(
-                100,
-                Math.round((current / limit) * 100)
-              )
-            : 0,
+        percent: limit > 0 ? Math.min(100, Math.round((current / limit) * 100)) : 0,
       };
     })
   );

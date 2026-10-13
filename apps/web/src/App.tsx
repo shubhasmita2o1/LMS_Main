@@ -27,6 +27,10 @@ import { CoursesListPage } from './pages/courses/CoursesListPage';
 import { CourseFormPage } from './pages/courses/CourseFormPage';
 import { CourseDetailPage } from './pages/courses/CourseDetailPage';
 import { CurriculumPage } from './pages/courses/CurriculumPage';
+import { MyCoursesPage } from './pages/learn/MyCoursesPage';
+import { CourseLearnPage } from './pages/learn/CourseLearnPage';
+import { LessonViewerPage } from './pages/learn/LessonViewerPage';
+import { LiveClassesPage } from './pages/learn/LiveClassesPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuthStore } from './stores/authStore';
 
@@ -41,7 +45,7 @@ function HomePage() {
         </div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">University LMS</h1>
         <p className="text-slate-500 mb-8">
-          Multi-tenant SaaS platform • Phase 7: Curriculum & Course Management
+          Multi-tenant SaaS platform • Phase 8: Core LMS / Theory Learning
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
           {isAuthenticated() ? (
@@ -69,7 +73,7 @@ function HomePage() {
           )}
         </div>
         <p className="mt-10 text-xs text-slate-400">
-          Phase 7 • Courses · Modules · Curriculum · Enrollments
+          Phase 8 • Learn · Progress · Notes · Live classes
         </p>
       </div>
     </div>
@@ -117,6 +121,12 @@ export default function App() {
       <Route path="/courses/:id" element={<ProtectedRoute><CourseDetailPage /></ProtectedRoute>} />
       <Route path="/courses/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><CourseFormPage /></ProtectedRoute>} />
       <Route path="/curriculum" element={<ProtectedRoute><CurriculumPage /></ProtectedRoute>} />
+
+      {/* Phase 8 — Core LMS Learning */}
+      <Route path="/learn" element={<ProtectedRoute><MyCoursesPage /></ProtectedRoute>} />
+      <Route path="/learn/courses/:id" element={<ProtectedRoute><CourseLearnPage /></ProtectedRoute>} />
+      <Route path="/learn/courses/:id/lessons/:lessonId" element={<ProtectedRoute><LessonViewerPage /></ProtectedRoute>} />
+      <Route path="/learn/courses/:id/live" element={<ProtectedRoute><LiveClassesPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

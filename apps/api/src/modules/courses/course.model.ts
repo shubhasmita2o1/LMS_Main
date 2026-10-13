@@ -175,6 +175,18 @@ export interface ICourseLesson extends Document {
   durationMinutes?: number | null;
   isFreePreview: boolean;
   contentSummary?: string;
+  contentUrl?: string | null;
+  fileKey?: string | null;
+  fileName?: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
+  textBody?: string | null;
+  videoProvider?: 'url' | 'youtube' | 'vimeo' | null;
+  videoUrl?: string | null;
+  durationSeconds?: number | null;
+  captionsUrl?: string | null;
+  transcript?: string | null;
+  allowDownload: boolean;
   isDeleted: boolean;
   deletedAt?: Date | null;
   createdBy?: Types.ObjectId | null;
@@ -193,12 +205,28 @@ const CourseLessonSchema = new Schema<ICourseLesson>(
     order: { type: Number, required: true, default: 0 },
     contentType: {
       type: String,
-      enum: ['text', 'video', 'pdf', 'link', 'other'],
+      enum: ['pdf', 'ppt', 'pptx', 'docx', 'image', 'zip', 'video', 'link', 'text', 'other'],
       default: 'text',
     },
     durationMinutes: { type: Number, min: 0, default: null },
     isFreePreview: { type: Boolean, default: false },
     contentSummary: { type: String, maxlength: 2000 },
+    contentUrl: { type: String, default: null, maxlength: 2000 },
+    fileKey: { type: String, default: null, maxlength: 500 },
+    fileName: { type: String, default: null, maxlength: 255 },
+    mimeType: { type: String, default: null, maxlength: 120 },
+    fileSize: { type: Number, min: 0, default: null },
+    textBody: { type: String, default: null, maxlength: 100000 },
+    videoProvider: {
+      type: String,
+      enum: ['url', 'youtube', 'vimeo', null],
+      default: null,
+    },
+    videoUrl: { type: String, default: null, maxlength: 2000 },
+    durationSeconds: { type: Number, min: 0, default: null },
+    captionsUrl: { type: String, default: null, maxlength: 2000 },
+    transcript: { type: String, default: null, maxlength: 500000 },
+    allowDownload: { type: Boolean, default: false },
     ...auditFields,
   },
   { timestamps: true }

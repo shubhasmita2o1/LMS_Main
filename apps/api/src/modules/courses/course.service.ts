@@ -102,6 +102,18 @@ function mapLesson(d: any) {
     durationMinutes: d.durationMinutes ?? null,
     isFreePreview: Boolean(d.isFreePreview),
     contentSummary: d.contentSummary,
+    contentUrl: d.contentUrl ?? null,
+    fileKey: d.fileKey ?? null,
+    fileName: d.fileName ?? null,
+    mimeType: d.mimeType ?? null,
+    fileSize: d.fileSize ?? null,
+    textBody: d.textBody ?? null,
+    videoProvider: d.videoProvider ?? null,
+    videoUrl: d.videoUrl ?? null,
+    durationSeconds: d.durationSeconds ?? null,
+    captionsUrl: d.captionsUrl ?? null,
+    transcript: d.transcript ?? null,
+    allowDownload: Boolean(d.allowDownload),
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
   };
@@ -487,6 +499,18 @@ export async function createLesson(
     durationMinutes: body.durationMinutes ?? null,
     isFreePreview: body.isFreePreview ?? false,
     contentSummary: body.contentSummary,
+    contentUrl: body.contentUrl ?? null,
+    fileKey: body.fileKey ?? null,
+    fileName: body.fileName ?? null,
+    mimeType: body.mimeType ?? null,
+    fileSize: body.fileSize ?? null,
+    textBody: body.textBody ?? null,
+    videoProvider: body.videoProvider ?? null,
+    videoUrl: body.videoUrl ?? null,
+    durationSeconds: body.durationSeconds ?? null,
+    captionsUrl: body.captionsUrl ?? null,
+    transcript: body.transcript ?? null,
+    allowDownload: body.allowDownload ?? false,
     createdBy: userId ? tid(userId) : null,
     updatedBy: userId ? tid(userId) : null,
   });
@@ -509,6 +533,18 @@ export async function updateLesson(
   if (body.durationMinutes !== undefined) doc.durationMinutes = body.durationMinutes;
   if (body.isFreePreview !== undefined) doc.isFreePreview = body.isFreePreview;
   if (body.contentSummary !== undefined) doc.contentSummary = body.contentSummary;
+  if (body.contentUrl !== undefined) doc.contentUrl = body.contentUrl;
+  if (body.fileKey !== undefined) doc.fileKey = body.fileKey;
+  if (body.fileName !== undefined) doc.fileName = body.fileName;
+  if (body.mimeType !== undefined) doc.mimeType = body.mimeType;
+  if (body.fileSize !== undefined) doc.fileSize = body.fileSize;
+  if (body.textBody !== undefined) doc.textBody = body.textBody;
+  if (body.videoProvider !== undefined) doc.videoProvider = body.videoProvider;
+  if (body.videoUrl !== undefined) doc.videoUrl = body.videoUrl;
+  if (body.durationSeconds !== undefined) doc.durationSeconds = body.durationSeconds;
+  if (body.captionsUrl !== undefined) doc.captionsUrl = body.captionsUrl;
+  if (body.transcript !== undefined) doc.transcript = body.transcript;
+  if (body.allowDownload !== undefined) doc.allowDownload = body.allowDownload;
   if (userId) doc.updatedBy = tid(userId);
 
   await doc.save();

@@ -118,6 +118,11 @@ export function DashboardPage() {
                 </Link>
               </li>
               <li>
+                <Link to="/learn" className="text-primary-600 hover:underline font-medium">
+                  My Learning
+                </Link>
+              </li>
+              <li>
                 <Link to="/curriculum" className="text-primary-600 hover:underline font-medium">
                   Curriculum
                 </Link>

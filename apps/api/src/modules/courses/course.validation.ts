@@ -14,7 +14,18 @@ const courseTypeEnum = z.enum([
 ]);
 const courseStatusEnum = z.enum(['draft', 'active', 'archived', 'inactive']);
 const prereqTypeEnum = z.enum(['required', 'recommended']);
-const contentTypeEnum = z.enum(['text', 'video', 'pdf', 'link', 'other']);
+const contentTypeEnum = z.enum([
+  'pdf',
+  'ppt',
+  'pptx',
+  'docx',
+  'image',
+  'zip',
+  'video',
+  'link',
+  'text',
+  'other',
+]);
 const offeringStatusEnum = z.enum(['planned', 'active', 'completed', 'cancelled']);
 const enrollmentStatusEnum = z.enum([
   'enrolled',
@@ -99,6 +110,18 @@ export const lessonCreateSchema = z.object({
   durationMinutes: z.number().min(0).max(1000).optional().nullable(),
   isFreePreview: z.boolean().optional(),
   contentSummary: z.string().max(2000).optional(),
+  contentUrl: z.string().max(2000).optional().nullable(),
+  fileKey: z.string().max(500).optional().nullable(),
+  fileName: z.string().max(255).optional().nullable(),
+  mimeType: z.string().max(120).optional().nullable(),
+  fileSize: z.number().min(0).optional().nullable(),
+  textBody: z.string().max(100000).optional().nullable(),
+  videoProvider: z.enum(['url', 'youtube', 'vimeo']).optional().nullable(),
+  videoUrl: z.string().max(2000).optional().nullable(),
+  durationSeconds: z.number().min(0).optional().nullable(),
+  captionsUrl: z.string().max(2000).optional().nullable(),
+  transcript: z.string().max(500000).optional().nullable(),
+  allowDownload: z.boolean().optional(),
 });
 
 export const lessonUpdateSchema = lessonCreateSchema.partial();

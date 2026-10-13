@@ -15,7 +15,9 @@ import { academicRouter } from './modules/academic/academic.routes';
 import { studentRouter } from './modules/students/student.routes';
 import { facultyRouter } from './modules/faculty/faculty.routes';
 import { courseRouter } from './modules/courses/course.routes';
+import { learnRouter } from './modules/learn/learn.routes';
 import { env } from './config/env';
+import path from 'path';
 
 export function createApp() {
   const app = express();
@@ -34,7 +36,7 @@ export function createApp() {
 
   // Stripe webhooks need raw body for signature verification in production.
   // For skeleton we accept JSON; mount raw parser selectively if needed later.
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '25mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
@@ -49,11 +51,14 @@ export function createApp() {
     res.json({
       success: true,
       message: 'University LMS API v1',
-      version: '0.7.0',
-      phase: 7,
+      version: '0.8.0',
+      phase: 8,
       docs: '/api/v1 (OpenAPI coming in later phases)',
     });
   });
+
+  // Local uploads static serve (dev)
+  app.use('/uploads', express.static(path.resolve(env.STORAGE_LOCAL_PATH || './uploads')));
 
   // Phase 2 modules
   app.use('/api/v1/auth', authRouter);
@@ -76,6 +81,9 @@ export function createApp() {
 
   // Phase 7 — Curriculum & Course Management
   app.use('/api/v1/courses', courseRouter);
+
+  // Phase 8 — Core LMS / Theory Learning
+  app.use('/api/v1/learn', learnRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

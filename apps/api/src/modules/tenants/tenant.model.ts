@@ -120,7 +120,8 @@ const TenantSchema = new Schema<ITenant>(
       type: String,
       default: null,
       lowercase: true,
-      trim: true
+      trim: true,
+      sparse: true,
     },
     settings: {
       type: Schema.Types.Mixed,

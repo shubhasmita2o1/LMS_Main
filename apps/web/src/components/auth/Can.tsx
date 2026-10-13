@@ -1,37 +1,17 @@
 import type { ReactNode } from 'react';
-import { usePermission } from '../../hooks/usePermission';
 import type { ResourceType, PermissionAction } from '@university-lms/shared';
+import { usePermission } from '../../hooks/usePermission';
 
 interface CanProps {
   resource: ResourceType;
   action: PermissionAction;
-  scope?: string;
-  fallback?: ReactNode;
   children: ReactNode;
+  fallback?: ReactNode;
 }
 
-/**
- * Declarative component for permission-aware UI rendering.
- *
- * Example:
- *   <Can resource="user" action="create">
- *     <Button>Create User</Button>
- *   </Can>
- */
-export function Can({
-  resource,
-  action,
-  scope,
-  fallback = null,
-  children,
-}: CanProps) {
-  const isAllowed = usePermission(resource, action, scope);
-
-  if (!isAllowed) {
-    return <>{fallback}</>;
-  }
-
+/** Renders children only if current user has the given permission */
+export function Can({ resource, action, children, fallback = null }: CanProps) {
+  const { can } = usePermission();
+  if (!can(resource, action)) return <>{fallback}</>;
   return <>{children}</>;
 }
-
-export default Can;

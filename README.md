@@ -3,7 +3,7 @@
 **Multi-tenant Learning Management & Academic Platform**  
 MERN Stack • Modular Monolith → Microservices • MongoDB Atlas
 
-Document Version: Starter 0.1.0 • Aligned with Roadmap 2.0 (Phase 0 + Phase 1 complete)
+Document Version: 0.3.0 • Aligned with Roadmap 2.0 (**Phase 0–3**)
 
 ---
 
@@ -12,53 +12,78 @@ Document Version: Starter 0.1.0 • Aligned with Roadmap 2.0 (Phase 0 + Phase 1 
 | Phase | Status | Notes |
 |-------|--------|-------|
 | **Phase 0** — Product, Requirements & Architecture | ✅ Complete | See `docs/phase-0/` |
-| **Phase 1** — Project Foundation & DevOps | ✅ Complete | This repository |
-| Phase 2+ | 🔒 Not started | Awaiting review |
+| **Phase 1** — Project Foundation & DevOps | ✅ Complete | Monorepo, Docker, CI skeleton |
+| **Phase 2** — Authentication, Security, RBAC & Tenant Core | ✅ Complete | Auth, JWT, RBAC |
+| **Phase 3** — Platform, Tenant Management & Billing | ✅ Complete | This release |
+| Phase 4+ | 🔒 Not started | University hierarchy, courses, etc. |
 
 ---
 
-## Project Structure
+
+## Phase 3 Highlights
+
+- **Tenant model** with branding, plan tier, limits, feature flags, billing customer/subscription IDs, custom domain
+- **Plan catalog** seeded (Free / Starter / Professional / Enterprise)
+- **Super Admin APIs**: list/create/update/suspend/activate tenants + platform stats
+- **Tenant APIs**: onboard, me, usage
+- **Feature flags & plan limits** enforceable via middleware helpers
+- **Billing skeleton**: checkout, portal, Stripe + Razorpay webhooks (idempotent)
+- **Frontend**: Admin tenant management, Tenant Settings, Billing plans, `useFeatureFlag` + `<Feature>`
+
+See `docs/phase-3/00-phase3-summary.md` for full details.
+
+---
+## Phase 2 Highlights
+
+- **User model** with `tenantId` (null for Super Admin), refresh tokens, login history, lockout
+- **Role model** (system + tenant-scoped) ready for Phase 3 seeds
+- **Auth API**: register, login, refresh, logout, logout-all, me, forgot/reset password
+- **JWT**: short-lived access (15m) + long-lived refresh (7d, hashed in DB, rotatable)
+- **Middlewares**: `authenticate`, `resolveTenant`, `requirePermission` / `requireRoles`
+- **Tenant isolation**: enforced on user queries; Super Admin operates with `tenantId = null`
+- **Rate limiting** on auth endpoints
+- **Frontend**: Login / Register / Dashboard / Users, Zustand auth store, Axios interceptors with auto-refresh, `ProtectedRoute`, `Can` component
+
+---
+
+## Project Structure (Phase 2)
 
 ```
 university-lms/
 ├── apps/
-│   ├── api/                 # Express + TypeScript modular monolith
+│   ├── api/
 │   │   └── src/
-│   │       ├── config/      # env, database
-│   │       ├── middleware/  # error, notFound, rateLimit
-│   │       ├── modules/     # feature modules (health only for now)
-│   │       ├── utils/       # logger
+│   │       ├── config/
+│   │       ├── middleware/     # auth, tenant, rbac, rateLimit, error, notFound
+│   │       ├── modules/
+│   │       │   ├── auth/       # routes, controller, service, validation
+│   │       │   ├── users/      # model, routes, controller
+│   │       │   ├── roles/      # model
+│   │       │   └── health/
+│   │       ├── types/          # express.d.ts
+│   │       ├── utils/          # jwt, password, logger
 │   │       ├── app.ts
 │   │       └── server.ts
-│   └── web/                 # React + Vite + TypeScript + Tailwind
-├── packages/
-│   └── shared/              # Shared types, constants, pure utils
+│   └── web/
+│       └── src/
+│           ├── components/auth/  # Can, ProtectedRoute
+│           ├── features/
+│           ├── hooks/            # usePermission
+│           ├── lib/              # api (interceptors), queryClient
+│           ├── pages/            # Login, Register, Dashboard, Users
+│           ├── stores/           # authStore (Zustand + persist)
+│           └── App.tsx
+├── packages/shared/              # types, constants, utils
 ├── docker/
-│   └── docker-compose.yml   # Local MongoDB + Redis
 ├── docs/
-│   ├── architecture/        # Architecture blueprint
-│   ├── phase-0/             # Product scope, module map, hierarchy, RBAC, NFRs
-│   └── conventions/         # Engineering conventions
-├── .github/workflows/       # CI (typecheck + build)
-├── .env.example
-├── package.json             # npm workspaces root
-└── README.md
+└── ...
 ```
-
----
-
-## Prerequisites
-
-- Node.js ≥ 20
-- npm ≥ 10
-- Docker (optional, for local MongoDB + Redis)
-- MongoDB (local via Docker or Atlas)
 
 ---
 
 ## Quick Start
 
-### 1. Install dependencies
+### 1. Install
 
 ```bash
 cd university-lms
@@ -69,36 +94,80 @@ npm install
 
 ```bash
 cp .env.example .env
-# Edit .env — at minimum set MONGODB_URI and strong JWT secrets
+# Set MONGODB_URI and strong JWT secrets (≥32 chars each)
 ```
 
-### 3. Start local infrastructure (recommended)
+### 3. Infrastructure
 
 ```bash
-cd docker
-docker compose up -d
-cd ..
+cd docker && docker compose up -d && cd ..
 ```
 
-### 4. Build shared package
+### 4. Build shared + run
 
 ```bash
 npm run build:shared
-```
 
-### 5. Run development servers
-
-```bash
-# Terminal 1 — API (port 4000)
+# Terminal 1
 npm run dev:api
 
-# Terminal 2 — Web (port 5173)
+# Terminal 2
 npm run dev:web
 ```
 
 - Frontend: http://localhost:5173  
-- API Health: http://localhost:4000/health  
-- API Base: http://localhost:4000/api/v1  
+- API: http://localhost:4000  
+- Health: http://localhost:4000/health  
+
+### 5. First user (Super Admin)
+
+1. Open http://localhost:5173/register  
+2. Register any email/password — **first user becomes `super_admin`** with `tenantId = null`  
+3. Subsequent registrations create tenant-scoped users (default role `tenant_admin` gets a generated tenant ObjectId until Phase 3 Tenant model exists)
+
+---
+
+## Auth API
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/v1/auth/register` | Public (controlled) | Register; first user → super_admin |
+| POST | `/api/v1/auth/login` | Public | Login → access + refresh tokens |
+| POST | `/api/v1/auth/refresh` | Refresh token | Rotate tokens |
+| POST | `/api/v1/auth/logout` | Bearer | Revoke one refresh token |
+| POST | `/api/v1/auth/logout-all` | Bearer | Revoke all sessions |
+| GET | `/api/v1/auth/me` | Bearer | Current user |
+| POST | `/api/v1/auth/forgot-password` | Public | Request reset (token logged in dev) |
+| POST | `/api/v1/auth/reset-password` | Public | Reset with token |
+| GET | `/api/v1/users` | Bearer + `user:read` | List users (tenant-scoped) |
+| GET | `/api/v1/users/:id` | Bearer + `user:read` | Get user |
+
+### Example login
+
+```bash
+curl -s -X POST http://localhost:4000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@example.com","password":"Password1"}' | jq
+```
+
+### Tenant header
+
+Authenticated tenant users automatically send `x-tenant-id`. Super Admin may pass `x-tenant-id` to scope queries.
+
+---
+
+## Security checklist (Phase 2)
+
+- [x] Passwords hashed with bcrypt (cost 12)
+- [x] Access token 15m; refresh 7d stored hashed in DB, revocable
+- [x] Tenant isolation on user list/get
+- [x] Super Admin `tenantId = null`
+- [x] Minimal JWT payload (`sub`, `tenantId`, `roles`, `type`)
+- [x] Rate limits on auth routes
+- [x] Generic login errors (no email enumeration)
+- [x] CORS + Helmet
+- [x] Login history + basic account lockout after failed attempts
+- [x] Password reset architecture (email mock in dev)
 
 ---
 
@@ -106,77 +175,14 @@ npm run dev:web
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev:api` | Start API in watch mode |
-| `npm run dev:web` | Start frontend Vite dev server |
-| `npm run build` | Build shared + all workspaces |
-| `npm run build:shared` | Build shared package only |
+| `npm run dev:api` | API watch mode (port 4000) |
+| `npm run dev:web` | Vite dev server (port 5173) |
+| `npm run build:shared` | Compile shared package |
 | `npm run typecheck` | Type-check all workspaces |
-| `npm run format` | Format with Prettier |
-| `npm run format:check` | Check formatting |
+| `npm run build` | Build all |
 
 ---
 
-## Architecture Notes
+## Next: Phase 3
 
-- **Multi-tenancy**: Shared database + `tenantId` on every document + strict middleware (Phase 2).
-- **Modular Monolith**: Feature-based modules under `apps/api/src/modules/`.
-- **Shared package**: Types and constants live in `@university-lms/shared`.
-- **Lab execution** (future): completely isolated from the main API process.
-- **SaaS-first**: Super-Admin control plane, billing, feature flags, white-label planned from Phase 2–3.
-
-See:
-
-- `docs/architecture/01-architecture-blueprint.md`
-- `docs/phase-0/` for product scope, module map, hierarchy, role matrix, NFRs
-- `docs/conventions/01-engineering-conventions.md`
-
----
-
-## Recommended Build Order (from Roadmap)
-
-```
-Foundation → Security + Tenant Core → SaaS Billing → University Structure
-→ SIS → Faculty → Curriculum → Core LMS → Assessment & Gradebook
-→ Practical Labs → Examination → Communication → University Operations
-→ Finance → Analytics → AI → Integrations → Compliance → Microservices
-```
-
-**Important Rules**
-
-1. Testing, security, DevOps, observability and data governance run continuously.
-2. Practical/Lab execution must be isolated from the core API.
-3. Multi-tenancy and billing must be production-ready before first external university is onboarded.
-4. Aim for a sellable MVP after Phase 10–11 (≈ 4.5–5.5 months with a focused team).
-
----
-
-## Phase 1 Deliverables Checklist
-
-- [x] Git-ready monorepo (npm workspaces)
-- [x] Backend Express + TypeScript + MongoDB + Redis foundation
-- [x] Frontend React/Vite + TypeScript + Tailwind + design tokens
-- [x] Environment configuration & secrets via Zod-validated env
-- [x] Docker Compose for local MongoDB + Redis
-- [x] CI pipeline (typecheck + build)
-- [x] Logging (structured JSON logger skeleton)
-- [x] Health checks
-- [x] Rate-limit skeleton
-- [x] Error handling + standard API response shape
-- [x] Shared types for multi-tenancy, roles, permissions
-- [x] Prettier + EditorConfig
-- [x] Phase 0 documentation (scope, modules, hierarchy, RBAC, NFRs, architecture)
-- [x] Engineering conventions documented
-
-**Intentionally deferred to Phase 2+**
-
-- User / Role / Permission models & auth
-- Tenant resolution middleware
-- Super-Admin & tenant onboarding
-- Business modules (SIS, LMS, Assessment, etc.)
-- OpenAPI full generation
-- Full ESLint ruleset & unit tests
-- BullMQ workers
-
----
-
-Ready for review. Do not proceed beyond Phase 1 until approved.
+Super-Admin control plane, Tenant onboarding, branding, feature flags, Stripe/Razorpay subscription foundation, custom domain architecture.

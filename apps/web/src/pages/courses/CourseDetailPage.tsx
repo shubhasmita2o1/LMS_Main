@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type {
@@ -11,17 +11,22 @@ import type {
   CourseEnrollmentPublic,
 } from '@university-lms/shared';
 import { Can } from '../../components/auth/Can';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthStore } from '../../stores/authStore';
 
 type Tab = 'overview' | 'structure' | 'offerings' | 'enrollments';
 
 export function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { logout } = useAuth();
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const navigate = useNavigate();
+  const logout = () => { clearAuth(); navigate('/login'); };
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('overview');
   const [moduleTitle, setModuleTitle] = useState('');
   const [lessonTitle, setLessonTitle] = useState('');
+  const [lessonContentType, setLessonContentType] = useState('text');
+  const [lessonVideoUrl, setLessonVideoUrl] = useState('');
+  const [lessonTextBody, setLessonTextBody] = useState('');
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   const [enrollStudentId, setEnrollStudentId] = useState('');
   const [enrollOfferingId, setEnrollOfferingId] = useState('');
@@ -93,13 +98,31 @@ export function CourseDetailPage() {
   const addLesson = useMutation({
     mutationFn: async () => {
       if (!activeModuleId) return;
-      const { data } = await api.post(`/courses/modules/${activeModuleId}/lessons`, {
+      const payload: Record<string, unknown> = {
         title: lessonTitle,
-      });
+        contentType: lessonContentType,
+      };
+      if (lessonContentType === 'video' && lessonVideoUrl.trim()) {
+        payload.videoUrl = lessonVideoUrl.trim();
+        payload.videoProvider = lessonVideoUrl.includes('youtu')
+          ? 'youtube'
+          : lessonVideoUrl.includes('vimeo')
+            ? 'vimeo'
+            : 'url';
+      }
+      if (lessonContentType === 'text' && lessonTextBody.trim()) {
+        payload.textBody = lessonTextBody.trim();
+      }
+      if (lessonContentType === 'link' && lessonVideoUrl.trim()) {
+        payload.contentUrl = lessonVideoUrl.trim();
+      }
+      const { data } = await api.post(`/courses/modules/${activeModuleId}/lessons`, payload);
       return data.data;
     },
     onSuccess: () => {
       setLessonTitle('');
+      setLessonVideoUrl('');
+      setLessonTextBody('');
       queryClient.invalidateQueries({
         queryKey: ['courses', 'modules', activeModuleId, 'lessons'],
       });
@@ -338,20 +361,49 @@ export function CourseDetailPage() {
                         </div>
                       ))}
                       <Can resource="course" action="update">
-                        <div className="flex gap-2 pt-2">
-                          <input
-                            value={lessonTitle}
-                            onChange={(e) => setLessonTitle(e.target.value)}
-                            placeholder="New lesson title"
-                            className="flex-1 px-3 py-1.5 rounded border border-slate-300 text-sm"
-                          />
-                          <button
-                            onClick={() => lessonTitle.trim() && addLesson.mutate()}
-                            disabled={addLesson.isPending || !lessonTitle.trim()}
-                            className="px-3 py-1.5 rounded bg-slate-800 text-white text-xs disabled:opacity-50"
-                          >
-                            Add lesson
-                          </button>
+                        <div className="space-y-2 pt-2">
+                          <div className="flex gap-2 flex-wrap">
+                            <input
+                              value={lessonTitle}
+                              onChange={(e) => setLessonTitle(e.target.value)}
+                              placeholder="New lesson title"
+                              className="flex-1 min-w-[140px] px-3 py-1.5 rounded border border-slate-300 text-sm"
+                            />
+                            <select
+                              value={lessonContentType}
+                              onChange={(e) => setLessonContentType(e.target.value)}
+                              className="px-2 py-1.5 rounded border border-slate-300 text-sm"
+                            >
+                              <option value="text">Text</option>
+                              <option value="video">Video</option>
+                              <option value="pdf">PDF</option>
+                              <option value="link">Link</option>
+                            </select>
+                            <button
+                              onClick={() => lessonTitle.trim() && addLesson.mutate()}
+                              disabled={addLesson.isPending || !lessonTitle.trim()}
+                              className="px-3 py-1.5 rounded bg-slate-800 text-white text-xs disabled:opacity-50"
+                            >
+                              Add lesson
+                            </button>
+                          </div>
+                          {(lessonContentType === 'video' || lessonContentType === 'link') && (
+                            <input
+                              value={lessonVideoUrl}
+                              onChange={(e) => setLessonVideoUrl(e.target.value)}
+                              placeholder={lessonContentType === 'video' ? 'Video URL (YouTube / Vimeo / MP4)' : 'External URL'}
+                              className="w-full px-3 py-1.5 rounded border border-slate-300 text-sm"
+                            />
+                          )}
+                          {lessonContentType === 'text' && (
+                            <textarea
+                              value={lessonTextBody}
+                              onChange={(e) => setLessonTextBody(e.target.value)}
+                              placeholder="Lesson text content (optional)"
+                              rows={2}
+                              className="w-full px-3 py-1.5 rounded border border-slate-300 text-sm"
+                            />
+                          )}
                         </div>
                       </Can>
                     </div>

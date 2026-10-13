@@ -1,349 +1,208 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AppLayout } from '../../components/layout/AppLayout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
-import { Alert } from '../../components/ui/Alert';
-import { createTenant, type CreateTenantInput } from '../../lib/adminApi';
-import { slugify } from '@university-lms/shared';
-import {
-  Building,
-  ArrowLeft,
-  User,
-  Mail,
-  Lock,
-  Palette,
-  CheckCircle2,
-} from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import api from '../../lib/api';
+import type { ApiResponse, TenantPublic } from '@university-lms/shared';
 
-const createTenantSchema = z.object({
-  name: z.string().min(2, 'Institution name must be at least 2 characters').max(200),
+const schema = z.object({
+  name: z.string().min(2, 'Name is required'),
   slug: z
     .string()
-    .min(2, 'Slug must be at least 2 characters')
-    .max(100)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens'),
+    .min(2)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Lowercase letters, numbers, hyphens only'),
   planTier: z.enum(['free', 'starter', 'professional', 'enterprise']),
-  trialDays: z.coerce.number().int().min(0).max(90),
-  // Optional Owner
-  ownerFirstName: z.string().max(100).optional(),
-  ownerLastName: z.string().max(100).optional(),
-  ownerEmail: z.string().email('Valid email required').optional().or(z.literal('')),
-  ownerPassword: z.string().min(8, 'Password must be at least 8 characters').optional().or(z.literal('')),
-  // Optional Branding
-  primaryColor: z
-    .string()
-    .regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Invalid hex code (e.g. #2563eb)')
-    .optional()
-    .or(z.literal('')),
-  secondaryColor: z
-    .string()
-    .regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Invalid hex code')
-    .optional()
-    .or(z.literal('')),
-  logoUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  customDomain: z.string().max(253).optional().or(z.literal('')),
+  ownerEmail: z.string().email().optional().or(z.literal('')),
+  ownerFirstName: z.string().optional(),
+  ownerLastName: z.string().optional(),
+  ownerPassword: z.string().optional(),
+  trialDays: z.coerce.number().int().min(0).max(90).optional(),
 });
 
-type CreateTenantFormData = z.infer<typeof createTenantSchema>;
+type FormValues = z.infer<typeof schema>;
 
 export function CreateTenantPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
+  const [serverError, setServerError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
-  } = useForm<CreateTenantFormData>({
-    resolver: zodResolver(createTenantSchema),
-    defaultValues: {
-      name: '',
-      slug: '',
-      planTier: 'free',
-      trialDays: 14,
-      ownerFirstName: '',
-      ownerLastName: '',
-      ownerEmail: '',
-      ownerPassword: '',
-      primaryColor: '#2563eb',
-      secondaryColor: '#1e40af',
-      logoUrl: '',
-      customDomain: '',
-    },
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { planTier: 'free', trialDays: 14 },
   });
 
-  const nameValue = watch('name');
+  const name = watch('name');
 
-  const createMutation = useMutation({
-    mutationFn: (input: CreateTenantInput) => createTenant(input),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['adminTenants'] });
-      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-      navigate(`/admin/tenants/${data.id}`);
-    },
-    onError: (err: Error) => {
-      setErrorMessage(err.message || 'Failed to create tenant institution.');
-    },
-  });
-
-  const onSubmit = (data: CreateTenantFormData) => {
-    setErrorMessage(null);
-
-    const payload: CreateTenantInput = {
-      name: data.name.trim(),
-      slug: data.slug.trim(),
-      planTier: data.planTier,
-      trialDays: Number(data.trialDays),
-      branding: {
-        name: data.name.trim(),
-        primaryColor: data.primaryColor || undefined,
-        secondaryColor: data.secondaryColor || undefined,
-        logoUrl: data.logoUrl || undefined,
-        customDomain: data.customDomain?.trim() || undefined,
-      },
-    };
-
-    if (data.ownerEmail && data.ownerPassword) {
-      payload.ownerEmail = data.ownerEmail.trim().toLowerCase();
-      payload.ownerPassword = data.ownerPassword;
-      payload.ownerFirstName = data.ownerFirstName?.trim() || 'Admin';
-      payload.ownerLastName = data.ownerLastName?.trim() || 'User';
+  const onNameBlur = () => {
+    if (name) {
+      const slug = name
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w-]+/g, '')
+        .replace(/--+/g, '-');
+      setValue('slug', slug, { shouldValidate: true });
     }
-
-    createMutation.mutate(payload);
   };
 
-  const handleNameBlur = () => {
-    const currentSlug = watch('slug');
-    if (!currentSlug && nameValue) {
-      setValue('slug', slugify(nameValue), { shouldValidate: true });
+  const onSubmit = async (values: FormValues) => {
+    setServerError(null);
+    try {
+      const payload: Record<string, unknown> = {
+        name: values.name,
+        slug: values.slug,
+        planTier: values.planTier,
+        trialDays: values.trialDays,
+      };
+      if (values.ownerEmail) {
+        payload.ownerEmail = values.ownerEmail;
+        payload.ownerFirstName = values.ownerFirstName || 'Tenant';
+        payload.ownerLastName = values.ownerLastName || 'Admin';
+        payload.ownerPassword = values.ownerPassword || 'ChangeMe1!';
+      }
+      const { data } = await api.post<ApiResponse<TenantPublic>>('/admin/tenants', payload);
+      if (data.success && data.data) {
+        navigate(`/admin/tenants/${data.data.id}`);
+      } else {
+        setServerError(data.error?.message || 'Failed to create tenant');
+      }
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: ApiResponse } };
+      setServerError(ax.response?.data?.error?.message || 'Request failed');
     }
   };
 
   return (
-    <AppLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between pb-2">
-          <Link
-            to="/admin/tenants"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to All Tenants</span>
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200">
+        <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/admin/tenants" className="text-sm text-slate-600 hover:text-slate-900">
+            ← Tenants
           </Link>
-          <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
-            Super Admin Action
-          </span>
+          <span className="font-semibold text-slate-900">Create Tenant</span>
+          <span />
         </div>
+      </header>
 
-        {/* Title */}
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Building className="w-7 h-7 text-primary-600" />
-            <span>Provision New University Tenant</span>
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Create an isolated multi-tenant academic instance, assign subscription limits, and bootstrap its initial institution administrator.
-          </p>
-        </div>
+      <main className="max-w-2xl mx-auto px-6 py-8">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white border border-slate-200 rounded-xl p-6 space-y-5"
+        >
+          {serverError && (
+            <div className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              {serverError}
+            </div>
+          )}
 
-        {errorMessage && (
-          <Alert variant="error" title="Creation Failed" onClose={() => setErrorMessage(null)}>
-            {errorMessage}
-          </Alert>
-        )}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Organization name</label>
+            <input
+              {...register('name')}
+              onBlur={onNameBlur}
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+              placeholder="Acme University"
+            />
+            {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name.message}</p>}
+          </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-          {/* Section 1: Core Institution Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Building className="w-5 h-5 text-primary-600" />
-                <span>Institution Identity &amp; Routing</span>
-              </CardTitle>
-              <CardDescription>
-                Essential identifier information for multi-tenant database partitioning
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Institution / University Name"
-                  placeholder="e.g. Stanford University"
-                  required
-                  error={errors.name?.message}
-                  {...register('name', { onBlur: handleNameBlur })}
-                />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Slug</label>
+            <input
+              {...register('slug')}
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary-500 outline-none"
+              placeholder="acme-university"
+            />
+            {errors.slug && <p className="text-xs text-red-600 mt-1">{errors.slug.message}</p>}
+          </div>
 
-                <div>
-                  <Input
-                    label="Tenant Slug (Subdomain identifier)"
-                    placeholder="e.g. stanford"
-                    required
-                    helperText="Used for headers, subdomains, and URL paths"
-                    error={errors.slug?.message}
-                    {...register('slug')}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <Select
-                  label="Subscription Plan Tier"
-                  options={[
-                    { value: 'free', label: 'Free (Evaluation & Sandbox)' },
-                    { value: 'starter', label: 'Starter (Small Colleges, 500 Students)' },
-                    { value: 'professional', label: 'Professional (Full Depts, 5,000 Students)' },
-                    { value: 'enterprise', label: 'Enterprise (Multi-Campus, 100K+ Students)' },
-                  ]}
-                  error={errors.planTier?.message}
-                  {...register('planTier')}
-                />
-
-                <Input
-                  label="Initial Trial Period (Days)"
-                  type="number"
-                  placeholder="14"
-                  helperText="Days before the tenant moves from trialing to active/past_due"
-                  error={errors.trialDays?.message}
-                  {...register('trialDays')}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Section 2: Initial Institution Administrator (Optional) */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <User className="w-5 h-5 text-indigo-600" />
-                <span>Primary Tenant Administrator Account (Optional)</span>
-              </CardTitle>
-              <CardDescription>
-                Optionally provision the institution dean or primary administrator account immediately
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Admin First Name"
-                  placeholder="Jane"
-                  leftIcon={<User className="w-4 h-4" />}
-                  error={errors.ownerFirstName?.message}
-                  {...register('ownerFirstName')}
-                />
-
-                <Input
-                  label="Admin Last Name"
-                  placeholder="Doe"
-                  leftIcon={<User className="w-4 h-4" />}
-                  error={errors.ownerLastName?.message}
-                  {...register('ownerLastName')}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Admin Email Address"
-                  type="email"
-                  placeholder="dean.doe@stanford.edu"
-                  leftIcon={<Mail className="w-4 h-4" />}
-                  error={errors.ownerEmail?.message}
-                  {...register('ownerEmail')}
-                />
-
-                <Input
-                  label="Initial Password"
-                  type="password"
-                  placeholder="Min. 8 characters"
-                  leftIcon={<Lock className="w-4 h-4" />}
-                  error={errors.ownerPassword?.message}
-                  {...register('ownerPassword')}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Section 3: Branding & Custom Domain (Optional) */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Palette className="w-5 h-5 text-emerald-600" />
-                <span>Institutional Branding &amp; Custom Domain</span>
-              </CardTitle>
-              <CardDescription>
-                Customize colors, campus logos, and domain routing for this instance
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Primary Brand Color (Hex)"
-                  placeholder="#2563eb"
-                  helperText="Primary buttons, navigation highlights"
-                  error={errors.primaryColor?.message}
-                  {...register('primaryColor')}
-                />
-
-                <Input
-                  label="Secondary Brand Color (Hex)"
-                  placeholder="#1e40af"
-                  error={errors.secondaryColor?.message}
-                  {...register('secondaryColor')}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Logo URL"
-                  placeholder="https://example.com/logo.png"
-                  helperText="Public image link for campus header"
-                  error={errors.logoUrl?.message}
-                  {...register('logoUrl')}
-                />
-
-                <Input
-                  label="Custom Domain (Optional)"
-                  placeholder="lms.stanford.edu"
-                  helperText="Requires Professional or Enterprise tier"
-                  error={errors.customDomain?.message}
-                  {...register('customDomain')}
-                />
-              </div>
-            </CardContent>
-
-            <CardFooter className="justify-end gap-3">
-              <Link to="/admin/tenants">
-                <Button variant="outline" size="md">
-                  Cancel
-                </Button>
-              </Link>
-              <Button
-                type="submit"
-                variant="primary"
-                size="md"
-                isLoading={createMutation.isPending}
-                leftIcon={<CheckCircle2 className="w-4 h-4" />}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Plan</label>
+              <select
+                {...register('planTier')}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
               >
-                Provision Tenant Instance
-              </Button>
-            </CardFooter>
-          </Card>
+                <option value="free">Free</option>
+                <option value="starter">Starter</option>
+                <option value="professional">Professional</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Trial days</label>
+              <input
+                type="number"
+                {...register('trialDays')}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <h2 className="text-sm font-semibold text-slate-800 mb-3">
+              Owner account (optional)
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Owner email</label>
+                <input
+                  type="email"
+                  {...register('ownerEmail')}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                  placeholder="admin@acme.edu"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">First name</label>
+                <input
+                  {...register('ownerFirstName')}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Last name</label>
+                <input
+                  {...register('ownerLastName')}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Temporary password
+                </label>
+                <input
+                  type="password"
+                  {...register('ownerPassword')}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                  placeholder="Min 8 chars, letter + number"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Link
+              to="/admin/tenants"
+              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg border border-slate-200"
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg disabled:opacity-60"
+            >
+              {isSubmitting ? 'Creating…' : 'Create tenant'}
+            </button>
+          </div>
         </form>
-      </div>
-    </AppLayout>
+      </main>
+    </div>
   );
 }
-
-export default CreateTenantPage;

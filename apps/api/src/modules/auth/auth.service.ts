@@ -97,7 +97,7 @@ export async function registerUser(
     if (!['tenant_admin', 'university_admin', 'faculty', 'student', 'staff'].includes(requestedRole)) {
       throw new AppError(400, 'Invalid role for registration', 'VALIDATION_ERROR');
     }
-        roles = [requestedRole];
+    roles = [requestedRole];
     if (input.tenantId) {
       if (!mongoose.Types.ObjectId.isValid(input.tenantId)) {
         throw new AppError(400, 'Invalid tenantId', 'VALIDATION_ERROR');
