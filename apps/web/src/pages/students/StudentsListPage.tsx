@@ -161,7 +161,7 @@ export function StudentsListPage() {
           <option value="">All batches</option>
           {(batches || []).map((b) => (
             <option key={b.id} value={b.id}>
-              {b.name || b.code || b.id}
+              {b.name || b.id}
             </option>
           ))}
         </select>
@@ -177,7 +177,7 @@ export function StudentsListPage() {
           <option value="">All sections</option>
           {(sections || []).map((s) => (
             <option key={s.id} value={s.id}>
-              {s.name || s.code || s.id}
+              {s.name || s.id}
             </option>
           ))}
         </select>
