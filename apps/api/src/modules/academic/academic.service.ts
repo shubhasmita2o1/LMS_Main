@@ -1069,7 +1069,7 @@ export async function getAcademicConfig(tenantId: string) {
       attendanceRules: DEFAULT_ATTENDANCE_RULES,
       promotionRules: DEFAULT_PROMOTION_RULES,
     });
-    doc = created.toObject() as typeof doc;
+    doc = created.toObject() as unknown as NonNullable<typeof doc>;
   }
   if (!doc) {
     throw new AppError(500, 'Failed to load academic config', 'CONFIG_ERROR');
