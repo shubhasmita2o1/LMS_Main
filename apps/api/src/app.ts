@@ -27,9 +27,29 @@ export function createApp() {
 
   // Security & basics
   app.use(helmet());
+  // CORS_ORIGIN: single origin or comma-separated list.
+  // Also allow this project's Vercel production + preview hosts.
+  const corsOrigins = env.CORS_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean);
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin(origin, callback) {
+        if (!origin) return callback(null, true);
+        if (corsOrigins.includes('*') || corsOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        try {
+          const host = new URL(origin).hostname;
+          if (
+            host === 'university-lms-web.vercel.app' ||
+            (host.endsWith('.vercel.app') && host.includes('university-lms-web'))
+          ) {
+            return callback(null, true);
+          }
+        } catch {
+          /* ignore */
+        }
+        return callback(null, false);
+      },
       credentials: true,
     })
   );
