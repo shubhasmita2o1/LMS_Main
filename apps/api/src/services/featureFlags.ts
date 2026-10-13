@@ -163,10 +163,18 @@ export async function getMetricUsage(
         },
       });
 
+    case 'courses': {
+      try {
+        const { countCourses } = await import('../modules/courses/course.service');
+        return countCourses(tenantId);
+      } catch {
+        return 0;
+      }
+    }
+
     case 'storageBytes':
     case 'apiCalls':
-    case 'courses':
-      // Placeholder until storage, API usage, and course modules exist.
+      // Placeholder until storage / API usage metering exists.
       return 0;
 
     default:

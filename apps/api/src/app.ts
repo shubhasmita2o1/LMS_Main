@@ -14,6 +14,7 @@ import { billingRouter, webhookRouter } from './modules/billing/billing.routes';
 import { academicRouter } from './modules/academic/academic.routes';
 import { studentRouter } from './modules/students/student.routes';
 import { facultyRouter } from './modules/faculty/faculty.routes';
+import { courseRouter } from './modules/courses/course.routes';
 import { env } from './config/env';
 
 export function createApp() {
@@ -24,35 +25,12 @@ export function createApp() {
 
   // Security & basics
   app.use(helmet());
-
-  // CORS configuration
-  const allowedOrigins = env.CORS_ORIGIN
-    .split(',')
-    .map((origin) => origin.trim().replace(/\/+$/, ''))
-    .filter(Boolean);
-
   app.use(
     cors({
-      origin(origin, callback) {
-        // Allow requests without an Origin header, such as server-to-server calls.
-        if (!origin) {
-          return callback(null, true);
-        }
-
-        const normalizedOrigin = origin.replace(/\/+$/, '');
-
-        if (allowedOrigins.includes(normalizedOrigin)) {
-          return callback(null, true);
-        }
-
-        return callback(
-          new Error(`CORS blocked origin: ${origin}`)
-        );
-      },
+      origin: env.CORS_ORIGIN,
       credentials: true,
     })
   );
-
 
   // Stripe webhooks need raw body for signature verification in production.
   // For skeleton we accept JSON; mount raw parser selectively if needed later.
@@ -71,8 +49,8 @@ export function createApp() {
     res.json({
       success: true,
       message: 'University LMS API v1',
-      version: '0.6.0',
-      phase: 6,
+      version: '0.7.0',
+      phase: 7,
       docs: '/api/v1 (OpenAPI coming in later phases)',
     });
   });
@@ -95,6 +73,9 @@ export function createApp() {
 
   // Phase 6 — Faculty Management
   app.use('/api/v1/faculty', facultyRouter);
+
+  // Phase 7 — Curriculum & Course Management
+  app.use('/api/v1/courses', courseRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

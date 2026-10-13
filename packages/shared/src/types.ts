@@ -1338,3 +1338,155 @@ export interface FacultyStats {
   byEmploymentType: Record<string, number>;
 
 }
+
+// ─── Phase 7: Curriculum & Course Management ────────────────────────────────
+
+export type CourseType =
+  | 'core'
+  | 'elective'
+  | 'lab'
+  | 'project'
+  | 'seminar'
+  | 'audit'
+  | 'other';
+
+export type CourseStatus = 'draft' | 'active' | 'archived' | 'inactive';
+
+export type PrerequisiteType = 'required' | 'recommended';
+
+export type LessonContentType = 'text' | 'video' | 'pdf' | 'link' | 'other';
+
+export type CourseEnrollmentStatus =
+  | 'enrolled'
+  | 'dropped'
+  | 'completed'
+  | 'failed'
+  | 'withdrawn';
+
+export type OfferingStatus = 'planned' | 'active' | 'completed' | 'cancelled';
+
+export interface CourseCredits {
+  theory: number;
+  practical: number;
+  total: number;
+}
+
+export interface CoursePrerequisite {
+  courseId: string;
+  type: PrerequisiteType;
+}
+
+export interface LearningOutcome {
+  code?: string;
+  description: string;
+  order?: number;
+}
+
+export interface CourseListItem {
+  id: string;
+  tenantId: string;
+  programId: string;
+  departmentId?: string | null;
+  code: string;
+  name: string;
+  shortName?: string;
+  courseType: CourseType;
+  credits: CourseCredits;
+  status: CourseStatus;
+  isElective: boolean;
+  isLab: boolean;
+  maxSeats?: number | null;
+  createdAt: Date | string;
+}
+
+export interface CoursePublic extends CourseListItem {
+  description?: string;
+  lectureHours?: number;
+  labHours?: number;
+  tutorialHours?: number;
+  prerequisites: CoursePrerequisite[];
+  corequisites: string[];
+  learningOutcomes: LearningOutcome[];
+  syllabusOutline?: string;
+  updatedAt: Date | string;
+  modulesCount?: number;
+  lessonsCount?: number;
+}
+
+export interface CourseModulePublic {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  title: string;
+  order: number;
+  description?: string;
+  status: 'draft' | 'published' | 'archived';
+  lessonsCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface CourseLessonPublic {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  moduleId: string;
+  chapterId?: string | null;
+  title: string;
+  order: number;
+  contentType: LessonContentType;
+  durationMinutes?: number | null;
+  isFreePreview: boolean;
+  contentSummary?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface CourseOfferingPublic {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  sectionId?: string | null;
+  batchId?: string | null;
+  academicYearId?: string | null;
+  semesterId?: string | null;
+  facultyIds: string[];
+  maxStudents?: number | null;
+  status: OfferingStatus;
+  enrolledCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface CurriculumEntryPublic {
+  id: string;
+  tenantId: string;
+  programId: string;
+  courseId: string;
+  semesterNumber?: number | null;
+  yearNumber?: number | null;
+  isMandatory: boolean;
+  creditsOverride?: number | null;
+  order?: number;
+  createdAt: Date | string;
+}
+
+export interface CourseEnrollmentPublic {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  courseId: string;
+  offeringId?: string | null;
+  sectionId?: string | null;
+  status: CourseEnrollmentStatus;
+  enrolledAt: Date | string;
+  grade?: string | null;
+  createdAt: Date | string;
+}
+
+export interface CourseStats {
+  total: number;
+  byStatus: Record<string, number>;
+  byType: Record<string, number>;
+  byProgram: Array<{ programId: string; count: number }>;
+}

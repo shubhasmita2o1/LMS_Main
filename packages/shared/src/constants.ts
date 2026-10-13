@@ -5,7 +5,7 @@
 import type { PlanTier, TenantFeatureFlags, TenantLimits } from './types';
 
 export const APP_NAME = 'University LMS';
-export const APP_VERSION = '0.6.0';
+export const APP_VERSION = '0.7.0';
 
 /** Default pagination */
 export const DEFAULT_PAGE = 1;
