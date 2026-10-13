@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
-import api from '../../lib/api';
+import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import {
@@ -37,9 +36,7 @@ type NavItem = {
 };
 
 export function AppLayout({ children, fullWidth }: AppLayoutProps) {
-  const user = useAuthStore((s) => s.user);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const refreshToken = useAuthStore((s) => s.refreshToken);
+  const { user, logout, logoutAll, refreshUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -49,12 +46,7 @@ export function AppLayout({ children, fullWidth }: AppLayoutProps) {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      try {
-        await api.post('/auth/logout', { refreshToken });
-      } catch {
-        /* ignore */
-      }
-      clearAuth();
+      await logout();
       navigate('/login');
     } finally {
       setIsLoggingOut(false);
@@ -65,12 +57,7 @@ export function AppLayout({ children, fullWidth }: AppLayoutProps) {
     if (confirm('Are you sure you want to sign out from all devices?')) {
       try {
         setIsLoggingOut(true);
-        try {
-          await api.post('/auth/logout-all');
-        } catch {
-          /* ignore */
-        }
-        clearAuth();
+        await logoutAll();
         navigate('/login');
       } finally {
         setIsLoggingOut(false);
@@ -81,14 +68,7 @@ export function AppLayout({ children, fullWidth }: AppLayoutProps) {
   const handleRefreshUser = async () => {
     try {
       setIsRefreshing(true);
-      const { data } = await api.get('/auth/me');
-      const me = data?.data;
-      if (me) {
-        const state = useAuthStore.getState();
-        // Preserve existing tokens; only refresh profile fields
-        useAuthStore.setState({ user: me });
-        void state;
-      }
+      await refreshUser();
     } catch (e) {
       console.error(e);
     } finally {
