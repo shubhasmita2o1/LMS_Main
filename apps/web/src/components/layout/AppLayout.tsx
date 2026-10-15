@@ -13,11 +13,6 @@ import {
   UserCheck,
   BookOpen,
   PlayCircle,
-<<<<<<< Updated upstream
-  ClipboardList,
-  HelpCircle,
-  FileQuestion,
-=======
   FlaskConical,
   FileCheck2,
   CalendarDays,
@@ -48,7 +43,6 @@ import {
   Layers,
   Clock,
   UserPlus,
->>>>>>> Stashed changes
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -184,112 +178,6 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
-<<<<<<< Updated upstream
-  const navItems: NavItem[] = [
-    {
-      to: '/dashboard',
-      label: 'Dashboard',
-      icon: <LayoutDashboard className="w-4 h-4" />,
-      show: true,
-    },
-    {
-      to: '/academic',
-      label: 'Academic',
-      icon: <Building className="w-4 h-4" />,
-      show: hasTenantContext || isSuperAdmin,
-    },
-    {
-      to: '/students',
-      label: 'Students',
-      icon: <Users className="w-4 h-4" />,
-      show: hasTenantContext || isSuperAdmin,
-    },
-    {
-      to: '/faculty',
-      label: 'Faculty',
-      icon: <UserCheck className="w-4 h-4" />,
-      show: hasTenantContext || isSuperAdmin,
-    },
-    {
-      to: '/courses',
-      label: 'Courses',
-      icon: <Library className="w-4 h-4" />,
-      show: hasTenantContext || isSuperAdmin,
-    },
-    {
-      to: '/learn',
-      label: 'Learn',
-      icon: <PlayCircle className="w-4 h-4" />,
-      show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
-    },
-    {
-      to: '/assignments',
-      label: 'Assignments',
-      icon: <ClipboardList className="w-4 h-4" />,
-      show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
-    },
-    {
-      to: '/quizzes',
-      label: 'Quizzes',
-      icon: <HelpCircle className="w-4 h-4" />,
-      show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
-    },
-    {
-      to: '/gradebook',
-      label: 'Grades',
-      icon: <ClipboardList className="w-4 h-4" />,
-      show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
-    },
-    {
-      to: '/attendance',
-      label: 'Attendance',
-      icon: <UserCheck className="w-4 h-4" />,
-      show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
-    },
-    {
-      to: '/question-bank',
-      label: 'Q-Bank',
-      icon: <FileQuestion className="w-4 h-4" />,
-      show: isFaculty || isTenantAdmin || isSuperAdmin,
-    },
-    {
-      to: '/admin/tenants',
-      label: 'Admin',
-      icon: <ShieldCheck className="w-4 h-4" />,
-      match: '/admin',
-      show: isSuperAdmin,
-    },
-  ];
-
-  const secondaryItems: NavItem[] = [
-    {
-      to: '/settings',
-      label: 'Settings',
-      icon: <Settings className="w-4 h-4" />,
-      show: isTenantAdmin || (isSuperAdmin && Boolean(user?.tenantId)),
-    },
-    {
-      to: '/billing',
-      label: 'Billing',
-      icon: <CreditCard className="w-4 h-4" />,
-      show: isTenantAdmin || isSuperAdmin,
-    },
-  ];
-
-  const linkClass = (path: string, accent?: 'purple') => {
-    const active = isActive(path);
-    if (accent === 'purple') {
-      return active
-        ? 'text-purple-700 bg-purple-50 font-semibold'
-        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100';
-    }
-    return active
-      ? 'text-primary-700 bg-primary-50 font-semibold'
-      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100';
-  };
-
-=======
->>>>>>> Stashed changes
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased selection:bg-primary-500 selection:text-white">
       {/* Modals & Drawers */}
