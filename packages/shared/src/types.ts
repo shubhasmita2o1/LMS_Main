@@ -23,8 +23,13 @@ export type SystemRole =
   | 'super_admin'
   | 'tenant_admin'
   | 'university_admin'
+  | 'registrar'
   | 'faculty'
   | 'student'
+  | 'department_head'
+  | 'exam_controller'
+  | 'finance'
+  | 'librarian'
   | 'staff'
   | 'parent'
   | 'guest';
@@ -37,7 +42,8 @@ export type PermissionAction =
   | 'delete'
   | 'manage'
   | 'export'
-  | 'import';
+  | 'import'
+  | 'approve';
 
 /** Resource types for fine-grained RBAC */
 export type ResourceType =
@@ -52,8 +58,10 @@ export type ResourceType =
   | 'batch'
   | 'section'
   | 'course'
+  | 'curriculum'
   | 'student'
   | 'faculty'
+  | 'assessment'
   | 'assignment'
   | 'quiz'
   | 'question'
@@ -67,6 +75,12 @@ export type ResourceType =
   | 'lab'
   | 'library'
   | 'placement'
+  | 'communication'
+  | 'report'
+  | 'document'
+  | 'setting'
+  | 'audit'
+  | 'support'
   | 'feature_flag'
   | 'plan'
   | 'live_class'

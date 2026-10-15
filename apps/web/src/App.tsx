@@ -1,32 +1,14 @@
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { SelectTenantPage } from './pages/SelectTenantPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { UsersPage } from './pages/UsersPage';
-import { AdminTenantsPage } from './pages/admin/AdminTenantsPage';
-import { CreateTenantPage } from './pages/admin/CreateTenantPage';
-import { TenantDetailPage } from './pages/admin/TenantDetailPage';
-import { TenantSettingsPage } from './pages/TenantSettingsPage';
-import { BillingPage } from './pages/BillingPage';
-import { AcademicTreePage } from './pages/academic/AcademicTreePage';
-import { DepartmentsPage } from './pages/academic/DepartmentsPage';
-import { ProgramsPage } from './pages/academic/ProgramsPage';
-import { BatchesPage } from './pages/academic/BatchesPage';
-import { AcademicYearsPage } from './pages/academic/AcademicYearsPage';
-import { AcademicSettingsPage } from './pages/academic/AcademicSettingsPage';
-import { CreateUniversityPage } from './pages/academic/CreateUniversityPage';
-import { StudentsListPage } from './pages/students/StudentsListPage';
-import { StudentFormPage } from './pages/students/StudentFormPage';
-import { StudentDetailPage } from './pages/students/StudentDetailPage';
-import { StudentMePage } from './pages/students/StudentMePage';
-import { FacultyListPage } from './pages/faculty/FacultyListPage';
-import { FacultyFormPage } from './pages/faculty/FacultyFormPage';
-import { FacultyDetailPage } from './pages/faculty/FacultyDetailPage';
-import { FacultyMePage } from './pages/faculty/FacultyMePage';
-import { CoursesListPage } from './pages/courses/CoursesListPage';
-import { CourseFormPage } from './pages/courses/CourseFormPage';
-import { CourseDetailPage } from './pages/courses/CourseDetailPage';
+import { TenantsPage } from './pages/tenants/TenantsPage';
+import { AcademicHierarchyPage } from './pages/academic/AcademicHierarchyPage';
+import { StudentsPage } from './pages/students/StudentsPage';
+import { FacultyPage } from './pages/faculty/FacultyPage';
 import { CurriculumPage } from './pages/courses/CurriculumPage';
+<<<<<<< Updated upstream
 import { MyCoursesPage } from './pages/learn/MyCoursesPage';
 import { CourseLearnPage } from './pages/learn/CourseLearnPage';
 import { LessonViewerPage } from './pages/learn/LessonViewerPage';
@@ -44,6 +26,27 @@ import { GradebookDetailPage } from './pages/gradebook/GradebookDetailPage';
 import { TranscriptPage } from './pages/gradebook/TranscriptPage';
 import { AttendancePage } from './pages/attendance/AttendancePage';
 import { AttendanceMarkPage } from './pages/attendance/AttendanceMarkPage';
+=======
+import { LmsLearningPage } from './pages/learn/LmsLearningPage';
+import { PracticalLabsPage } from './pages/labs/PracticalLabsPage';
+import { AssessmentsPage } from './pages/assessments/AssessmentsPage';
+import { ExaminationsPage } from './pages/examinations/ExaminationsPage';
+import { AttendancePage } from './pages/attendance/AttendancePage';
+import { ResultsPage } from './pages/results/ResultsPage';
+import { AdmissionsPage } from './pages/admissions/AdmissionsPage';
+import { FinanceFeesPage } from './pages/finance/FinanceFeesPage';
+import { LibraryPage } from './pages/library/LibraryPage';
+import { PlacementPage } from './pages/placement/PlacementPage';
+import { CommunicationPage } from './pages/communication/CommunicationPage';
+import { ReportsAnalyticsPage } from './pages/reports/ReportsAnalyticsPage';
+import { DocumentsCertificatesPage } from './pages/documents/DocumentsCertificatesPage';
+import { UserManagementPage } from './pages/users/UserManagementPage';
+import { RolePermissionsPage } from './pages/roles/RolePermissionsPage';
+import { NotificationsPage } from './pages/notifications/NotificationsPage';
+import { SystemSettingsPage } from './pages/settings/SystemSettingsPage';
+import { AuditLogsPage } from './pages/audit/AuditLogsPage';
+import { HelpSupportPage } from './pages/support/HelpSupportPage';
+>>>>>>> Stashed changes
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuthStore } from './stores/authStore';
 
@@ -52,42 +55,68 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-600 text-white text-2xl font-bold mb-6">
+      <div className="max-w-3xl w-full bg-white rounded-3xl shadow-sm border border-slate-200 p-10 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-600 text-white text-2xl font-bold mb-6 shadow-md shadow-primary-500/20">
           UL
         </div>
+<<<<<<< Updated upstream
         <h1 className="text-3xl font-bold text-slate-900 mb-2">University LMS</h1>
         <p className="text-slate-500 mb-8">
           Multi-tenant SaaS platform • Phase 9: Assignments, Quiz & Question Bank
+=======
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+          University Learning Management &amp; Academic ERP
+        </h1>
+        <p className="text-slate-500 text-sm max-w-xl mx-auto mb-8 leading-relaxed">
+          Enterprise Multi-Tenant SaaS Platform for Higher Education Institutions.
+          Full-cycle academic governance, curriculum design, student information systems, examination management, and compliance analytics.
+>>>>>>> Stashed changes
         </p>
-        <div className="flex flex-wrap gap-3 justify-center">
+
+        <div className="flex flex-wrap gap-3 justify-center mb-10">
           {isAuthenticated() ? (
             <Link
               to="/dashboard"
-              className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition"
+              className="inline-flex items-center px-6 py-3 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 transition shadow-sm"
             >
-              Go to Dashboard
+              Go to Academic ERP Dashboard →
             </Link>
           ) : (
             <>
               <Link
                 to="/login"
-                className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition"
+                className="inline-flex items-center px-6 py-3 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 transition shadow-sm"
               >
-                Sign in
+                Sign In / 1-Click Demo Personas →
               </Link>
               <Link
-                to="/register"
-                className="inline-flex items-center px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition"
+                to="/select-tenant"
+                className="inline-flex items-center px-6 py-3 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition"
               >
-                Register
+                Select University Tenant
               </Link>
             </>
           )}
         </div>
-        <p className="mt-10 text-xs text-slate-400">
-          Phase 8 • Learn · Progress · Notes · Live classes
-        </p>
+
+        <div className="pt-8 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-[11px] font-bold text-primary-700 uppercase tracking-wider block">Tenancy</span>
+            <span className="text-xs text-slate-700 font-medium">Multi-University Isolation</span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-[11px] font-bold text-primary-700 uppercase tracking-wider block">Personas</span>
+            <span className="text-xs text-slate-700 font-medium">9 Distinct Roles</span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-[11px] font-bold text-primary-700 uppercase tracking-wider block">Modules</span>
+            <span className="text-xs text-slate-700 font-medium">25 Integrated Suites</span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-[11px] font-bold text-primary-700 uppercase tracking-wider block">Accreditation</span>
+            <span className="text-xs text-slate-700 font-medium">NAAC / NBA / ABET Ready</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -96,51 +125,36 @@ function HomePage() {
 export default function App() {
   return (
     <Routes>
+      {/* Public & Authentication Routes */}
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/select-tenant" element={<SelectTenantPage />} />
+
+      {/* Module 1: Executive Dashboard */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><TenantSettingsPage /></ProtectedRoute>} />
-      <Route path="/billing" element={<ProtectedRoute roles={['tenant_admin', 'super_admin']}><BillingPage /></ProtectedRoute>} />
-      <Route path="/admin/tenants" element={<ProtectedRoute roles={['super_admin']}><AdminTenantsPage /></ProtectedRoute>} />
-      <Route path="/admin/tenants/new" element={<ProtectedRoute roles={['super_admin']}><CreateTenantPage /></ProtectedRoute>} />
-      <Route path="/admin/tenants/:id" element={<ProtectedRoute roles={['super_admin']}><TenantDetailPage /></ProtectedRoute>} />
-      <Route path="/academic" element={<ProtectedRoute><AcademicTreePage /></ProtectedRoute>} />
-      <Route path="/academic/universities/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><CreateUniversityPage /></ProtectedRoute>} />
-      <Route path="/academic/departments" element={<ProtectedRoute><DepartmentsPage /></ProtectedRoute>} />
-      <Route path="/academic/programs" element={<ProtectedRoute><ProgramsPage /></ProtectedRoute>} />
-      <Route path="/academic/batches" element={<ProtectedRoute><BatchesPage /></ProtectedRoute>} />
-      <Route path="/academic/years" element={<ProtectedRoute><AcademicYearsPage /></ProtectedRoute>} />
-      <Route path="/academic/settings" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><AcademicSettingsPage /></ProtectedRoute>} />
 
-      {/* Phase 5 — Students */}
-      <Route path="/students" element={<ProtectedRoute><StudentsListPage /></ProtectedRoute>} />
-      <Route path="/students/me" element={<ProtectedRoute roles={['student', 'tenant_admin', 'university_admin', 'super_admin']}><StudentMePage /></ProtectedRoute>} />
-      <Route path="/students/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><StudentFormPage /></ProtectedRoute>} />
-      <Route path="/students/:id" element={<ProtectedRoute><StudentDetailPage /></ProtectedRoute>} />
-      <Route path="/students/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><StudentFormPage /></ProtectedRoute>} />
+      {/* Module 2: Multi-Tenant University Management */}
+      <Route path="/tenants" element={<ProtectedRoute><TenantsPage /></ProtectedRoute>} />
+      <Route path="/admin/tenants" element={<ProtectedRoute><TenantsPage /></ProtectedRoute>} />
 
-      {/* Phase 6 — Faculty */}
-      <Route path="/faculty" element={<ProtectedRoute><FacultyListPage /></ProtectedRoute>} />
-      <Route path="/faculty/me" element={<ProtectedRoute roles={['faculty', 'tenant_admin', 'university_admin', 'super_admin']}><FacultyMePage /></ProtectedRoute>} />
-      <Route path="/faculty/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><FacultyFormPage /></ProtectedRoute>} />
-      <Route path="/faculty/:id" element={<ProtectedRoute><FacultyDetailPage /></ProtectedRoute>} />
-      <Route path="/faculty/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><FacultyFormPage /></ProtectedRoute>} />
+      {/* Module 3: Campus & Academic Hierarchy */}
+      <Route path="/academic" element={<ProtectedRoute><AcademicHierarchyPage /></ProtectedRoute>} />
 
-      {/* Phase 7 — Courses & Curriculum */}
-      <Route path="/courses" element={<ProtectedRoute><CoursesListPage /></ProtectedRoute>} />
-      <Route path="/courses/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><CourseFormPage /></ProtectedRoute>} />
-      <Route path="/courses/:id" element={<ProtectedRoute><CourseDetailPage /></ProtectedRoute>} />
-      <Route path="/courses/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><CourseFormPage /></ProtectedRoute>} />
+      {/* Module 4: Student Information System (SIS) */}
+      <Route path="/students" element={<ProtectedRoute><StudentsPage /></ProtectedRoute>} />
+
+      {/* Module 5: Faculty Management & Workload */}
+      <Route path="/faculty" element={<ProtectedRoute><FacultyPage /></ProtectedRoute>} />
+
+      {/* Module 6: Curriculum, Syllabi & OBE CO-PO Mapping */}
+      <Route path="/courses" element={<ProtectedRoute><CurriculumPage /></ProtectedRoute>} />
       <Route path="/curriculum" element={<ProtectedRoute><CurriculumPage /></ProtectedRoute>} />
 
-      {/* Phase 8 — Core LMS Learning */}
-      <Route path="/learn" element={<ProtectedRoute><MyCoursesPage /></ProtectedRoute>} />
-      <Route path="/learn/courses/:id" element={<ProtectedRoute><CourseLearnPage /></ProtectedRoute>} />
-      <Route path="/learn/courses/:id/lessons/:lessonId" element={<ProtectedRoute><LessonViewerPage /></ProtectedRoute>} />
-      <Route path="/learn/courses/:id/live" element={<ProtectedRoute><LiveClassesPage /></ProtectedRoute>} />
+      {/* Module 7: Core LMS Theory & Lesson Viewer */}
+      <Route path="/learn" element={<ProtectedRoute><LmsLearningPage /></ProtectedRoute>} />
 
+<<<<<<< Updated upstream
       {/* Phase 9 — Assignments, Quiz & Question Bank */}
       <Route path="/question-bank" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><QuestionBankPage /></ProtectedRoute>} />
       <Route path="/assignments" element={<ProtectedRoute><AssignmentsPage /></ProtectedRoute>} />
@@ -158,6 +172,63 @@ export default function App() {
       <Route path="/attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
       <Route path="/attendance/sessions/:id" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><AttendanceMarkPage /></ProtectedRoute>} />
 
+=======
+      {/* Module 8: Practical & Virtual Labs */}
+      <Route path="/labs" element={<ProtectedRoute><PracticalLabsPage /></ProtectedRoute>} />
+
+      {/* Module 9: Continuous Assessments & Quizzes */}
+      <Route path="/assessments" element={<ProtectedRoute><AssessmentsPage /></ProtectedRoute>} />
+
+      {/* Module 10: Examinations, Timetable & Hall Tickets */}
+      <Route path="/examinations" element={<ProtectedRoute><ExaminationsPage /></ProtectedRoute>} />
+
+      {/* Module 11: Attendance Register & Biometrics */}
+      <Route path="/attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
+
+      {/* Module 12: Results, Gradebook & Transcripts */}
+      <Route path="/results" element={<ProtectedRoute><ResultsPage /></ProtectedRoute>} />
+
+      {/* Module 13: Admissions & Enrollment Pipeline */}
+      <Route path="/admissions" element={<ProtectedRoute><AdmissionsPage /></ProtectedRoute>} />
+
+      {/* Module 14: Finance, Fee Invoicing & Receipts */}
+      <Route path="/finance" element={<ProtectedRoute><FinanceFeesPage /></ProtectedRoute>} />
+
+      {/* Module 15: Library Management & Circulation Desk */}
+      <Route path="/library" element={<ProtectedRoute><LibraryPage /></ProtectedRoute>} />
+
+      {/* Module 16: Placement & Career Services */}
+      <Route path="/placement" element={<ProtectedRoute><PlacementPage /></ProtectedRoute>} />
+
+      {/* Module 17: Communication Hub & Circulars */}
+      <Route path="/communication" element={<ProtectedRoute><CommunicationPage /></ProtectedRoute>} />
+
+      {/* Module 18: Accreditation (NAAC) & SSR Analytics */}
+      <Route path="/reports" element={<ProtectedRoute><ReportsAnalyticsPage /></ProtectedRoute>} />
+
+      {/* Module 19: Documents & QR-Verified Certificates */}
+      <Route path="/documents" element={<ProtectedRoute><DocumentsCertificatesPage /></ProtectedRoute>} />
+
+      {/* Module 20: User Management & Security Directory */}
+      <Route path="/users" element={<ProtectedRoute><UserManagementPage /></ProtectedRoute>} />
+
+      {/* Module 21: Roles & RBAC Matrix */}
+      <Route path="/roles" element={<ProtectedRoute><RolePermissionsPage /></ProtectedRoute>} />
+
+      {/* Module 22: Notifications Center */}
+      <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+
+      {/* Module 23: System Settings & Identity */}
+      <Route path="/settings" element={<ProtectedRoute><SystemSettingsPage /></ProtectedRoute>} />
+
+      {/* Module 24: Audit Trail & Compliance */}
+      <Route path="/audit" element={<ProtectedRoute><AuditLogsPage /></ProtectedRoute>} />
+
+      {/* Module 25: Campus Helpdesk & Support */}
+      <Route path="/support" element={<ProtectedRoute><HelpSupportPage /></ProtectedRoute>} />
+
+      {/* Fallback */}
+>>>>>>> Stashed changes
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

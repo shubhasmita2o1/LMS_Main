@@ -1,249 +1,376 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import api from '../../lib/api';
-import type {
-  ApiResponse,
-  ProgramPublic,
-  CurriculumEntryPublic,
-  CourseListItem,
-} from '@university-lms/shared';
-import { Can } from '../../components/auth/Can';
-import { useAuth } from '../../hooks/useAuth';
+import { AppLayout } from '../../components/layout/AppLayout';
+import { ModuleHeader } from '../../components/common/ModuleHeader';
+import { DataTable, type Column } from '../../components/common/DataTable';
+import { DetailDrawer } from '../../components/common/DetailDrawer';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { MOCK_COURSES, type Course } from '../../data/mockData';
+import {
+  Layers,
+  GraduationCap,
+  Plus,
+  X,
+  FileCheck,
+} from 'lucide-react';
 
 export function CurriculumPage() {
-  const { logout } = useAuth();
-  const queryClient = useQueryClient();
-  const [programId, setProgramId] = useState('');
-  const [courseId, setCourseId] = useState('');
-  const [semesterNumber, setSemesterNumber] = useState('');
-  const [yearNumber, setYearNumber] = useState('');
-  const [isMandatory, setIsMandatory] = useState(true);
+  const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
 
-  const { data: programs } = useQuery({
-    queryKey: ['programs'],
-    queryFn: async () => {
-      const { data } = await api.get<ApiResponse<ProgramPublic[]>>('/academic/programs', {
-        params: { limit: 100 },
-      });
-      return data.data || [];
-    },
+  const [formData, setFormData] = useState({
+    code: '',
+    title: '',
+    department: 'Computer Science & Engineering',
+    credits: 4.0,
+    type: 'Core' as Course['type'],
+    semester: 5,
+    instructorName: 'Prof. Elena Rostova',
+    description: '',
   });
 
-  const { data: courses } = useQuery({
-    queryKey: ['courses', 'all'],
-    queryFn: async () => {
-      const { data } = await api.get<ApiResponse<CourseListItem[]>>('/courses', {
-        params: { limit: 100 },
-      });
-      return data.data || [];
+  const columns: Column<Course>[] = [
+    {
+      key: 'code',
+      header: 'Course Code & Title',
+      sortable: true,
+      render: (c) => (
+        <div>
+          <div className="font-bold text-slate-900 flex items-center gap-2">
+            <span className="font-mono text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">
+              {c.code}
+            </span>
+            <span className="truncate">{c.title}</span>
+          </div>
+          <span className="text-xs text-slate-400 mt-0.5 block">{c.department}</span>
+        </div>
+      ),
     },
-  });
+    {
+      key: 'credits',
+      header: 'Credits',
+      sortable: true,
+      render: (c) => (
+        <span className="text-xs font-bold text-slate-800">{c.credits} Credits</span>
+      ),
+    },
+    {
+      key: 'type',
+      header: 'Classification',
+      sortable: true,
+      render: (c) => (
+        <span
+          className={`text-xs font-semibold px-2 py-0.5 rounded ${
+            c.type === 'Core'
+              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+              : c.type === 'Lab'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              : 'bg-purple-50 text-purple-700 border border-purple-200'
+          }`}
+        >
+          {c.type}
+        </span>
+      ),
+    },
+    {
+      key: 'instructorName',
+      header: 'Course Director',
+      sortable: true,
+      render: (c) => (
+        <div className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
+          <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
+          <span>{c.instructorName}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'enrolledStudents',
+      header: 'Enrolled',
+      sortable: true,
+      render: (c) => (
+        <span className="text-xs font-bold text-slate-800">{c.enrolledStudents} Students</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      render: (c) => (
+        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+          {c.status}
+        </span>
+      ),
+    },
+  ];
 
-  const { data: entries, isLoading } = useQuery({
-    queryKey: ['curriculum', programId],
-    enabled: !!programId,
-    queryFn: async () => {
-      const { data } = await api.get<ApiResponse<CurriculumEntryPublic[]>>(
-        `/courses/curriculum/${programId}`
-      );
-      return data.data || [];
-    },
-  });
+  const handleRowClick = (course: Course) => {
+    setSelectedCourse(course);
+    setIsDetailOpen(true);
+  };
 
-  const addEntry = useMutation({
-    mutationFn: async () => {
-      const { data } = await api.post('/courses/curriculum', {
-        programId,
-        courseId,
-        semesterNumber: semesterNumber ? Number(semesterNumber) : null,
-        yearNumber: yearNumber ? Number(yearNumber) : null,
-        isMandatory,
-      });
-      return data.data;
-    },
-    onSuccess: () => {
-      setCourseId('');
-      setSemesterNumber('');
-      setYearNumber('');
-      queryClient.invalidateQueries({ queryKey: ['curriculum', programId] });
-    },
-  });
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newCourse: Course = {
+      id: `crs-${Date.now()}`,
+      code: formData.code.toUpperCase(),
+      title: formData.title,
+      department: formData.department,
+      credits: Number(formData.credits),
+      type: formData.type,
+      semester: Number(formData.semester),
+      instructorName: formData.instructorName,
+      enrolledStudents: 120,
+      status: 'active',
+      description: formData.description,
+      syllabusUnits: [
+        { unit: 1, title: 'Foundations & Concepts', hours: 10, topics: ['Introduction', 'Core Architecture'] },
+        { unit: 2, title: 'Advanced Methodologies', hours: 12, topics: ['Algorithms', 'Design Optimization'] },
+      ],
+      outcomes: [
+        'CO1: Demonstrate fundamental mastery of topic principles.',
+        'CO2: Evaluate complex tradeoffs in real-world scenarios.',
+      ],
+    };
+    setCourses([newCourse, ...courses]);
+    setIsCreateOpen(false);
+  };
 
-  const removeEntry = useMutation({
-    mutationFn: async (entryId: string) => {
-      await api.delete(`/courses/curriculum/${entryId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['curriculum', programId] });
-    },
-  });
-
-  const courseMap = new Map((courses || []).map((c) => [c.id, c]));
-
-  // Group by year/semester
-  const grouped = (entries || []).reduce(
-    (acc, e) => {
-      const key = `Y${e.yearNumber ?? '?'}-S${e.semesterNumber ?? '?'}`;
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(e);
-      return acc;
-    },
-    {} as Record<string, CurriculumEntryPublic[]>
-  );
+  const handleDeleteConfirm = () => {
+    if (courseToDelete) {
+      setCourses(courses.filter((c) => c.id !== courseToDelete.id));
+      setIsDeleteOpen(false);
+      setCourseToDelete(null);
+      setIsDetailOpen(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="text-sm text-slate-600 hover:text-slate-900">
-              ← Dashboard
-            </Link>
-            <span className="font-semibold text-slate-900">Curriculum</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Link to="/courses" className="text-primary-600 hover:underline">
-              Courses
-            </Link>
-            <button
-              onClick={() => logout()}
-              className="text-slate-600 hover:text-slate-900 px-2 py-1 rounded hover:bg-slate-100"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+    <AppLayout>
+      <ModuleHeader
+        title="Curriculum & Course Management"
+        subtitle="Manage syllabi, Outcome-Based Education (OBE) course outcomes, and credit structures"
+        breadcrumbs={[{ label: 'Home', href: '/dashboard' }, { label: 'Curriculum' }]}
+        stats={[
+          { label: 'Active Courses', value: courses.length, variant: 'primary' },
+          { label: 'NBA/OBE Mapped', value: '100%', variant: 'success' },
+          { label: 'Credit Hours', value: '14.0 Avg', variant: 'default' },
+        ]}
+        primaryAction={{
+          label: 'Create Course',
+          onClick: () => {
+            setFormData({
+              code: '',
+              title: '',
+              department: 'Computer Science & Engineering',
+              credits: 4.0,
+              type: 'Core',
+              semester: 5,
+              instructorName: 'Prof. Elena Rostova',
+              description: '',
+            });
+            setIsCreateOpen(true);
+          },
+          icon: <Plus className="w-4 h-4" />,
+        }}
+      />
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Program</label>
-          <select
-            value={programId}
-            onChange={(e) => setProgramId(e.target.value)}
-            className="w-full max-w-md px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
-          >
-            <option value="">Select a program</option>
-            {(programs || []).map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} {p.code ? `(${p.code})` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
+      <DataTable
+        data={courses}
+        columns={columns}
+        keyExtractor={(c) => c.id}
+        searchPlaceholder="Search courses by code, title, or instructor..."
+        exportTitle="course_catalog"
+        onRowClick={handleRowClick}
+      />
 
-        {programId && (
-          <>
-            <Can resource="course" action="manage">
-              <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap gap-3 items-end">
-                <div className="flex-1 min-w-[180px]">
-                  <label className="block text-xs text-slate-500 mb-1">Course</label>
+      {/* Course Detail Drawer */}
+      {selectedCourse && (
+        <DetailDrawer
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          title={`${selectedCourse.code}: ${selectedCourse.title}`}
+          subtitle={`${selectedCourse.credits} Credits • ${selectedCourse.department}`}
+          badge={
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary-100 text-primary-800">
+              {selectedCourse.type}
+            </span>
+          }
+          onDelete={() => {
+            setCourseToDelete(selectedCourse);
+            setIsDeleteOpen(true);
+          }}
+        >
+          <div className="space-y-6">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
+                Course Description
+              </h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {selectedCourse.description}
+              </p>
+            </div>
+
+            {/* Outcome-Based Education (OBE) */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <FileCheck className="w-4 h-4 text-emerald-600" />
+                <span>OBE Course Outcomes (CO)</span>
+              </h4>
+              <div className="space-y-1.5">
+                {selectedCourse.outcomes.map((co, idx) => (
+                  <div key={idx} className="p-2.5 rounded-lg bg-emerald-50/50 border border-emerald-100 text-xs text-emerald-900 font-medium">
+                    {co}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Unit Breakdown */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-primary-600" />
+                <span>Modular Syllabus Breakdown</span>
+              </h4>
+              <div className="space-y-2">
+                {selectedCourse.syllabusUnits.map((u) => (
+                  <div key={u.unit} className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-xs">
+                    <div className="flex justify-between font-bold text-slate-800 mb-1">
+                      <span>Unit {u.unit}: {u.title}</span>
+                      <span className="text-primary-700">{u.hours} Lecture Hours</span>
+                    </div>
+                    <p className="text-slate-500">
+                      Topics: {u.topics.join(', ')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DetailDrawer>
+      )}
+
+      {/* Create Course Modal Form */}
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-scaleUp">
+            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Create Academic Course</h3>
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSubmit} className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Course Code</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    placeholder="CS305"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Credit Units</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={formData.credits}
+                    onChange={(e) => setFormData({ ...formData, credits: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Course Title</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="e.g. Compiler Design & Optimization"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Course Type</label>
                   <select
-                    value={courseId}
-                    onChange={(e) => setCourseId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"
                   >
-                    <option value="">Select course</option>
-                    {(courses || []).map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.code} — {c.name}
-                      </option>
-                    ))}
+                    <option value="Core">Core</option>
+                    <option value="Elective">Elective</option>
+                    <option value="Lab">Lab</option>
+                    <option value="Seminar">Seminar</option>
                   </select>
                 </div>
-                <div className="w-24">
-                  <label className="block text-xs text-slate-500 mb-1">Year</label>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Semester</label>
                   <input
                     type="number"
-                    min={1}
-                    value={yearNumber}
-                    onChange={(e) => setYearNumber(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm"
+                    value={formData.semester}
+                    onChange={(e) => setFormData({ ...formData, semester: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                   />
                 </div>
-                <div className="w-28">
-                  <label className="block text-xs text-slate-500 mb-1">Semester</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={semesterNumber}
-                    onChange={(e) => setSemesterNumber(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm"
-                  />
-                </div>
-                <label className="flex items-center gap-2 text-sm text-slate-700 pb-2">
-                  <input
-                    type="checkbox"
-                    checked={isMandatory}
-                    onChange={(e) => setIsMandatory(e.target.checked)}
-                  />
-                  Mandatory
-                </label>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Syllabus Overview</label>
+                <textarea
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Outline topics, prerequisites, and learning objectives..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
                 <button
-                  onClick={() => courseId && addEntry.mutate()}
-                  disabled={!courseId || addEntry.isPending}
-                  className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm disabled:opacity-50"
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Add to curriculum
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold shadow-md shadow-primary-500/20"
+                >
+                  Publish Course
                 </button>
               </div>
-            </Can>
+            </form>
+          </div>
+        </div>
+      )}
 
-            {isLoading && <p className="text-sm text-slate-500">Loading curriculum…</p>}
-
-            {!isLoading && (entries || []).length === 0 && (
-              <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-slate-500 text-sm">
-                No courses mapped to this program yet.
-              </div>
-            )}
-
-            {Object.entries(grouped)
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([key, list]) => (
-                <div key={key} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                  <div className="px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    {key}
-                  </div>
-                  <ul className="divide-y divide-slate-100">
-                    {list.map((e) => {
-                      const c = courseMap.get(e.courseId);
-                      return (
-                        <li
-                          key={e.id}
-                          className="px-4 py-3 flex items-center justify-between gap-3 text-sm"
-                        >
-                          <div>
-                            <Link
-                              to={`/courses/${e.courseId}`}
-                              className="font-medium text-primary-600 hover:underline"
-                            >
-                              {c ? `${c.code} — ${c.name}` : e.courseId}
-                            </Link>
-                            <span className="ml-2 text-xs text-slate-400">
-                              {e.isMandatory ? 'Mandatory' : 'Optional'}
-                              {e.creditsOverride != null
-                                ? ` · ${e.creditsOverride} cr override`
-                                : ''}
-                            </span>
-                          </div>
-                          <Can resource="course" action="manage">
-                            <button
-                              onClick={() => removeEntry.mutate(e.id)}
-                              className="text-xs text-red-600 hover:underline"
-                            >
-                              Remove
-                            </button>
-                          </Can>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-          </>
-        )}
-      </main>
-    </div>
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Archive Course Curriculum?"
+        description="This course will be archived. Enrolled student marks and grade transcript records will remain intact."
+        itemName={courseToDelete ? `${courseToDelete.code}: ${courseToDelete.title}` : ''}
+        confirmLabel="Confirm Archive"
+      />
+    </AppLayout>
   );
 }
+export default CurriculumPage;
