@@ -39,6 +39,11 @@ import { QuizzesPage } from './pages/quizzes/QuizzesPage';
 import { QuizBuilderPage } from './pages/quizzes/QuizBuilderPage';
 import { QuizTakePage } from './pages/quizzes/QuizTakePage';
 import { QuizAttemptsPage } from './pages/quizzes/QuizAttemptsPage';
+import { GradebooksPage } from './pages/gradebook/GradebooksPage';
+import { GradebookDetailPage } from './pages/gradebook/GradebookDetailPage';
+import { TranscriptPage } from './pages/gradebook/TranscriptPage';
+import { AttendancePage } from './pages/attendance/AttendancePage';
+import { AttendanceMarkPage } from './pages/attendance/AttendanceMarkPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuthStore } from './stores/authStore';
 
@@ -145,6 +150,13 @@ export default function App() {
       <Route path="/quizzes/:id/builder" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><QuizBuilderPage /></ProtectedRoute>} />
       <Route path="/quizzes/:id/take" element={<ProtectedRoute><QuizTakePage /></ProtectedRoute>} />
       <Route path="/quizzes/:id/attempts" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><QuizAttemptsPage /></ProtectedRoute>} />
+
+      {/* Phase 10 — Gradebook, Results & Attendance */}
+      <Route path="/gradebook" element={<ProtectedRoute><GradebooksPage /></ProtectedRoute>} />
+      <Route path="/gradebook/transcript" element={<ProtectedRoute><TranscriptPage /></ProtectedRoute>} />
+      <Route path="/gradebook/:id" element={<ProtectedRoute><GradebookDetailPage /></ProtectedRoute>} />
+      <Route path="/attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
+      <Route path="/attendance/sessions/:id" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><AttendanceMarkPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -19,6 +19,8 @@ import { learnRouter } from './modules/learn/learn.routes';
 import { questionBankRouter } from './modules/question-bank/question-bank.routes';
 import { assignmentRouter } from './modules/assignments/assignment.routes';
 import { quizRouter } from './modules/quizzes/quiz.routes';
+import { gradebookRouter } from './modules/gradebook/gradebook.routes';
+import { attendanceRouter } from './modules/attendance/attendance.routes';
 import { env } from './config/env';
 import path from 'path';
 
@@ -112,6 +114,8 @@ export function createApp() {
   app.use('/api/v1/question-bank', questionBankRouter);
   app.use('/api/v1/assignments', assignmentRouter);
   app.use('/api/v1/quizzes', quizRouter);
+  app.use('/api/v1/gradebook', gradebookRouter);
+  app.use('/api/v1/attendance', attendanceRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

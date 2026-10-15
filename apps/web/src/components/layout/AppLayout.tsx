@@ -150,6 +150,18 @@ export function AppLayout({ children, fullWidth }: AppLayoutProps) {
       show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
     },
     {
+      to: '/gradebook',
+      label: 'Grades',
+      icon: <ClipboardList className="w-4 h-4" />,
+      show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
+    },
+    {
+      to: '/attendance',
+      label: 'Attendance',
+      icon: <UserCheck className="w-4 h-4" />,
+      show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
+    },
+    {
       to: '/question-bank',
       label: 'Q-Bank',
       icon: <FileQuestion className="w-4 h-4" />,

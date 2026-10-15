@@ -3,7 +3,7 @@
 **Multi-tenant Learning Management & Academic Platform**  
 MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 
-**Document version:** 0.9.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
+**Document version:** 0.10.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
 **Repository:** [shubhasmita2o1/LMS_Main](https://github.com/shubhasmita2o1/LMS_Main)
 
 ---
@@ -22,8 +22,8 @@ MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 | **7** | Courses, curriculum & enrollments | ✅ Complete |
 | **8** | Core LMS (lessons, progress, live classes) | ✅ Complete |
 | **9** | Assignments, quiz & question bank | ✅ Complete |
-| **10** | Gradebook | 🔒 Next |
-| **11+** | Attendance, exams, labs, sellable MVP polish | Planned |
+| **10** | Gradebook, results & basic attendance | ✅ Complete |
+| **11+** | Analytics, exams, labs, sellable MVP polish | Planned |
 
 **Sellable MVP target:** after Phase 10–11 (per roadmap). Lab execution stays isolated from the main API.
 
@@ -124,6 +124,17 @@ See `docs/phase-9/README.md` for API surface details.
 ---
 
 ## Getting started
+
+### Phase 10 — Gradebook, Results & Attendance
+
+- **Gradebook** with weighted components (assignment / quiz / attendance / manual)
+- Server-side **recompute** pulling marks from Phase 9 submissions & quiz attempts
+- Lock / unlock / **publish results** with immutable snapshots
+- Student **my-grades** + basic **transcript**
+- **Attendance sessions** (manual, QR-ready), bulk mark, summary, shortage report
+- APIs: `/api/v1/gradebook`, `/api/v1/attendance`
+- Frontend: gradebook setup + roster, attendance mark UI, student views
+
 
 ### Prerequisites
 

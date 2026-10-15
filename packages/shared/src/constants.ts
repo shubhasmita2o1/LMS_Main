@@ -223,6 +223,10 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'assignment', action: 'manage' },
     { resource: 'quiz', action: 'manage' },
     { resource: 'question', action: 'manage' },
+    { resource: 'grade', action: 'manage' },
+    { resource: 'attendance', action: 'manage' },
+    { resource: 'gradebook', action: 'manage' },
+    { resource: 'result', action: 'manage' },
     { resource: 'tenant', action: 'read' },
     { resource: 'tenant', action: 'update' },
     { resource: 'billing', action: 'read' },
@@ -244,6 +248,10 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'assignment', action: 'manage' },
     { resource: 'quiz', action: 'manage' },
     { resource: 'question', action: 'manage' },
+    { resource: 'grade', action: 'manage' },
+    { resource: 'attendance', action: 'manage' },
+    { resource: 'gradebook', action: 'manage' },
+    { resource: 'result', action: 'manage' },
   ],
   faculty: [
     { resource: 'faculty', action: 'read' },
@@ -253,6 +261,8 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'question', action: 'manage' },
     { resource: 'grade', action: 'manage' },
     { resource: 'attendance', action: 'manage' },
+    { resource: 'gradebook', action: 'manage' },
+    { resource: 'result', action: 'manage' },
     { resource: 'student', action: 'read' },
   ],
   student: [
@@ -262,6 +272,8 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'quiz', action: 'read' },
     { resource: 'grade', action: 'read' },
     { resource: 'attendance', action: 'read' },
+    { resource: 'gradebook', action: 'read' },
+    { resource: 'result', action: 'read' },
   ],
   staff: [{ resource: 'user', action: 'read' }],
   parent: [{ resource: 'student', action: 'read' }],
@@ -435,3 +447,30 @@ export const QUIZ_ATTEMPT_STATUSES = [
 export const QUESTION_BANK_STATUSES = ['active', 'draft', 'archived'] as const;
 
 export const QUIZ_SHOW_RESULTS = ['never', 'after_submit', 'after_close'] as const;
+
+// ─── Phase 10: Gradebook & Attendance ────────────────────────────────────────
+
+export const GRADE_COMPONENT_TYPES = [
+  'assignment',
+  'quiz',
+  'midterm',
+  'final',
+  'attendance',
+  'project',
+  'other',
+  'manual',
+] as const;
+
+export const GRADE_COMPONENT_SOURCES = ['assignment', 'quiz', 'attendance', 'manual'] as const;
+
+export const GRADEBOOK_STATUSES = ['open', 'locked', 'published'] as const;
+
+export const RESULT_STATUSES = ['draft', 'moderation', 'published', 'held'] as const;
+
+export const ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused', 'holiday'] as const;
+
+export const ATTENDANCE_SESSION_TYPES = ['lecture', 'lab', 'tutorial', 'other'] as const;
+
+export const ATTENDANCE_METHODS = ['manual', 'qr', 'biometric', 'import'] as const;
+
+export const ATTENDANCE_SESSION_STATUSES = ['open', 'closed'] as const;

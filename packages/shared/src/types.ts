@@ -70,7 +70,9 @@ export type ResourceType =
   | 'feature_flag'
   | 'plan'
   | 'live_class'
-  | 'learning';
+  | 'learning'
+  | 'result'
+  | 'gradebook';
 
 export interface Permission {
   resource: ResourceType;
@@ -1219,4 +1221,204 @@ export interface QuizAttemptPublic {
   createdAt: Date | string;
   updatedAt: Date | string;
   studentName?: string;
+}
+
+// ─── Phase 10: Gradebook, Results & Attendance ───────────────────────────────
+
+export type GradeComponentType =
+  | 'assignment'
+  | 'quiz'
+  | 'midterm'
+  | 'final'
+  | 'attendance'
+  | 'project'
+  | 'other'
+  | 'manual';
+
+export type GradeComponentSource = 'assignment' | 'quiz' | 'attendance' | 'manual';
+
+export type GradebookStatus = 'open' | 'locked' | 'published';
+
+export type ResultStatus = 'draft' | 'moderation' | 'published' | 'held';
+
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused' | 'holiday';
+
+export type AttendanceSessionType = 'lecture' | 'lab' | 'tutorial' | 'other';
+
+export type AttendanceMethod = 'manual' | 'qr' | 'biometric' | 'import';
+
+export type AttendanceSessionStatus = 'open' | 'closed';
+
+export interface GradeComponentConfig {
+  key: string;
+  name: string;
+  type: GradeComponentType;
+  weightPercent: number;
+  maxMarks: number;
+  source: GradeComponentSource;
+  sourceIds?: string[];
+  dropLowest?: number;
+}
+
+export interface GradebookPublic {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  offeringId?: string | null;
+  academicYearId?: string | null;
+  semesterId?: string | null;
+  title: string;
+  status: GradebookStatus;
+  components: GradeComponentConfig[];
+  lockedAt?: Date | string | null;
+  lockedBy?: string | null;
+  publishedAt?: Date | string | null;
+  publishedBy?: string | null;
+  createdBy?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  courseName?: string;
+  courseCode?: string;
+}
+
+export interface GradeEntryPublic {
+  id: string;
+  tenantId: string;
+  gradebookId: string;
+  studentId: string;
+  componentKey: string;
+  rawMarks: number;
+  maxMarks: number;
+  percent: number;
+  overriddenMarks?: number | null;
+  overrideReason?: string | null;
+  overriddenBy?: string | null;
+  sourceRef?: { type: string; id: string } | null;
+  isExcluded?: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface GradebookTotalPublic {
+  id: string;
+  tenantId: string;
+  gradebookId: string;
+  studentId: string;
+  weightedPercent: number;
+  letterGrade?: string | null;
+  gradePoint?: number | null;
+  rank?: number | null;
+  isPass?: boolean | null;
+  recomputedAt?: Date | string | null;
+  studentName?: string;
+  studentCode?: string;
+}
+
+export interface StudentGradeRow {
+  studentId: string;
+  studentName?: string;
+  studentCode?: string;
+  entries: Record<string, GradeEntryPublic | undefined>;
+  total?: GradebookTotalPublic | null;
+}
+
+export interface ResultPublic {
+  id: string;
+  tenantId: string;
+  gradebookId: string;
+  studentId: string;
+  status: ResultStatus;
+  publishedAt?: Date | string | null;
+  publishedBy?: string | null;
+  weightedPercent: number;
+  letterGrade?: string | null;
+  gradePoint?: number | null;
+  isPass?: boolean | null;
+  components: Array<{
+    key: string;
+    name: string;
+    weightPercent: number;
+    rawMarks: number;
+    maxMarks: number;
+    percent: number;
+    contribution: number;
+  }>;
+  remarks?: string | null;
+  courseId?: string;
+  courseName?: string;
+  courseCode?: string;
+  title?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface TranscriptItem {
+  resultId: string;
+  gradebookId: string;
+  courseId: string;
+  courseName?: string;
+  courseCode?: string;
+  title: string;
+  weightedPercent: number;
+  letterGrade?: string | null;
+  gradePoint?: number | null;
+  isPass?: boolean | null;
+  publishedAt?: Date | string | null;
+}
+
+export interface AttendanceSessionPublic {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  offeringId?: string | null;
+  sectionId?: string | null;
+  date: Date | string;
+  startTime?: string | null;
+  endTime?: string | null;
+  sessionType: AttendanceSessionType;
+  topic?: string | null;
+  title?: string | null;
+  markedBy?: string | null;
+  method: AttendanceMethod;
+  status: AttendanceSessionStatus;
+  qrToken?: string | null;
+  presentCount?: number;
+  absentCount?: number;
+  totalMarked?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  courseName?: string;
+}
+
+export interface AttendanceRecordPublic {
+  id: string;
+  tenantId: string;
+  sessionId: string;
+  studentId: string;
+  courseId: string;
+  status: AttendanceStatus;
+  markedAt?: Date | string | null;
+  markedBy?: string | null;
+  note?: string | null;
+  studentName?: string;
+  studentCode?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface AttendanceSummaryPublic {
+  studentId: string;
+  courseId: string;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  excusedCount: number;
+  holidayCount: number;
+  totalSessions: number;
+  /** present + late typically count toward percent */
+  percent: number;
+  isShortage: boolean;
+  minimumPercent: number;
+  studentName?: string;
+  studentCode?: string;
 }
