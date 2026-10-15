@@ -220,6 +220,9 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'course', action: 'manage' },
     { resource: 'student', action: 'manage' },
     { resource: 'faculty', action: 'manage' },
+    { resource: 'assignment', action: 'manage' },
+    { resource: 'quiz', action: 'manage' },
+    { resource: 'question', action: 'manage' },
     { resource: 'tenant', action: 'read' },
     { resource: 'tenant', action: 'update' },
     { resource: 'billing', action: 'read' },
@@ -238,12 +241,16 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'course', action: 'manage' },
     { resource: 'student', action: 'manage' },
     { resource: 'faculty', action: 'manage' },
+    { resource: 'assignment', action: 'manage' },
+    { resource: 'quiz', action: 'manage' },
+    { resource: 'question', action: 'manage' },
   ],
   faculty: [
     { resource: 'faculty', action: 'read' },
     { resource: 'course', action: 'read' },
     { resource: 'assignment', action: 'manage' },
     { resource: 'quiz', action: 'manage' },
+    { resource: 'question', action: 'manage' },
     { resource: 'grade', action: 'manage' },
     { resource: 'attendance', action: 'manage' },
     { resource: 'student', action: 'read' },
@@ -368,3 +375,63 @@ export const COMMON_DESIGNATIONS = [
   'Visiting Faculty',
   'Other',
 ] as const;
+
+// ─── Phase 9: Assignments / Quiz / Question Bank ─────────────────────────────
+
+export const ASSIGNMENT_STATUSES = [
+  'draft',
+  'published',
+  'closed',
+  'archived',
+] as const;
+
+export const SUBMISSION_STATUSES = [
+  'draft',
+  'submitted',
+  'late',
+  'graded',
+  'returned',
+  'resubmitted',
+] as const;
+
+export const QUESTION_TYPES = [
+  'mcq',
+  'multi_select',
+  'true_false',
+  'fill_blank',
+  'short',
+  'long',
+  'numerical',
+  'matching',
+] as const;
+
+export const OBJECTIVE_QUESTION_TYPES = [
+  'mcq',
+  'multi_select',
+  'true_false',
+  'fill_blank',
+  'numerical',
+  'matching',
+] as const;
+
+export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
+
+export const BLOOM_LEVELS = [
+  'remember',
+  'understand',
+  'apply',
+  'analyze',
+  'evaluate',
+  'create',
+] as const;
+
+export const QUIZ_ATTEMPT_STATUSES = [
+  'in_progress',
+  'submitted',
+  'auto_submitted',
+  'graded',
+] as const;
+
+export const QUESTION_BANK_STATUSES = ['active', 'draft', 'archived'] as const;
+
+export const QUIZ_SHOW_RESULTS = ['never', 'after_submit', 'after_close'] as const;

@@ -56,6 +56,7 @@ export type ResourceType =
   | 'faculty'
   | 'assignment'
   | 'quiz'
+  | 'question'
   | 'exam'
   | 'grade'
   | 'attendance'
@@ -962,4 +963,260 @@ export interface CourseStats {
   byStatus: Record<string, number>;
   byType: Record<string, number>;
   byProgram: Array<{ programId: string; count: number }>;
+}
+
+// ─── Phase 9: Assignments, Quiz & Question Bank ─────────────────────────────
+
+export type AssignmentStatus = 'draft' | 'published' | 'closed' | 'archived';
+export type SubmissionStatus =
+  | 'draft'
+  | 'submitted'
+  | 'late'
+  | 'graded'
+  | 'returned'
+  | 'resubmitted';
+
+export type QuestionType =
+  | 'mcq'
+  | 'multi_select'
+  | 'true_false'
+  | 'fill_blank'
+  | 'short'
+  | 'long'
+  | 'numerical'
+  | 'matching';
+
+export type Difficulty = 'easy' | 'medium' | 'hard';
+export type BloomLevel =
+  | 'remember'
+  | 'understand'
+  | 'apply'
+  | 'analyze'
+  | 'evaluate'
+  | 'create';
+
+export type QuizAttemptStatus =
+  | 'in_progress'
+  | 'submitted'
+  | 'auto_submitted'
+  | 'graded';
+
+export type QuestionBankStatus = 'active' | 'draft' | 'archived';
+export type QuizShowResults = 'never' | 'after_submit' | 'after_close';
+
+export interface FileAttachmentRef {
+  fileKey: string;
+  fileName: string;
+  mimeType?: string;
+  size?: number;
+  url?: string;
+}
+
+export interface RubricCriterion {
+  criterion: string;
+  maxMarks: number;
+  description?: string;
+}
+
+export interface RubricScore {
+  criterionIndex: number;
+  marks: number;
+  comment?: string;
+}
+
+export interface QuestionOption {
+  key: string;
+  text: string;
+  isCorrect?: boolean;
+}
+
+export interface MatchingPair {
+  left: string;
+  right: string;
+}
+
+export interface QBankSubjectPublic {
+  id: string;
+  tenantId: string;
+  name: string;
+  code?: string | null;
+  departmentId?: string | null;
+  status: QuestionBankStatus;
+  unitsCount?: number;
+  questionsCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface QBankUnitPublic {
+  id: string;
+  tenantId: string;
+  subjectId: string;
+  name: string;
+  order: number;
+  status: QuestionBankStatus;
+  topicsCount?: number;
+  questionsCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface QBankTopicPublic {
+  id: string;
+  tenantId: string;
+  unitId: string;
+  subjectId: string;
+  name: string;
+  order: number;
+  status: QuestionBankStatus;
+  questionsCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface QuestionPublic {
+  id: string;
+  tenantId: string;
+  subjectId: string;
+  unitId?: string | null;
+  topicId?: string | null;
+  type: QuestionType;
+  stem: string;
+  richText?: string | null;
+  options?: QuestionOption[];
+  correctAnswer?: string | null;
+  matchingPairs?: MatchingPair[];
+  marks: number;
+  difficulty: Difficulty;
+  bloomLevel?: BloomLevel | null;
+  explanation?: string | null;
+  tags: string[];
+  status: QuestionBankStatus;
+  usageCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface QuestionSafePublic {
+  id: string;
+  type: QuestionType;
+  stem: string;
+  richText?: string | null;
+  options?: Array<{ key: string; text: string }>;
+  matchingPairs?: Array<{ left: string; right?: string }>;
+  marks: number;
+  order?: number;
+}
+
+export interface AssignmentPublic {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  offeringId?: string | null;
+  moduleId?: string | null;
+  lessonId?: string | null;
+  title: string;
+  description?: string | null;
+  instructions?: string | null;
+  attachments: FileAttachmentRef[];
+  maxMarks: number;
+  passingMarks?: number | null;
+  availableFrom?: Date | string | null;
+  dueAt?: Date | string | null;
+  lateDueAt?: Date | string | null;
+  allowLate: boolean;
+  latePenaltyPercent?: number | null;
+  allowResubmission: boolean;
+  maxSubmissions: number;
+  rubric: RubricCriterion[];
+  status: AssignmentStatus;
+  createdBy?: string | null;
+  submissionsCount?: number;
+  mySubmissionStatus?: SubmissionStatus | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface AssignmentSubmissionPublic {
+  id: string;
+  tenantId: string;
+  assignmentId: string;
+  studentId: string;
+  courseId: string;
+  attemptNumber: number;
+  body?: string | null;
+  attachments: FileAttachmentRef[];
+  submittedAt?: Date | string | null;
+  isLate: boolean;
+  status: SubmissionStatus;
+  marksAwarded?: number | null;
+  feedback?: string | null;
+  gradedBy?: string | null;
+  gradedAt?: Date | string | null;
+  rubricScores?: RubricScore[];
+  plagiarismScore?: number | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  studentName?: string;
+}
+
+export interface QuizQuestionRef {
+  questionId: string;
+  marks?: number | null;
+  order: number;
+}
+
+export interface QuizPublic {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  offeringId?: string | null;
+  title: string;
+  description?: string | null;
+  instructions?: string | null;
+  questions: QuizQuestionRef[];
+  totalMarks: number;
+  durationMinutes?: number | null;
+  maxAttempts: number;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  showResults: QuizShowResults;
+  availableFrom?: Date | string | null;
+  dueAt?: Date | string | null;
+  status: AssignmentStatus;
+  passPercent?: number | null;
+  negativeMarking?: number | null;
+  autoSubmitOnTimeout: boolean;
+  createdBy?: string | null;
+  attemptsCount?: number;
+  myAttemptsCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface QuizAnswer {
+  questionId: string;
+  response?: string | string[] | MatchingPair[] | null;
+  isCorrect?: boolean | null;
+  marksAwarded?: number | null;
+}
+
+export interface QuizAttemptPublic {
+  id: string;
+  tenantId: string;
+  quizId: string;
+  studentId: string;
+  courseId: string;
+  attemptNumber: number;
+  status: QuizAttemptStatus;
+  startedAt: Date | string;
+  submittedAt?: Date | string | null;
+  expiresAt?: Date | string | null;
+  answers: QuizAnswer[];
+  totalMarksAwarded?: number | null;
+  percent?: number | null;
+  questionOrder?: string[];
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  studentName?: string;
 }

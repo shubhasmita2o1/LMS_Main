@@ -19,6 +19,9 @@ import {
   UserCheck,
   Library,
   PlayCircle,
+  ClipboardList,
+  HelpCircle,
+  FileQuestion,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -133,6 +136,24 @@ export function AppLayout({ children, fullWidth }: AppLayoutProps) {
       label: 'Learn',
       icon: <PlayCircle className="w-4 h-4" />,
       show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
+    },
+    {
+      to: '/assignments',
+      label: 'Assignments',
+      icon: <ClipboardList className="w-4 h-4" />,
+      show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
+    },
+    {
+      to: '/quizzes',
+      label: 'Quizzes',
+      icon: <HelpCircle className="w-4 h-4" />,
+      show: hasTenantContext || isSuperAdmin || isStudent || isFaculty,
+    },
+    {
+      to: '/question-bank',
+      label: 'Q-Bank',
+      icon: <FileQuestion className="w-4 h-4" />,
+      show: isFaculty || isTenantAdmin || isSuperAdmin,
     },
     {
       to: '/admin/tenants',

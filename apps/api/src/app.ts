@@ -16,6 +16,9 @@ import { studentRouter } from './modules/students/student.routes';
 import { facultyRouter } from './modules/faculty/faculty.routes';
 import { courseRouter } from './modules/courses/course.routes';
 import { learnRouter } from './modules/learn/learn.routes';
+import { questionBankRouter } from './modules/question-bank/question-bank.routes';
+import { assignmentRouter } from './modules/assignments/assignment.routes';
+import { quizRouter } from './modules/quizzes/quiz.routes';
 import { env } from './config/env';
 import path from 'path';
 
@@ -71,8 +74,8 @@ export function createApp() {
     res.json({
       success: true,
       message: 'University LMS API v1',
-      version: '0.8.0',
-      phase: 8,
+      version: '0.9.0',
+      phase: 9,
       docs: '/api/v1 (OpenAPI coming in later phases)',
     });
   });
@@ -104,6 +107,11 @@ export function createApp() {
 
   // Phase 8 — Core LMS / Theory Learning
   app.use('/api/v1/learn', learnRouter);
+
+  // Phase 9 — Assignments, Quiz & Question Bank
+  app.use('/api/v1/question-bank', questionBankRouter);
+  app.use('/api/v1/assignments', assignmentRouter);
+  app.use('/api/v1/quizzes', quizRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

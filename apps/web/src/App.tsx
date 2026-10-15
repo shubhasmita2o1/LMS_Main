@@ -31,6 +31,14 @@ import { MyCoursesPage } from './pages/learn/MyCoursesPage';
 import { CourseLearnPage } from './pages/learn/CourseLearnPage';
 import { LessonViewerPage } from './pages/learn/LessonViewerPage';
 import { LiveClassesPage } from './pages/learn/LiveClassesPage';
+import { QuestionBankPage } from './pages/question-bank/QuestionBankPage';
+import { AssignmentsPage } from './pages/assignments/AssignmentsPage';
+import { AssignmentDetailPage } from './pages/assignments/AssignmentDetailPage';
+import { AssignmentSubmissionsPage } from './pages/assignments/AssignmentSubmissionsPage';
+import { QuizzesPage } from './pages/quizzes/QuizzesPage';
+import { QuizBuilderPage } from './pages/quizzes/QuizBuilderPage';
+import { QuizTakePage } from './pages/quizzes/QuizTakePage';
+import { QuizAttemptsPage } from './pages/quizzes/QuizAttemptsPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuthStore } from './stores/authStore';
 
@@ -45,7 +53,7 @@ function HomePage() {
         </div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">University LMS</h1>
         <p className="text-slate-500 mb-8">
-          Multi-tenant SaaS platform • Phase 8: Core LMS / Theory Learning
+          Multi-tenant SaaS platform • Phase 9: Assignments, Quiz & Question Bank
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
           {isAuthenticated() ? (
@@ -127,6 +135,16 @@ export default function App() {
       <Route path="/learn/courses/:id" element={<ProtectedRoute><CourseLearnPage /></ProtectedRoute>} />
       <Route path="/learn/courses/:id/lessons/:lessonId" element={<ProtectedRoute><LessonViewerPage /></ProtectedRoute>} />
       <Route path="/learn/courses/:id/live" element={<ProtectedRoute><LiveClassesPage /></ProtectedRoute>} />
+
+      {/* Phase 9 — Assignments, Quiz & Question Bank */}
+      <Route path="/question-bank" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><QuestionBankPage /></ProtectedRoute>} />
+      <Route path="/assignments" element={<ProtectedRoute><AssignmentsPage /></ProtectedRoute>} />
+      <Route path="/assignments/:id" element={<ProtectedRoute><AssignmentDetailPage /></ProtectedRoute>} />
+      <Route path="/assignments/:id/submissions" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><AssignmentSubmissionsPage /></ProtectedRoute>} />
+      <Route path="/quizzes" element={<ProtectedRoute><QuizzesPage /></ProtectedRoute>} />
+      <Route path="/quizzes/:id/builder" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><QuizBuilderPage /></ProtectedRoute>} />
+      <Route path="/quizzes/:id/take" element={<ProtectedRoute><QuizTakePage /></ProtectedRoute>} />
+      <Route path="/quizzes/:id/attempts" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><QuizAttemptsPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
