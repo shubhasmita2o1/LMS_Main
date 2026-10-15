@@ -6,7 +6,6 @@ import type {
   ApiResponse,
   AttendanceSessionPublic,
   AttendanceRecordPublic,
-  StudentGradeRow,
 } from '@university-lms/shared';
 import { AppLayout } from '../../components/layout/AppLayout';
 
