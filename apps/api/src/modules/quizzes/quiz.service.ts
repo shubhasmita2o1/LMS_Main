@@ -171,11 +171,11 @@ function gradeObjective(
       correct = normalizeText(String(ans)) === normalizeText(String(question.correctAnswer));
     }
   } else if (type === 'multi_select') {
-    const correctKeys = new Set(
-      (question.options || []).filter((o: any) => o.isCorrect).map((o: any) => o.key)
+    const correctKeys = new Set<string>(
+      (question.options || []).filter((o: any) => o.isCorrect).map((o: any) => String(o.key))
     );
     const ans = Array.isArray(response) ? response.map(String) : response ? [String(response)] : [];
-    const ansSet = new Set(ans);
+    const ansSet = new Set<string>(ans);
     correct =
       correctKeys.size === ansSet.size && [...correctKeys].every((k) => ansSet.has(k));
   } else if (type === 'fill_blank' || type === 'numerical') {
@@ -271,7 +271,7 @@ export async function getQuiz(
   id: string,
   user?: { id: string; roles: string[] }
 ) {
-  const doc = await Quiz.findOne(baseFilter(tenantId, { _id: tid(id) })).lean();
+  const doc = (await Quiz.findOne(baseFilter(tenantId, { _id: tid(id) })).lean()) as any;
   if (!doc) throw new AppError(404, 'Quiz not found', 'NOT_FOUND');
 
   if (user?.roles.includes('student') && !isAdminOrFaculty(user.roles)) {
@@ -499,7 +499,7 @@ export async function startAttempt(
     throw new AppError(400, 'Maximum attempts reached', 'MAX_ATTEMPTS');
   }
 
-  let questionOrder = (quiz.questions || []).map((q) => q.questionId);
+  let questionOrder = (quiz.questions || []).map((q: any) => q.questionId);
   if (quiz.shuffleQuestions) {
     questionOrder = shuffleArray(questionOrder);
   }
@@ -663,7 +663,9 @@ export async function saveAnswers(
     return submitAttemptInternal(tenantId, attempt, quiz, true);
   }
 
-  const answerMap = new Map(attempt.answers.map((a) => [String(a.questionId), a]));
+  const answerMap = new Map<string, any>(
+    attempt.answers.map((a: any) => [String(a.questionId), a])
+  );
   for (const a of answers) {
     const existing = answerMap.get(a.questionId);
     if (existing) {
@@ -865,7 +867,9 @@ export async function gradeAttempt(
   const marksOverride = new Map(
     (quiz.questions || []).map((q: any) => [String(q.questionId), q.marks])
   );
-  const answerMap = new Map(attempt.answers.map((a) => [String(a.questionId), a]));
+  const answerMap = new Map<string, any>(
+    attempt.answers.map((a: any) => [String(a.questionId), a])
+  );
 
   for (const g of body.answers) {
     const existing = answerMap.get(g.questionId);

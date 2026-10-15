@@ -169,14 +169,14 @@ export async function listAssignments(
     );
     let myStatus: AssignmentPublic['mySubmissionStatus'] = null;
     if (studentId) {
-      const mine = await AssignmentSubmission.findOne(
+      const mine = (await AssignmentSubmission.findOne(
         baseFilter(tenantId, {
           assignmentId: d._id,
           studentId: tid(studentId),
         })
       )
         .sort({ attemptNumber: -1 })
-        .lean();
+        .lean()) as any;
       myStatus = (mine?.status as any) ?? null;
     }
     mapped.push(mapAssignment(d, { submissionsCount: count, mySubmissionStatus: myStatus }));
@@ -196,7 +196,9 @@ export async function getAssignment(
   id: string,
   user?: { id: string; roles: string[] }
 ) {
-  const doc = await Assignment.findOne(baseFilter(tenantId, { _id: tid(id) })).lean();
+  const doc = (await Assignment.findOne(
+    baseFilter(tenantId, { _id: tid(id) })
+  ).lean()) as any;
   if (!doc) throw new AppError(404, 'Assignment not found', 'NOT_FOUND');
 
   const count = await AssignmentSubmission.countDocuments(
@@ -210,11 +212,11 @@ export async function getAssignment(
     if (doc.status === 'draft') {
       throw new AppError(404, 'Assignment not found', 'NOT_FOUND');
     }
-    const mine = await AssignmentSubmission.findOne(
+    const mine = (await AssignmentSubmission.findOne(
       baseFilter(tenantId, { assignmentId: doc._id, studentId: tid(studentId) })
     )
       .sort({ attemptNumber: -1 })
-      .lean();
+      .lean()) as any;
     myStatus = (mine?.status as any) ?? null;
   }
 

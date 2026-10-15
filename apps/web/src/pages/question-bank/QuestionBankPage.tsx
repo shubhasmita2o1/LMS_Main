@@ -72,7 +72,7 @@ export function QuestionBankPage() {
     },
   });
 
-  const { data: topics = [] } = useQuery({
+  useQuery({
     queryKey: ['qb', 'topics', unitId],
     enabled: !!unitId,
     queryFn: async () => {

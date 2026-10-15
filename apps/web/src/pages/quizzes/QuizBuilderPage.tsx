@@ -8,7 +8,7 @@ export function QuizBuilderPage() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const [selected, setSelected] = useState<string[]>([]);
-  const [subjectId, setSubjectId] = useState('');
+  const [subjectId] = useState('');
 
   const { data: quiz } = useQuery({
     queryKey: ['quiz', id],

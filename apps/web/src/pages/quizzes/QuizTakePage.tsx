@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type {
@@ -11,7 +11,6 @@ import type {
 
 export function QuizTakePage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [attempt, setAttempt] = useState<QuizAttemptPublic | null>(null);
   const [quiz, setQuiz] = useState<QuizPublic | null>(null);
   const [questions, setQuestions] = useState<QuestionSafePublic[]>([]);
