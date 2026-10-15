@@ -1,188 +1,251 @@
 # University LMS — SaaS Platform
 
 **Multi-tenant Learning Management & Academic Platform**  
-MERN Stack • Modular Monolith → Microservices • MongoDB Atlas
+MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 
-Document Version: 0.3.0 • Aligned with Roadmap 2.0 (**Phase 0–3**)
-
----
-
-## Current Status
-
-| Phase | Status | Notes |
-|-------|--------|-------|
-| **Phase 0** — Product, Requirements & Architecture | ✅ Complete | See `docs/phase-0/` |
-| **Phase 1** — Project Foundation & DevOps | ✅ Complete | Monorepo, Docker, CI skeleton |
-| **Phase 2** — Authentication, Security, RBAC & Tenant Core | ✅ Complete | Auth, JWT, RBAC |
-| **Phase 3** — Platform, Tenant Management & Billing | ✅ Complete | This release |
-| Phase 4+ | 🔒 Not started | University hierarchy, courses, etc. |
+**Document version:** 0.9.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
+**Repository:** [shubhasmita2o1/LMS_Main](https://github.com/shubhasmita2o1/LMS_Main)
 
 ---
 
+## Current status
 
-## Phase 3 Highlights
+| Phase | Scope | Status |
+|------:|-------|--------|
+| **0** | Product, requirements & architecture | ✅ Complete |
+| **1** | Project foundation & DevOps | ✅ Complete |
+| **2** | Auth, security, RBAC & tenant core | ✅ Complete |
+| **3** | Platform, tenant management & billing | ✅ Complete |
+| **4** | Academic hierarchy | ✅ Complete |
+| **5** | Student Information System (SIS) | ✅ Complete |
+| **6** | Faculty management | ✅ Complete |
+| **7** | Courses, curriculum & enrollments | ✅ Complete |
+| **8** | Core LMS (lessons, progress, live classes) | ✅ Complete |
+| **9** | Assignments, quiz & question bank | ✅ Complete |
+| **10** | Gradebook | 🔒 Next |
+| **11+** | Attendance, exams, labs, sellable MVP polish | Planned |
 
-- **Tenant model** with branding, plan tier, limits, feature flags, billing customer/subscription IDs, custom domain
-- **Plan catalog** seeded (Free / Starter / Professional / Enterprise)
-- **Super Admin APIs**: list/create/update/suspend/activate tenants + platform stats
-- **Tenant APIs**: onboard, me, usage
-- **Feature flags & plan limits** enforceable via middleware helpers
-- **Billing skeleton**: checkout, portal, Stripe + Razorpay webhooks (idempotent)
-- **Frontend**: Admin tenant management, Tenant Settings, Billing plans, `useFeatureFlag` + `<Feature>`
-
-See `docs/phase-3/00-phase3-summary.md` for full details.
-
----
-## Phase 2 Highlights
-
-- **User model** with `tenantId` (null for Super Admin), refresh tokens, login history, lockout
-- **Role model** (system + tenant-scoped) ready for Phase 3 seeds
-- **Auth API**: register, login, refresh, logout, logout-all, me, forgot/reset password
-- **JWT**: short-lived access (15m) + long-lived refresh (7d, hashed in DB, rotatable)
-- **Middlewares**: `authenticate`, `resolveTenant`, `requirePermission` / `requireRoles`
-- **Tenant isolation**: enforced on user queries; Super Admin operates with `tenantId = null`
-- **Rate limiting** on auth endpoints
-- **Frontend**: Login / Register / Dashboard / Users, Zustand auth store, Axios interceptors with auto-refresh, `ProtectedRoute`, `Can` component
+**Sellable MVP target:** after Phase 10–11 (per roadmap). Lab execution stays isolated from the main API.
 
 ---
 
-## Project Structure (Phase 2)
+## Stack
+
+| Layer | Choice |
+|-------|--------|
+| API | Express + TypeScript, Zod validation |
+| Web | React + Vite + Tailwind, React Query, Zustand |
+| Shared | `@university-lms/shared` types, constants, utils |
+| DB | MongoDB (Atlas-ready), multi-tenant via `tenantId` on every document |
+| Cache / queues | Redis (optional in early phases) |
+| Billing | Stripe + Razorpay skeletons |
+| Storage | Local disk abstraction (S3-ready) for lesson/assignment files |
+| Auth | JWT access + refresh, RBAC permissions per role |
+
+**Multi-tenancy:** shared database + `tenantId` isolation on all queries. Super Admin operates with `tenantId = null`.
+
+---
+
+## Monorepo layout
 
 ```
 university-lms/
 ├── apps/
-│   ├── api/
+│   ├── api/                 # Express API (@university-lms/api)
 │   │   └── src/
 │   │       ├── config/
-│   │       ├── middleware/     # auth, tenant, rbac, rateLimit, error, notFound
-│   │       ├── modules/
-│   │       │   ├── auth/       # routes, controller, service, validation
-│   │       │   ├── users/      # model, routes, controller
-│   │       │   ├── roles/      # model
-│   │       │   └── health/
-│   │       ├── types/          # express.d.ts
-│   │       ├── utils/          # jwt, password, logger
-│   │       ├── app.ts
-│   │       └── server.ts
-│   └── web/
+│   │       ├── middleware/  # auth, tenant, rbac, rateLimit, errors
+│   │       ├── modules/     # feature modules (see below)
+│   │       ├── services/    # storage, feature flags, …
+│   │       └── scripts/     # seed helpers
+│   └── web/                 # React SPA (@university-lms/web)
 │       └── src/
-│           ├── components/auth/  # Can, ProtectedRoute
-│           ├── features/
-│           ├── hooks/            # usePermission
-│           ├── lib/              # api (interceptors), queryClient
-│           ├── pages/            # Login, Register, Dashboard, Users
-│           ├── stores/           # authStore (Zustand + persist)
-│           └── App.tsx
-├── packages/shared/              # types, constants, utils
-├── docker/
+│           ├── pages/       # feature screens
+│           ├── components/
+│           ├── hooks/
+│           ├── lib/         # API client
+│           └── stores/      # auth store
+├── packages/
+│   └── shared/              # shared types, constants, utils
 ├── docs/
-└── ...
+│   ├── phase-0/ … phase-9/
+│   ├── architecture/
+│   └── conventions/
+├── docker/
+├── .github/workflows/       # CI: install, build shared, typecheck, build api/web
+└── package.json             # npm workspaces root
 ```
+
+### API modules (`apps/api/src/modules`)
+
+| Module | Base path | Notes |
+|--------|-----------|--------|
+| `auth` | `/api/v1/auth` | Login, register, refresh, logout, me |
+| `users` | `/api/v1/users` | User admin |
+| `tenants` / `admin` / `billing` / `plans` | `/api/v1/…` | Tenant, super-admin, billing |
+| `academic` | `/api/v1/academic` | University → section hierarchy |
+| `students` | `/api/v1/students` | SIS |
+| `faculty` | `/api/v1/faculty` | Faculty profiles & assignments |
+| `courses` | `/api/v1/courses` | Catalog, structure, offerings, enrollments |
+| `learn` | `/api/v1/learn` | Outline, progress, notes, live classes, content upload |
+| `question-bank` | `/api/v1/question-bank` | Subjects / units / topics / questions |
+| `assignments` | `/api/v1/assignments` | Assignments & submissions |
+| `quizzes` | `/api/v1/quizzes` | Quizzes & attempts (auto-grade objective) |
 
 ---
 
-## Quick Start
+## Phase highlights (summary)
 
-### 1. Install
+### Phases 0–3 — Foundation & platform
+- Product/architecture docs, monorepo, Docker, CI skeleton
+- JWT auth, RBAC, tenant resolution, rate limits
+- Tenant CRUD, plans, feature flags, Stripe/Razorpay webhook + checkout/portal skeletons
+
+### Phases 4–6 — Academic & people
+- University → campus → school → department → program → batch → section
+- Academic year / semester / config
+- Student SIS (CRUD, documents, bulk, enrollment status)
+- Faculty profiles, department assign, teaching assignments
+
+### Phases 7–8 — Courses & learning
+- Course catalog, modules/lessons, offerings, curriculum mapping, enrollments
+- Learning progress, notes, bookmarks, live classes
+- Storage abstraction for content files
+
+### Phase 9 — Assessments (current)
+- **Question bank:** subject → unit → topic → question (MCQ, multi-select, T/F, fill, short/long, numerical, matching)
+- **Assignments:** due/late policy, resubmit, rubric, attachments; student submit; faculty grade
+- **Quizzes:** bank attach, duration, shuffle, max attempts; timed attempt; **server-side** auto-grade for objective items; manual grade for subjective
+- Frontend: Q-Bank, Assignments, Quizzes (builder / take / attempts)
+- Marks fields ready for **Phase 10 Gradebook**
+
+See `docs/phase-9/README.md` for API surface details.
+
+---
+
+## Getting started
+
+### Prerequisites
+
+- Node.js **≥ 20**
+- MongoDB (local or Atlas)
+- Optional: Redis, Docker
+
+### Install
 
 ```bash
-cd university-lms
+git clone https://github.com/shubhasmita2o1/LMS_Main.git
+cd LMS_Main
+cp .env.example .env   # set MONGODB_URI, JWT secrets
 npm install
-```
-
-### 2. Environment
-
-```bash
-cp .env.example .env
-# Set MONGODB_URI and strong JWT secrets (≥32 chars each)
-```
-
-### 3. Infrastructure
-
-```bash
-cd docker && docker compose up -d && cd ..
-```
-
-### 4. Build shared + run
-
-```bash
 npm run build:shared
+```
 
-# Terminal 1
+### Run (development)
+
+```bash
+# Terminal 1 — API (default http://localhost:4000)
 npm run dev:api
 
-# Terminal 2
+# Terminal 2 — Web (default http://localhost:5173)
 npm run dev:web
 ```
 
-- Frontend: http://localhost:5173  
-- API: http://localhost:4000  
-- Health: http://localhost:4000/health  
+API health: `GET /health`  
+API version: `GET /api/v1` (reports phase/version)
 
-### 5. First user (Super Admin)
+### Scripts
 
-1. Open http://localhost:5173/register  
-2. Register any email/password — **first user becomes `super_admin`** with `tenantId = null`  
-3. Subsequent registrations create tenant-scoped users (default role `tenant_admin` gets a generated tenant ObjectId until Phase 3 Tenant model exists)
+| Command | Description |
+|---------|-------------|
+| `npm run dev:api` | API watch mode |
+| `npm run dev:web` | Vite dev server |
+| `npm run build:shared` | Compile shared package |
+| `npm run typecheck` | Type-check all workspaces |
+| `npm run build` | Build shared + all workspaces |
+| `npm run seed:demo` | Demo tenant seed (API workspace) |
 
 ---
 
-## Auth API
+## Auth & tenancy (quick reference)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/v1/auth/register` | Public (controlled) | Register; first user → super_admin |
-| POST | `/api/v1/auth/login` | Public | Login → access + refresh tokens |
-| POST | `/api/v1/auth/refresh` | Refresh token | Rotate tokens |
-| POST | `/api/v1/auth/logout` | Bearer | Revoke one refresh token |
-| POST | `/api/v1/auth/logout-all` | Bearer | Revoke all sessions |
-| GET | `/api/v1/auth/me` | Bearer | Current user |
-| POST | `/api/v1/auth/forgot-password` | Public | Request reset (token logged in dev) |
-| POST | `/api/v1/auth/reset-password` | Public | Reset with token |
-| GET | `/api/v1/users` | Bearer + `user:read` | List users (tenant-scoped) |
-| GET | `/api/v1/users/:id` | Bearer + `user:read` | Get user |
+- **Access token:** short-lived JWT (`sub`, `tenantId`, `roles`, `type`)
+- **Refresh token:** longer-lived, stored hashed, rotatable / revocable
+- Tenant users send `Authorization: Bearer …` and typically `x-tenant-id`
+- Super Admin may omit tenant or pass `x-tenant-id` to scope
+- Permissions: resource + action (`manage` implies all actions on that resource)
+- Resources include `assignment`, `quiz`, `question`, `course`, `student`, `faculty`, …
 
 ### Example login
 
 ```bash
 curl -s -X POST http://localhost:4000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"admin@example.com","password":"Password1"}' | jq
+  -d '{"email":"admin@example.com","password":"Password1"}'
 ```
 
-### Tenant header
+---
 
-Authenticated tenant users automatically send `x-tenant-id`. Super Admin may pass `x-tenant-id` to scope queries.
+## Security baseline
+
+- [x] bcrypt password hashing
+- [x] Short-lived access + revocable refresh tokens
+- [x] Tenant isolation on queries (`tenantId` + soft delete)
+- [x] RBAC on routes (`requirePermission` / `requireRoles`)
+- [x] Zod validation on inputs
+- [x] Rate limits (global + auth)
+- [x] Helmet + CORS
+- [x] Enrollment checks for student assessment access
+- [x] Grades computed on the server (never trust client scores)
+- [x] Plagiarism field architecture-ready (no external API yet)
 
 ---
 
-## Security checklist (Phase 2)
+## Frontend routes (selected)
 
-- [x] Passwords hashed with bcrypt (cost 12)
-- [x] Access token 15m; refresh 7d stored hashed in DB, revocable
-- [x] Tenant isolation on user list/get
-- [x] Super Admin `tenantId = null`
-- [x] Minimal JWT payload (`sub`, `tenantId`, `roles`, `type`)
-- [x] Rate limits on auth routes
-- [x] Generic login errors (no email enumeration)
-- [x] CORS + Helmet
-- [x] Login history + basic account lockout after failed attempts
-- [x] Password reset architecture (email mock in dev)
-
----
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev:api` | API watch mode (port 4000) |
-| `npm run dev:web` | Vite dev server (port 5173) |
-| `npm run build:shared` | Compile shared package |
-| `npm run typecheck` | Type-check all workspaces |
-| `npm run build` | Build all |
+| Path | Audience |
+|------|----------|
+| `/login`, `/register` | Public |
+| `/dashboard` | Authenticated |
+| `/academic/*`, `/students`, `/faculty`, `/courses` | Staff / admin |
+| `/learn` | Enrolled learning |
+| `/assignments`, `/assignments/:id` | Faculty + students |
+| `/quizzes`, `/quizzes/:id/take`, `/quizzes/:id/builder` | Faculty + students |
+| `/question-bank` | Faculty / admin |
+| `/admin/tenants`, `/billing`, `/settings` | Super admin / tenant admin |
 
 ---
 
-## Next: Phase 3
+## Documentation
 
-Super-Admin control plane, Tenant onboarding, branding, feature flags, Stripe/Razorpay subscription foundation, custom domain architecture.
+| Path | Content |
+|------|---------|
+| `docs/phase-0/` … `docs/phase-9/` | Phase notes & summaries |
+| `docs/architecture/` | Architecture decisions |
+| `docs/conventions/` | Coding conventions |
+| `.env.example` | Environment variables |
+
+---
+
+## CI
+
+On push/PR to `main` or `develop`:
+
+1. `npm ci`
+2. Build `@university-lms/shared`
+3. `npm run typecheck` (all workspaces)
+4. Build API + Web
+
+Workflow: `.github/workflows/ci.yml`
+
+---
+
+## Next: Phase 10 — Gradebook
+
+Consume assignment submission and quiz attempt marks into a unified gradebook, reporting, and export. Do not expand into full exam system (Phase 12) until Gradebook is stable.
+
+---
+
+## License
+
+UNLICENSED — private project.
