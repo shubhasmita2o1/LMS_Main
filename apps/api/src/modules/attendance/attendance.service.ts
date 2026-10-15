@@ -227,7 +227,9 @@ export async function getSession(
   id: string,
   user: { id: string; roles: string[] }
 ) {
-  const session = await AttendanceSession.findOne(baseFilter(tenantId, { _id: tid(id) })).lean();
+  const session = (await AttendanceSession.findOne(
+    baseFilter(tenantId, { _id: tid(id) })
+  ).lean()) as any;
   if (!session) throw new AppError(404, 'Session not found', 'NOT_FOUND');
 
   const isStudentOnly =
@@ -471,7 +473,7 @@ export async function myAttendance(
   q: { courseId?: string },
   user: { id: string; roles: string[] }
 ) {
-  const studentId = await resolveStudentId(tenantId, user);
+  const studentId = await resolveStudentId(tenantId, user.id);
 
   if (!q.courseId) {
     // list summaries for all enrolled courses

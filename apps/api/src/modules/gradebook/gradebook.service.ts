@@ -276,7 +276,7 @@ export async function getGradebook(
   id: string,
   user: { id: string; roles: string[] }
 ) {
-  const doc = await Gradebook.findOne(baseFilter(tenantId, { _id: tid(id) })).lean();
+  const doc = (await Gradebook.findOne(baseFilter(tenantId, { _id: tid(id) })).lean()) as any;
   if (!doc) throw new AppError(404, 'Gradebook not found', 'NOT_FOUND');
 
   const isStudentOnly =
@@ -593,7 +593,7 @@ export async function recomputeGradebook(
   let updatedEntries = 0;
 
   for (const comp of gb.components) {
-    const sourceIds = (comp.sourceIds || []).map((x) => String(x));
+    const sourceIds = (comp.sourceIds || []).map((x: unknown) => String(x));
     let marksMap = new Map<string, { marks: number; maxMarks: number }>();
 
     if (comp.source === 'assignment') {
@@ -682,19 +682,19 @@ export async function recomputeGradebook(
     entriesByStudent.get(sid)!.push(e);
   }
 
-  const weightSum = gb.components.reduce((s, c) => s + c.weightPercent, 0) || 100;
+  const weightSum = gb.components.reduce((s: number, c: { weightPercent: number }) => s + c.weightPercent, 0) || 100;
   let updatedTotals = 0;
   const totalPercents: Array<{ studentId: string; weightedPercent: number }> = [];
 
   for (const sid of studentIds) {
     const entries = entriesByStudent.get(sid) || [];
-    const entryMap = new Map(entries.map((e) => [e.componentKey, e]));
+    const entryMap = new Map(entries.map((e: any) => [e.componentKey, e]));
 
     let weighted = 0;
     for (const comp of gb.components) {
       const e = entryMap.get(comp.key);
       if (!e || e.isExcluded) continue;
-      const marks = effectiveMarks(e);
+      const marks = effectiveMarks(e as any);
       if (marks == null) continue;
       const pct = e.maxMarks > 0 ? (marks / e.maxMarks) * 100 : 0;
       weighted += (pct * comp.weightPercent) / weightSum;
@@ -760,7 +760,7 @@ export async function getRoster(
   id: string,
   user: { id: string; roles: string[] }
 ): Promise<{ gradebook: GradebookPublic; rows: StudentGradeRow[] }> {
-  const gb = await Gradebook.findOne(baseFilter(tenantId, { _id: tid(id) })).lean();
+  const gb = (await Gradebook.findOne(baseFilter(tenantId, { _id: tid(id) })).lean()) as any;
   if (!gb) throw new AppError(404, 'Gradebook not found', 'NOT_FOUND');
 
   await assertCanManage(tenantId, user, String(gb.courseId));
@@ -858,7 +858,7 @@ export async function upsertEntries(
   }
   await assertCanManage(tenantId, user, String(gb.courseId));
 
-  const compMap = new Map(gb.components.map((c) => [c.key, c]));
+  const compMap = new Map(gb.components.map((c: any) => [c.key, c]));
   const results: GradeEntryPublic[] = [];
 
   for (const item of body.entries) {
@@ -867,7 +867,7 @@ export async function upsertEntries(
       throw new AppError(400, `Unknown component key: ${item.componentKey}`, 'INVALID_COMPONENT');
     }
 
-    let existing = await GradeEntry.findOne({
+    let existing: any = await GradeEntry.findOne({
       tenantId: tid(tenantId),
       gradebookId: gb._id,
       studentId: tid(item.studentId),
@@ -876,7 +876,7 @@ export async function upsertEntries(
 
     if (!existing) {
       const raw = item.rawMarks ?? 0;
-      const maxM = comp.maxMarks;
+      const maxM = Number((comp as any).maxMarks) || 100;
       existing = await GradeEntry.create({
         tenantId: tid(tenantId),
         gradebookId: gb._id,
@@ -915,7 +915,7 @@ export async function upsertEntries(
   const affected = [...new Set(body.entries.map((e) => e.studentId))];
   const config = await getAcademicConfig(tenantId);
   const bands: GradeBand[] = config.gradingScheme?.bands || [];
-  const weightSum = gb.components.reduce((s, c) => s + c.weightPercent, 0) || 100;
+  const weightSum = gb.components.reduce((s: number, c: { weightPercent: number }) => s + c.weightPercent, 0) || 100;
 
   for (const sid of affected) {
     const entries = await GradeEntry.find({
@@ -924,12 +924,12 @@ export async function upsertEntries(
       studentId: tid(sid),
       isDeleted: { $ne: true },
     }).lean();
-    const entryMap = new Map(entries.map((e) => [e.componentKey, e]));
+    const entryMap = new Map(entries.map((e: any) => [e.componentKey, e]));
     let weighted = 0;
     for (const comp of gb.components) {
       const e = entryMap.get(comp.key);
       if (!e || e.isExcluded) continue;
-      const marks = effectiveMarks(e);
+      const marks = effectiveMarks(e as any);
       if (marks == null) continue;
       const pct = e.maxMarks > 0 ? (marks / e.maxMarks) * 100 : 0;
       weighted += (pct * comp.weightPercent) / weightSum;
@@ -998,17 +998,17 @@ export async function publishResults(
     entriesByStudent.get(sid)!.push(e);
   }
 
-  const weightSum = gb.components.reduce((s, c) => s + c.weightPercent, 0) || 100;
+  const weightSum = gb.components.reduce((s: number, c: { weightPercent: number }) => s + c.weightPercent, 0) || 100;
   let published = 0;
 
   for (const t of totals) {
     const sid = String(t.studentId);
     const studEntries = entriesByStudent.get(sid) || [];
-    const entryMap = new Map(studEntries.map((e) => [e.componentKey, e]));
+    const entryMap = new Map(studEntries.map((e: any) => [e.componentKey, e]));
 
-    const components = gb.components.map((comp) => {
+    const components = gb.components.map((comp: any) => {
       const e = entryMap.get(comp.key);
-      const marks = e ? effectiveMarks(e) ?? 0 : 0;
+      const marks = e ? effectiveMarks(e as any) ?? 0 : 0;
       const maxM = e?.maxMarks ?? comp.maxMarks;
       const pct = maxM > 0 ? (marks / maxM) * 100 : 0;
       const contribution = (pct * comp.weightPercent) / weightSum;
@@ -1070,11 +1070,11 @@ export async function myGrades(
   user: { id: string; roles: string[] }
 ) {
   const { resolveStudentId } = await import('../learn/learn.service');
-  const studentId = await resolveStudentId(tenantId, user);
+  const studentId = await resolveStudentId(tenantId, user.id);
 
-  const gb = await Gradebook.findOne(
+  const gb = (await Gradebook.findOne(
     baseFilter(tenantId, { _id: tid(gradebookId), status: 'published' })
-  ).lean();
+  ).lean()) as any;
   if (!gb) throw new AppError(404, 'Published gradebook not found', 'NOT_FOUND');
 
   const result = await Result.findOne({
@@ -1105,7 +1105,7 @@ export async function myTranscript(
   user: { id: string; roles: string[] }
 ): Promise<TranscriptItem[]> {
   const { resolveStudentId } = await import('../learn/learn.service');
-  const studentId = await resolveStudentId(tenantId, user);
+  const studentId = await resolveStudentId(tenantId, user.id);
 
   const results = await Result.find({
     tenantId: tid(tenantId),
