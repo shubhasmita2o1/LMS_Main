@@ -6,6 +6,8 @@ import {
   logoutSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  verifyEmailSchema,
+  resendVerificationSchema,
 } from './auth.validation';
 import * as authService from './auth.service';
 
@@ -23,7 +25,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
     res.status(201).json({
       success: true,
       data: result,
-      message: 'Registration successful',
+      message: result.message,
     });
   } catch (err) {
     next(err);
@@ -112,6 +114,26 @@ export async function resetPassword(req: Request, res: Response, next: NextFunct
     const body = resetPasswordSchema.parse(req.body);
     await authService.resetPassword(body.token, body.password);
     res.status(200).json({ success: true, message: 'Password reset successful' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function verifyEmail(req: Request, res: Response, next: NextFunction) {
+  try {
+    const body = verifyEmailSchema.parse(req.body);
+    const result = await authService.verifyEmail(body.token);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function resendVerification(req: Request, res: Response, next: NextFunction) {
+  try {
+    const body = resendVerificationSchema.parse(req.body);
+    const result = await authService.resendVerification(body.email);
+    res.status(200).json({ success: true, message: result.message });
   } catch (err) {
     next(err);
   }

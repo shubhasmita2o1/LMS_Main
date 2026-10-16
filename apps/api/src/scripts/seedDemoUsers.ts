@@ -86,7 +86,7 @@ const DEMO_USERS: Array<{
 ];
 
 async function seedDemoUsers() {
-  console.log('🌱 Starting demo user seed...');
+  console.log('🌱 Starting demo user seed (approved + active)...');
 
   await mongoose.connect(env.MONGODB_URI);
 
@@ -112,13 +112,16 @@ async function seedDemoUsers() {
       existingUser.tenantId = demoUser.tenantId;
       existingUser.isActive = true;
       existingUser.isEmailVerified = true;
+      existingUser.approvalStatus = 'approved';
+      existingUser.approvedAt = existingUser.approvedAt || new Date();
+      existingUser.rejectionReason = null;
       existingUser.password = password;
       existingUser.failedLoginAttempts = 0;
       existingUser.lockUntil = null;
 
       await existingUser.save();
 
-      console.log(`🔄 Updated: ${email}`);
+      console.log(`🔄 Updated (approved/active): ${email}`);
     } else {
       await User.create({
         email,
@@ -129,6 +132,8 @@ async function seedDemoUsers() {
         permissions,
         tenantId: demoUser.tenantId,
         isEmailVerified: true,
+        approvalStatus: 'approved',
+        approvedAt: new Date(),
         isActive: true,
         loginHistory: [],
         refreshTokens: [],
@@ -137,23 +142,32 @@ async function seedDemoUsers() {
         isDeleted: false,
       });
 
-      console.log(`✅ Created: ${email}`);
+      console.log(`✅ Created (approved/active): ${email}`);
     }
+  }
+
+  const backfill = await User.updateMany(
+    {
+      isDeleted: false,
+      $or: [{ approvalStatus: { $exists: false } }, { approvalStatus: null }],
+      isActive: true,
+      isEmailVerified: true,
+    },
+    {
+      $set: {
+        approvalStatus: 'approved',
+        approvedAt: new Date(),
+      },
+    }
+  );
+  if (backfill.modifiedCount) {
+    console.log(`🩹 Backfilled approvalStatus=approved on ${backfill.modifiedCount} existing user(s)`);
   }
 
   console.log('');
   console.log('🎉 Demo users seeded successfully!');
-  console.log('');
-  console.log('Demo credentials:');
-  console.log('--------------------------------------------');
-  console.log('Super Admin       admin@university.edu');
-  console.log('Tenant Admin      dean.mitchell@stanford.edu');
-  console.log('University Admin  university.admin@stanford.edu');
-  console.log('Faculty           prof.jenkins@stanford.edu');
-  console.log('Student           alex.rivera@stanford.edu');
-  console.log('Staff             staff.demo@stanford.edu');
-  console.log('Password          Password123!');
-  console.log('--------------------------------------------');
+  console.log('Public registration never creates super_admin.');
+  console.log('Use seed:bootstrap-sa for controlled Super Admin bootstrap.');
 }
 
 seedDemoUsers()

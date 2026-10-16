@@ -49,7 +49,22 @@ export async function authenticate(
       isDeleted: false,
     }).lean();
 
-    if (!user || !user.isActive) {
+    if (!user) {
+      next(new AppError(401, 'User not found or inactive', 'UNAUTHORIZED'));
+      return;
+    }
+
+    if (!user.isEmailVerified) {
+      next(new AppError(403, 'Email not verified', 'EMAIL_NOT_VERIFIED'));
+      return;
+    }
+
+    if (user.approvalStatus && user.approvalStatus !== 'approved') {
+      next(new AppError(403, 'Account not approved', 'APPROVAL_PENDING'));
+      return;
+    }
+
+    if (!user.isActive) {
       next(new AppError(401, 'User not found or inactive', 'UNAUTHORIZED'));
       return;
     }
