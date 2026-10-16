@@ -174,6 +174,7 @@ API version: `GET /api/v1` (reports phase/version)
 | `npm run build:shared` | Compile shared package |
 | `npm run typecheck` | Type-check all workspaces |
 | `npm run build` | Build shared + all workspaces |
+| `npm run seed:users` | Demo users for login (API workspace: `apps/api`) |
 | `npm run seed:demo` | Demo tenant seed (API workspace) |
 
 ---
@@ -186,13 +187,33 @@ API version: `GET /api/v1` (reports phase/version)
 - Super Admin may omit tenant or pass `x-tenant-id` to scope
 - Permissions: resource + action (`manage` implies all actions on that resource)
 - Resources include `assignment`, `quiz`, `question`, `course`, `student`, `faculty`, …
+- **Bootstrap:** the first successful `POST /auth/register` on an empty users collection becomes `super_admin`. Later self-registration cannot choose `super_admin`.
+- Frontend auth persist key is `ul-auth-v2`. Demo/hardcoded tokens are rejected by `isAuthenticated`.
+
+### Demo users (seed)
+
+From the API workspace (requires MongoDB):
+
+```bash
+cd apps/api && npm run seed:users
+# equivalent: npx tsx src/scripts/seedDemoUsers.ts
+```
+
+| Role | Email | Password |
+|------|-------|----------|
+| Super Admin | `admin@university.edu` | `Password123!` |
+| Tenant Admin | `dean.mitchell@stanford.edu` | `Password123!` |
+| Faculty | `prof.jenkins@stanford.edu` | `Password123!` |
+| Student | `alex.rivera@stanford.edu` | `Password123!` |
+
+Login UI “Quick Demo Autofill” uses the same credentials. Web calls API via `VITE_API_URL` or the Vite proxy (`/api` → `http://localhost:4000`).
 
 ### Example login
 
 ```bash
 curl -s -X POST http://localhost:4000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"admin@example.com","password":"Password1"}'
+  -d '{"email":"admin@university.edu","password":"Password123!"}'
 ```
 
 ---

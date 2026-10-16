@@ -1,7 +1,25 @@
 import { useCallback } from 'react';
+import { isAxiosError } from 'axios';
 import api from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import type { AuthContextValue, RegisterInput, ApiResponse, LoginResponse, AuthUser } from '../types/auth';
+
+/**
+ * Extract a user-facing message from API / axios errors.
+ * Backend shape: { success: false, error: { code, message } }
+ */
+function getErrorMessage(err: unknown, fallback: string): string {
+  if (isAxiosError(err)) {
+    const data = err.response?.data as
+      | { error?: { message?: string }; message?: string }
+      | undefined;
+    if (data?.error?.message) return data.error.message;
+    if (typeof data?.message === 'string' && data.message) return data.message;
+    if (err.message) return err.message;
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
+}
 
 /**
  * App-wide auth hook backed by Zustand authStore (persisted).
@@ -12,28 +30,37 @@ export function useAuth(): AuthContextValue {
   const setAuth = useAuthStore((s) => s.setAuth);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const refreshToken = useAuthStore((s) => s.refreshToken);
-  const isAuthenticated = Boolean(user);
+  const storeIsAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthenticated = storeIsAuthenticated();
 
   const login = useCallback(
     async (email: string, password: string, tenantId?: string, _rememberMe?: boolean) => {
-      const payload: Record<string, string> = { email, password };
-      if (tenantId?.trim()) payload.tenantId = tenantId.trim();
-      const { data } = await api.post<ApiResponse<LoginResponse>>('/auth/login', payload);
-      if (!data.success || !data.data) {
-        throw new Error(data.message || 'Login failed');
+      try {
+        const payload: Record<string, string> = { email, password };
+        if (tenantId?.trim()) payload.tenantId = tenantId.trim();
+        const { data } = await api.post<ApiResponse<LoginResponse>>('/auth/login', payload);
+        if (!data.success || !data.data) {
+          throw new Error(data.message || 'Login failed');
+        }
+        setAuth(data.data.user, data.data.tokens);
+      } catch (err) {
+        throw new Error(getErrorMessage(err, 'Login failed'));
       }
-      setAuth(data.data.user, data.data.tokens);
     },
     [setAuth]
   );
 
   const register = useCallback(
     async (input: RegisterInput, _rememberMe?: boolean) => {
-      const { data } = await api.post<ApiResponse<LoginResponse>>('/auth/register', input);
-      if (!data.success || !data.data) {
-        throw new Error(data.message || 'Registration failed');
+      try {
+        const { data } = await api.post<ApiResponse<LoginResponse>>('/auth/register', input);
+        if (!data.success || !data.data) {
+          throw new Error(data.message || 'Registration failed');
+        }
+        setAuth(data.data.user, data.data.tokens);
+      } catch (err) {
+        throw new Error(getErrorMessage(err, 'Registration failed'));
       }
-      setAuth(data.data.user, data.data.tokens);
     },
     [setAuth]
   );

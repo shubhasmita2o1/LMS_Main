@@ -110,30 +110,18 @@ interface AuthState {
   hasRole: (...roles: string[]) => boolean;
 }
 
+function isRealToken(token: string | null | undefined): boolean {
+  if (!token) return false;
+  return !token.startsWith('demo-');
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      user: {
-        id: 'user-provost-1',
-        tenantId: 't-northridge',
-        email: 'provost@northridge.edu',
-        firstName: 'Dr. Elizabeth',
-        lastName: 'Vance',
-        roles: ['university_admin'],
-        permissions: [
-          { resource: 'university', action: 'manage' },
-          { resource: 'campus', action: 'manage' },
-          { resource: 'department', action: 'manage' },
-          { resource: 'student', action: 'manage' },
-          { resource: 'faculty', action: 'manage' },
-          { resource: 'course', action: 'manage' },
-          { resource: 'exam', action: 'manage' },
-          { resource: 'analytics', action: 'read' },
-        ],
-      },
-      accessToken: 'demo-access-token-enterprise',
-      refreshToken: 'demo-refresh-token-enterprise',
-      expiresAt: Date.now() + 86400000 * 30, // 30 days
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      expiresAt: null,
 
       setAuth: (user, tokens) =>
         set({
@@ -202,7 +190,7 @@ export const useAuthStore = create<AuthState>()(
 
       isAuthenticated: () => {
         const { accessToken, user } = get();
-        return Boolean(accessToken && user);
+        return Boolean(user && isRealToken(accessToken));
       },
 
       hasPermission: (resource, action) => {
@@ -222,7 +210,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'ulms-auth',
+      name: 'ul-auth-v2',
       partialize: (s) => ({
         user: s.user,
         accessToken: s.accessToken,
