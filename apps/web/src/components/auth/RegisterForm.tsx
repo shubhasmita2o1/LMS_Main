@@ -2,14 +2,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { Alert } from '../ui/Alert';
-import { Mail, Lock, User, UserPlus, Building, ChevronDown, ChevronUp } from 'lucide-react';
-import type { SystemRole } from '@university-lms/shared';
+import { Mail, Lock, User, UserPlus, Building2 } from 'lucide-react';
 
 const registerFormSchema = z
   .object({
@@ -27,17 +25,10 @@ const registerFormSchema = z
       .regex(/[A-Za-z]/, 'Must contain at least one letter')
       .regex(/[0-9]/, 'Must contain at least one number'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
-    role: z
-      .enum([
-        'tenant_admin',
-        'university_admin',
-        'faculty',
-        'student',
-        'staff',
-      ])
-      .optional(),
-    tenantId: z.string().optional(),
-    rememberMe: z.boolean().default(true),
+    organizationName: z.string().max(200).optional(),
+    acceptTerms: z.boolean().refine((v) => v === true, {
+      message: 'You must acknowledge the terms to continue',
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -47,10 +38,9 @@ const registerFormSchema = z
 type RegisterFormData = z.infer<typeof registerFormSchema>;
 
 export function RegisterForm() {
-  const { register: registerUser } = useAuth();
-  const navigate = useNavigate();
+  const { registerAccount } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const {
     register,
@@ -64,28 +54,23 @@ export function RegisterForm() {
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'tenant_admin',
-      tenantId: '',
-      rememberMe: true,
+      organizationName: '',
+      acceptTerms: false,
     },
   });
 
   const onSubmit = async (data: RegisterFormData) => {
     setErrorMessage(null);
+    setSuccessMessage(null);
     try {
-      await registerUser(
-        {
-          firstName: data.firstName.trim(),
-          lastName: data.lastName.trim(),
-          email: data.email.trim().toLowerCase(),
-          password: data.password,
-          role: data.role as SystemRole | undefined,
-          tenantId: data.tenantId?.trim() ? data.tenantId.trim() : null,
-        },
-        data.rememberMe
-      );
-
-      navigate('/dashboard', { replace: true });
+      const result = await registerAccount({
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+        organizationName: data.organizationName?.trim() || undefined,
+      });
+      setSuccessMessage(result.message);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -95,27 +80,33 @@ export function RegisterForm() {
     }
   };
 
-  const roleOptions = [
-    { value: 'tenant_admin', label: 'Tenant Administrator (Default)' },
-    { value: 'university_admin', label: 'University Administrator' },
-    { value: 'faculty', label: 'Faculty Member' },
-    { value: 'student', label: 'Student' },
-    { value: 'staff', label: 'Staff' },
-  ];
+  if (successMessage) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="success" title="Check your email">
+          {successMessage}
+        </Alert>
+        <p className="text-sm text-slate-600">
+          After you verify your email, an administrator must approve and activate your account
+          before you can sign in.
+        </p>
+        <div className="text-center text-sm text-slate-600">
+          <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700">
+            Back to sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       {errorMessage && (
-        <Alert
-          variant="error"
-          title="Registration failed"
-          onClose={() => setErrorMessage(null)}
-        >
+        <Alert variant="error" title="Registration failed" onClose={() => setErrorMessage(null)}>
           {errorMessage}
         </Alert>
       )}
 
-      {/* Name row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input
           label="First Name"
@@ -127,7 +118,6 @@ export function RegisterForm() {
           error={errors.firstName?.message}
           {...register('firstName')}
         />
-
         <Input
           label="Last Name"
           type="text"
@@ -140,7 +130,6 @@ export function RegisterForm() {
         />
       </div>
 
-      {/* Email input */}
       <Input
         label="Email Address"
         type="email"
@@ -152,7 +141,17 @@ export function RegisterForm() {
         {...register('email')}
       />
 
-      {/* Password inputs */}
+      <Input
+        label="Organization (optional)"
+        type="text"
+        autoComplete="organization"
+        placeholder="Your university or institution"
+        leftIcon={<Building2 className="w-4 h-4" />}
+        helperText="Shown to administrators during approval review. Does not bind a tenant automatically."
+        error={errors.organizationName?.message}
+        {...register('organizationName')}
+      />
+
       <Input
         label="Password"
         type="password"
@@ -176,57 +175,20 @@ export function RegisterForm() {
         {...register('confirmPassword')}
       />
 
-      {/* Advanced / Role Selection Accordion */}
-      <div>
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-primary-600 transition-colors focus:outline-none"
-        >
-          <Building className="w-3.5 h-3.5" />
-          <span>{showAdvanced ? 'Hide advanced settings' : 'Configure role & tenant (Bootstrap / Demo)'}</span>
-          {showAdvanced ? (
-            <ChevronUp className="w-3.5 h-3.5" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5" />
-          )}
-        </button>
+      <label className="flex items-start gap-2 cursor-pointer select-none text-sm text-slate-600">
+        <input
+          type="checkbox"
+          className="mt-1 w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+          {...register('acceptTerms')}
+        />
+        <span>
+          I understand that access requires email verification and administrator approval.
+        </span>
+      </label>
+      {errors.acceptTerms?.message && (
+        <p className="text-xs text-red-600">{errors.acceptTerms.message}</p>
+      )}
 
-        {showAdvanced && (
-          <div className="mt-2.5 p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-3">
-            <Select
-              label="Initial Role"
-              options={roleOptions}
-              helperText="Note: If this is the very first registered user in the database, the backend automatically grants super_admin bootstrap."
-              error={errors.role?.message}
-              {...register('role')}
-            />
-
-            <Input
-              label="Tenant ID (Optional)"
-              type="text"
-              placeholder="e.g. 507f1f77bcf86cd799439011"
-              helperText="Leave empty to auto-generate a demo tenant context"
-              error={errors.tenantId?.message}
-              {...register('tenantId')}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Remember me */}
-      <div className="flex items-center text-sm">
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
-            {...register('rememberMe')}
-          />
-          <span className="text-xs sm:text-sm text-slate-600">Keep me signed in</span>
-        </label>
-      </div>
-
-      {/* Submit button */}
       <Button
         type="submit"
         variant="primary"
@@ -238,7 +200,6 @@ export function RegisterForm() {
         Create your account
       </Button>
 
-      {/* Login redirect */}
       <div className="pt-2 text-center text-xs sm:text-sm text-slate-600">
         Already have an account?{' '}
         <Link

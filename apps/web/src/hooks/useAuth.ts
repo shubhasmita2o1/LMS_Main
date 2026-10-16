@@ -4,10 +4,6 @@ import api from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import type { AuthContextValue, RegisterInput, ApiResponse, LoginResponse, AuthUser } from '../types/auth';
 
-/**
- * Extract a user-facing message from API / axios errors.
- * Backend shape: { success: false, error: { code, message } }
- */
 function getErrorMessage(err: unknown, fallback: string): string {
   if (isAxiosError(err)) {
     const data = err.response?.data as
@@ -21,11 +17,14 @@ function getErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-/**
- * App-wide auth hook backed by Zustand authStore (persisted).
- * AuthProvider is not required — this matches LoginPage / ProtectedRoute.
- */
-export function useAuth(): AuthContextValue {
+export type RegisterResult = {
+  email: string;
+  message: string;
+};
+
+export function useAuth(): AuthContextValue & {
+  registerAccount: (input: RegisterInput & { organizationName?: string }) => Promise<RegisterResult>;
+} {
   const user = useAuthStore((s) => s.user);
   const setAuth = useAuthStore((s) => s.setAuth);
   const clearAuth = useAuthStore((s) => s.clearAuth);
@@ -50,19 +49,42 @@ export function useAuth(): AuthContextValue {
     [setAuth]
   );
 
-  const register = useCallback(
-    async (input: RegisterInput, _rememberMe?: boolean) => {
+  const registerAccount = useCallback(
+    async (input: RegisterInput & { organizationName?: string }) => {
       try {
-        const { data } = await api.post<ApiResponse<LoginResponse>>('/auth/register', input);
-        if (!data.success || !data.data) {
+        const payload = {
+          firstName: input.firstName,
+          lastName: input.lastName,
+          email: input.email,
+          password: input.password,
+          organizationName: input.organizationName,
+        };
+        const { data } = await api.post<ApiResponse<{ email: string; message: string }>>(
+          '/auth/register',
+          payload
+        );
+        if (!data.success) {
           throw new Error(data.message || 'Registration failed');
         }
-        setAuth(data.data.user, data.data.tokens);
+        return {
+          email: data.data?.email || input.email,
+          message:
+            data.data?.message ||
+            data.message ||
+            'Registration successful. Please verify your email.',
+        };
       } catch (err) {
         throw new Error(getErrorMessage(err, 'Registration failed'));
       }
     },
-    [setAuth]
+    []
+  );
+
+  const register = useCallback(
+    async (input: RegisterInput, _rememberMe?: boolean) => {
+      await registerAccount(input);
+    },
+    [registerAccount]
   );
 
   const logout = useCallback(async () => {
@@ -100,6 +122,7 @@ export function useAuth(): AuthContextValue {
     isLoading: false,
     login,
     register,
+    registerAccount,
     logout,
     logoutAll,
     refreshUser,

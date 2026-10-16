@@ -13,3 +13,5 @@ authRouter.post('/logout-all', authenticate, ctrl.logoutAll);
 authRouter.get('/me', authenticate, ctrl.me);
 authRouter.post('/forgot-password', authRateLimit, ctrl.forgotPassword);
 authRouter.post('/reset-password', authRateLimit, ctrl.resetPassword);
+authRouter.post('/verify-email', authRateLimit, ctrl.verifyEmail);
+authRouter.post('/resend-verification', authRateLimit, ctrl.resendVerification);

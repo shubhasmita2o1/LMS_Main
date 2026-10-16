@@ -1,6 +1,9 @@
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { SelectTenantPage } from './pages/SelectTenantPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TenantsPage } from './pages/tenants/TenantsPage';
@@ -121,6 +124,9 @@ export default function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/select-tenant" element={<SelectTenantPage />} />
 
       {/* Module 1: Executive Dashboard */}

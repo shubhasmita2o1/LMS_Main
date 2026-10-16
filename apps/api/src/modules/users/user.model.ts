@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import type { SystemRole, Permission, LoginHistoryEntry } from '@university-lms/shared';
 
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 export interface IRefreshToken {
   token: string;
   expiresAt: Date;
@@ -19,7 +21,15 @@ export interface IUser extends Document {
   permissions: Permission[];
   /** null for super_admin only */
   tenantId: Types.ObjectId | null;
+  /** Optional free-text org name from public registration (review only; does not bind tenant) */
+  organizationName?: string | null;
   isEmailVerified: boolean;
+  emailVerificationTokenHash?: string | null;
+  emailVerificationExpires?: Date | null;
+  approvalStatus: ApprovalStatus;
+  approvedBy?: Types.ObjectId | null;
+  approvedAt?: Date | null;
+  rejectionReason?: string | null;
   isActive: boolean;
   lastLoginAt?: Date;
   loginHistory: LoginHistoryEntry[];
@@ -28,7 +38,6 @@ export interface IUser extends Document {
   lockUntil?: Date | null;
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
-  emailVerificationToken?: string | null;
   isDeleted: boolean;
   deletedAt?: Date | null;
   createdAt: Date;
@@ -96,8 +105,20 @@ const UserSchema = new Schema<IUser>(
       default: null,
       index: true,
     },
+    organizationName: { type: String, default: null, trim: true, maxlength: 200 },
     isEmailVerified: { type: Boolean, default: false },
-    isActive: { type: Boolean, default: true },
+    emailVerificationTokenHash: { type: String, default: null, select: false },
+    emailVerificationExpires: { type: Date, default: null, select: false },
+    approvalStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+      index: true,
+    },
+    approvedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    approvedAt: { type: Date, default: null },
+    rejectionReason: { type: String, default: null, maxlength: 500 },
+    isActive: { type: Boolean, default: false },
     lastLoginAt: { type: Date },
     loginHistory: {
       type: [LoginHistorySchema],
@@ -112,7 +133,6 @@ const UserSchema = new Schema<IUser>(
     lockUntil: { type: Date, default: null },
     passwordResetToken: { type: String, default: null, select: false },
     passwordResetExpires: { type: Date, default: null, select: false },
-    emailVerificationToken: { type: String, default: null, select: false },
     isDeleted: { type: Boolean, default: false, index: true },
     deletedAt: { type: Date, default: null },
   },
@@ -124,7 +144,8 @@ const UserSchema = new Schema<IUser>(
         delete ret.refreshTokens;
         delete ret.passwordResetToken;
         delete ret.passwordResetExpires;
-        delete ret.emailVerificationToken;
+        delete ret.emailVerificationTokenHash;
+        delete ret.emailVerificationExpires;
         delete ret.__v;
         return ret;
       },
@@ -142,5 +163,6 @@ UserSchema.index(
 );
 UserSchema.index({ tenantId: 1, isDeleted: 1 });
 UserSchema.index({ 'refreshTokens.token': 1 });
+UserSchema.index({ approvalStatus: 1, isDeleted: 1 });
 
 export const User = mongoose.model<IUser>('User', UserSchema);

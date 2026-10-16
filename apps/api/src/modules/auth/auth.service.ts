@@ -21,6 +21,15 @@ import {
 import { AppError } from '../../middleware/errorHandler';
 import type { RegisterBody, LoginBody } from './auth.validation';
 import mongoose from 'mongoose';
+import { env } from '../../config/env';
+import {
+  sendEmail,
+  verificationEmailHtml,
+  passwordResetEmailHtml,
+} from '../../services/email.service';
+
+const EMAIL_VERIFY_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 function permissionsForRoles(roles: SystemRole[]): Permission[] {
   const set = new Map<string, Permission>();
@@ -55,7 +64,6 @@ function toAuthUser(user: IUser | Record<string, unknown>): AuthUser {
 }
 
 function parseRefreshExpiry(): Date {
-  // REFRESH_TOKEN_EXPIRES_IN is like "7d"
   const match = /^(\d+)([dhms])$/.exec(REFRESH_TOKEN_EXPIRES_IN);
   const now = Date.now();
   if (!match) return new Date(now + 7 * 24 * 60 * 60 * 1000);
@@ -72,79 +80,195 @@ function parseRefreshExpiry(): Date {
   return new Date(now + ms);
 }
 
+function hashToken(raw: string): string {
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+function generateSecureToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+/** Eligibility for issuing access/refresh tokens */
+export function assertLoginEligible(user: IUser): void {
+  if (user.isDeleted) {
+    throw new AppError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
+  }
+  if (user.lockUntil && user.lockUntil > new Date()) {
+    throw new AppError(423, 'Account temporarily locked. Try again later.', 'ACCOUNT_LOCKED');
+  }
+  if (!user.isEmailVerified) {
+    throw new AppError(
+      403,
+      'Please verify your email before signing in. Check your inbox for the verification link.',
+      'EMAIL_NOT_VERIFIED'
+    );
+  }
+  if (user.approvalStatus === 'pending') {
+    throw new AppError(
+      403,
+      'Your account is awaiting administrator approval.',
+      'APPROVAL_PENDING'
+    );
+  }
+  if (user.approvalStatus === 'rejected') {
+    throw new AppError(
+      403,
+      'Your registration was not approved. Contact your administrator for details.',
+      'APPROVAL_REJECTED'
+    );
+  }
+  if (!user.isActive) {
+    throw new AppError(403, 'Account is deactivated', 'ACCOUNT_INACTIVE');
+  }
+  if (user.approvalStatus !== 'approved') {
+    throw new AppError(403, 'Account is not approved for access', 'APPROVAL_PENDING');
+  }
+}
+
+/**
+ * Public registration — never creates super_admin, never trusts client role/tenantId,
+ * never issues tokens. Account is pending + unverified + inactive.
+ */
 export async function registerUser(
   input: RegisterBody,
-  meta: { ip?: string; userAgent?: string }
-): Promise<LoginResponse> {
-  const existingCount = await User.countDocuments({ isDeleted: false });
-  const isFirstUser = existingCount === 0;
-
-  let roles: SystemRole[];
-  let tenantId: mongoose.Types.ObjectId | null = null;
-
-  if (isFirstUser) {
-    // Bootstrap: first user becomes super_admin
-    roles = ['super_admin'];
-    tenantId = null;
-  } else {
-    // Controlled registration — only tenant_admin or similar when allowed
-    const requestedRole = (input.role || 'tenant_admin') as SystemRole;
-    if (requestedRole === 'super_admin') {
-      throw new AppError(403, 'Cannot self-register as super_admin', 'FORBIDDEN');
-    }
-    // For Phase 2: allow tenant_admin registration with optional tenantId
-    // (Phase 3 will gate this behind Super Admin / invite flow)
-    if (!['tenant_admin', 'university_admin', 'faculty', 'student', 'staff'].includes(requestedRole)) {
-      throw new AppError(400, 'Invalid role for registration', 'VALIDATION_ERROR');
-    }
-    roles = [requestedRole];
-    if (input.tenantId) {
-      if (!mongoose.Types.ObjectId.isValid(input.tenantId)) {
-        throw new AppError(400, 'Invalid tenantId', 'VALIDATION_ERROR');
-      }
-      tenantId = new mongoose.Types.ObjectId(input.tenantId);
-    } else {
-      // Generate a placeholder tenant ObjectId for demo tenant users (Phase 3 replaces with real Tenant)
-      tenantId = new mongoose.Types.ObjectId();
-    }
-  }
-
+  _meta: { ip?: string; userAgent?: string }
+): Promise<{ email: string; message: string }> {
   const email = input.email.toLowerCase().trim();
 
-  const conflict = await User.findOne({
+  // Global uniqueness for public registrations (no tenant yet)
+  const existing = await User.findOne({
     email,
-    tenantId: tenantId,
     isDeleted: false,
   });
-  if (conflict) {
+  if (existing) {
     throw new AppError(409, 'Email already registered', 'EMAIL_EXISTS');
   }
 
-  // Also block same email as existing super_admin
-  if (tenantId === null) {
-    const sa = await User.findOne({ email, tenantId: null, isDeleted: false });
-    if (sa) throw new AppError(409, 'Email already registered', 'EMAIL_EXISTS');
-  }
-
   const passwordHash = await hashPassword(input.password);
-  const permissions = permissionsForRoles(roles);
+  const rawVerifyToken = generateSecureToken();
+  const tokenHash = hashToken(rawVerifyToken);
 
   const user = await User.create({
     email,
     password: passwordHash,
-    firstName: input.firstName,
-    lastName: input.lastName,
-    roles,
-    permissions,
-    tenantId,
-    isEmailVerified: isFirstUser, // first user auto-verified
-    isActive: true,
+    firstName: input.firstName.trim(),
+    lastName: input.lastName.trim(),
+    roles: [], // assigned only on admin approval
+    permissions: [],
+    tenantId: null,
+    organizationName: input.organizationName?.trim() || null,
+    isEmailVerified: false,
+    emailVerificationTokenHash: tokenHash,
+    emailVerificationExpires: new Date(Date.now() + EMAIL_VERIFY_TTL_MS),
+    approvalStatus: 'pending',
+    approvedBy: null,
+    approvedAt: null,
+    rejectionReason: null,
+    isActive: false,
     loginHistory: [],
     refreshTokens: [],
   });
 
-  const tokens = await issueTokens(user, meta);
-  return { user: toAuthUser(user), tokens };
+  const verifyUrl = `${env.APP_URL.replace(/\/$/, '')}/verify-email?token=${rawVerifyToken}`;
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: 'Verify your University LMS email',
+      html: verificationEmailHtml({ firstName: user.firstName, verifyUrl }),
+      text: `Hi ${user.firstName}, verify your email: ${verifyUrl}`,
+    });
+  } catch (err) {
+    // In production without email config, surface failure; in dev sendEmail already logs
+    if (env.NODE_ENV === 'production' && env.EMAIL_PROVIDER_API_KEY) {
+      // roll back user so they can retry cleanly
+      await User.deleteOne({ _id: user._id });
+      throw new AppError(503, 'Unable to send verification email. Try again later.', 'EMAIL_SEND_FAILED');
+    }
+    // Dev without provider: email was logged; keep the user
+    if (env.NODE_ENV === 'production' && !env.EMAIL_PROVIDER_API_KEY) {
+      await User.deleteOne({ _id: user._id });
+      throw new AppError(503, 'Email provider not configured', 'EMAIL_SEND_FAILED');
+    }
+  }
+
+  return {
+    email,
+    message:
+      'Registration successful. Please check your email to verify your address. After verification, an administrator must approve your account before you can sign in.',
+  };
+}
+
+export async function verifyEmail(rawToken: string): Promise<{ message: string }> {
+  if (!rawToken?.trim()) {
+    throw new AppError(400, 'Verification token is required', 'VALIDATION_ERROR');
+  }
+  const tokenHash = hashToken(rawToken.trim());
+  const user = await User.findOne({
+    emailVerificationTokenHash: tokenHash,
+    isDeleted: false,
+  }).select('+emailVerificationTokenHash +emailVerificationExpires');
+
+  if (!user) {
+    throw new AppError(400, 'Invalid or expired verification link', 'INVALID_VERIFICATION_TOKEN');
+  }
+
+  if (!user.emailVerificationExpires || user.emailVerificationExpires < new Date()) {
+    throw new AppError(400, 'Verification link has expired. Request a new one.', 'VERIFICATION_EXPIRED');
+  }
+
+  if (user.isEmailVerified) {
+    // Idempotent success for already-verified
+    user.emailVerificationTokenHash = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+    return {
+      message:
+        'Email already verified. Your account is awaiting administrator approval before you can sign in.',
+    };
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationTokenHash = null;
+  user.emailVerificationExpires = null;
+  // approval and isActive remain pending / false
+  await user.save();
+
+  return {
+    message:
+      'Email verified successfully. Your account is awaiting administrator approval. You will be able to sign in once your account is approved and activated.',
+  };
+}
+
+export async function resendVerification(emailRaw: string): Promise<{ message: string }> {
+  const email = emailRaw.toLowerCase().trim();
+  const generic =
+    'If an account exists and requires verification, a new email has been sent.';
+
+  const user = await User.findOne({ email, isDeleted: false }).select(
+    '+emailVerificationTokenHash +emailVerificationExpires'
+  );
+  if (!user || user.isEmailVerified) {
+    return { message: generic };
+  }
+
+  const rawToken = generateSecureToken();
+  user.emailVerificationTokenHash = hashToken(rawToken);
+  user.emailVerificationExpires = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
+  await user.save();
+
+  const verifyUrl = `${env.APP_URL.replace(/\/$/, '')}/verify-email?token=${rawToken}`;
+  try {
+    await sendEmail({
+      to: email,
+      subject: 'Verify your University LMS email',
+      html: verificationEmailHtml({ firstName: user.firstName, verifyUrl }),
+      text: `Hi ${user.firstName}, verify your email: ${verifyUrl}`,
+    });
+  } catch {
+    // still return generic
+  }
+  return { message: generic };
 }
 
 export async function loginUser(
@@ -153,7 +277,6 @@ export async function loginUser(
 ): Promise<LoginResponse> {
   const email = input.email.toLowerCase().trim();
 
-  // Build query: if tenantId provided, scope; else try super_admin then any
   let user: IUser | null = null;
 
   if (input.tenantId && mongoose.Types.ObjectId.isValid(input.tenantId)) {
@@ -163,7 +286,6 @@ export async function loginUser(
       isDeleted: false,
     }).select('+password +refreshTokens');
   } else {
-    // Prefer super_admin (tenantId null), else first matching active user
     user = await User.findOne({
       email,
       tenantId: null,
@@ -178,7 +300,6 @@ export async function loginUser(
     }
   }
 
-  // Generic error — never reveal whether email exists
   const invalidCreds = () =>
     new AppError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
 
@@ -186,12 +307,9 @@ export async function loginUser(
     throw invalidCreds();
   }
 
+  // Lock check before password to avoid unnecessary work, but still generic for missing users
   if (user.lockUntil && user.lockUntil > new Date()) {
     throw new AppError(423, 'Account temporarily locked. Try again later.', 'ACCOUNT_LOCKED');
-  }
-
-  if (!user.isActive) {
-    throw new AppError(403, 'Account is deactivated', 'ACCOUNT_INACTIVE');
   }
 
   const valid = await comparePassword(input.password, user.password);
@@ -209,7 +327,9 @@ export async function loginUser(
     throw invalidCreds();
   }
 
-  // Success — reset lock
+  // Lifecycle gates (after password so we don't leak which accounts exist via verification-only errors for wrong emails)
+  assertLoginEligible(user);
+
   user.failedLoginAttempts = 0;
   user.lockUntil = null;
   user.lastLoginAt = new Date();
@@ -242,11 +362,8 @@ async function issueTokens(
   });
 
   const expiresAt = parseRefreshExpiry();
+  const tokenHash = hashToken(refreshToken);
 
-  // Store hashed refresh token for revocation capability
-  const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-
-  // Keep last 10 refresh tokens
   const existing = (user.refreshTokens || []).filter((t) => t.expiresAt > new Date());
   existing.push({
     token: tokenHash,
@@ -276,16 +393,24 @@ export async function refreshTokens(
     throw new AppError(401, 'Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
   }
 
-  const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+  const tokenHash = hashToken(refreshToken);
 
   const user = await User.findOne({
     _id: payload.sub,
     isDeleted: false,
-    isActive: true,
   }).select('+refreshTokens');
 
   if (!user) {
     throw new AppError(401, 'Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
+  }
+
+  try {
+    assertLoginEligible(user);
+  } catch (err) {
+    // Clear sessions if suspended/unapproved
+    user.refreshTokens = [];
+    await user.save();
+    throw err;
   }
 
   const stored = (user.refreshTokens || []).find(
@@ -295,22 +420,18 @@ export async function refreshTokens(
     throw new AppError(401, 'Refresh token revoked or expired', 'INVALID_REFRESH_TOKEN');
   }
 
-  // Rotate: remove old, issue new
   user.refreshTokens = (user.refreshTokens || []).filter((t) => t.token !== tokenHash);
   await user.save();
 
   return issueTokens(user, meta);
 }
 
-export async function logoutUser(
-  userId: string,
-  refreshToken?: string
-): Promise<void> {
+export async function logoutUser(userId: string, refreshToken?: string): Promise<void> {
   const user = await User.findById(userId).select('+refreshTokens');
   if (!user) return;
 
   if (refreshToken) {
-    const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    const tokenHash = hashToken(refreshToken);
     user.refreshTokens = (user.refreshTokens || []).filter((t) => t.token !== tokenHash);
   } else {
     user.refreshTokens = [];
@@ -324,13 +445,13 @@ export async function logoutAll(userId: string): Promise<void> {
 
 export async function getMe(userId: string): Promise<AuthUser> {
   const user = await User.findOne({ _id: userId, isDeleted: false });
-  if (!user || !user.isActive) {
+  if (!user) {
     throw new AppError(401, 'User not found', 'UNAUTHORIZED');
   }
+  assertLoginEligible(user);
   return toAuthUser(user);
 }
 
-/** Password reset — architecture ready (email mock) */
 export async function requestPasswordReset(
   email: string,
   tenantId?: string
@@ -344,26 +465,32 @@ export async function requestPasswordReset(
   }
 
   const user = await User.findOne(query).select('+passwordResetToken +passwordResetExpires');
-  // Always return same message
   const msg = 'If an account exists, a reset link has been sent.';
 
   if (!user) return { message: msg };
 
-  const raw = crypto.randomBytes(32).toString('hex');
-  user.passwordResetToken = crypto.createHash('sha256').update(raw).digest('hex');
-  user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1h
+  const raw = generateSecureToken();
+  user.passwordResetToken = hashToken(raw);
+  user.passwordResetExpires = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
   await user.save();
 
-  // Phase 2: log token for dev (replace with email service)
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[DEV] Password reset token for ${email}: ${raw}`);
+  const resetUrl = `${env.APP_URL.replace(/\/$/, '')}/reset-password?token=${raw}`;
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Reset your University LMS password',
+      html: passwordResetEmailHtml({ firstName: user.firstName, resetUrl }),
+      text: `Hi ${user.firstName}, reset your password: ${resetUrl}`,
+    });
+  } catch {
+    // generic response always
   }
 
   return { message: msg };
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
-  const hash = crypto.createHash('sha256').update(token).digest('hex');
+  const hash = hashToken(token);
   const user = await User.findOne({
     passwordResetToken: hash,
     passwordResetExpires: { $gt: new Date() },
@@ -377,6 +504,8 @@ export async function resetPassword(token: string, newPassword: string): Promise
   user.password = await hashPassword(newPassword);
   user.passwordResetToken = null;
   user.passwordResetExpires = null;
-  user.refreshTokens = []; // force re-login
+  user.refreshTokens = [];
+  user.failedLoginAttempts = 0;
+  user.lockUntil = null;
   await user.save();
 }

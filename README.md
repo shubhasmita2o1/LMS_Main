@@ -181,22 +181,26 @@ API version: `GET /api/v1` (reports phase/version)
 
 ## Auth & tenancy (quick reference)
 
-- **Access token:** short-lived JWT (`sub`, `tenantId`, `roles`, `type`)
-- **Refresh token:** longer-lived, stored hashed, rotatable / revocable
-- Tenant users send `Authorization: Bearer …` and typically `x-tenant-id`
-- Super Admin may omit tenant or pass `x-tenant-id` to scope
-- Permissions: resource + action (`manage` implies all actions on that resource)
-- Resources include `assignment`, `quiz`, `question`, `course`, `student`, `faculty`, …
-- **Bootstrap:** the first successful `POST /auth/register` on an empty users collection becomes `super_admin`. Later self-registration cannot choose `super_admin`.
-- Frontend auth persist key is `ul-auth-v2`. Demo/hardcoded tokens are rejected by `isAuthenticated`.
+Production lifecycle: **Register → Email verify → Admin approve (+ role/tenant) → Activate → Login**.
 
-### Demo users (seed)
+### Hard rules
+- Public `POST /auth/register` never creates `super_admin`, never trusts client `role`/`tenantId`, never issues tokens.
+- New accounts: `isEmailVerified=false`, `approvalStatus=pending`, `isActive=false`.
+- Login requires verified email + approved + active + not locked.
+- Super Admin only via `npm run seed:bootstrap-sa` or `seed:users` (controlled tooling).
+- Frontend persist key `ul-auth-v2`; tokens starting with `demo-` are not authenticated.
+- Demo login autofill only when `import.meta.env.DEV && VITE_ENABLE_DEMO_LOGIN==="true"`.
 
-From the API workspace (requires MongoDB):
+### Email
+- `EMAIL_PROVIDER_API_KEY` (Resend), `EMAIL_FROM`, `APP_URL`
+- Without API key in development: `[DEV MAIL]` log with link (no production tokens logged).
+
+### Demo / bootstrap users
 
 ```bash
 cd apps/api && npm run seed:users
-# equivalent: npx tsx src/scripts/seedDemoUsers.ts
+# Super Admin bootstrap (does not wipe other SAs):
+BOOTSTRAP_SA_EMAIL=admin@example.com BOOTSTRAP_SA_PASSWORD='StrongPass1' npm run seed:bootstrap-sa
 ```
 
 | Role | Email | Password |
@@ -206,7 +210,13 @@ cd apps/api && npm run seed:users
 | Faculty | `prof.jenkins@stanford.edu` | `Password123!` |
 | Student | `alex.rivera@stanford.edu` | `Password123!` |
 
-Login UI “Quick Demo Autofill” uses the same credentials. Web calls API via `VITE_API_URL` or the Vite proxy (`/api` → `http://localhost:4000`).
+Seeded users are verified + approved + active.
+
+### Admin approval APIs
+- `GET /api/v1/users?approvalStatus=pending` — list pending
+- `POST /api/v1/users/:id/approve` — body `{ role, tenantId?, activate }` (RBAC `user:manage`)
+- `POST /api/v1/users/:id/reject` — body `{ reason? }`
+- `PATCH /api/v1/users/:id/active` — body `{ isActive }`
 
 ### Example login
 
@@ -215,8 +225,6 @@ curl -s -X POST http://localhost:4000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"admin@university.edu","password":"Password123!"}'
 ```
-
----
 
 ## Security baseline
 
