@@ -43,7 +43,23 @@ function permissionsForRoles(roles: SystemRole[]): Permission[] {
   return Array.from(set.values());
 }
 
-function mapUser(u: Record<string, unknown>) {
+function mapUser(u: {
+  _id?: unknown;
+  email?: unknown;
+  firstName?: unknown;
+  lastName?: unknown;
+  roles?: unknown;
+  tenantId?: unknown;
+  organizationName?: unknown;
+  isActive?: unknown;
+  isEmailVerified?: unknown;
+  approvalStatus?: unknown;
+  approvedAt?: unknown;
+  rejectionReason?: unknown;
+  lastLoginAt?: unknown;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}) {
   return {
     id: String(u._id),
     email: u.email,
@@ -113,7 +129,7 @@ export async function listUsers(req: Request, res: Response, next: NextFunction)
 
     res.status(200).json({
       success: true,
-      data: items.map((u) => mapUser(u as Record<string, unknown>)),
+      data: items.map((u) => mapUser(u)),
       meta: {
         page: query.page,
         limit: query.limit,
@@ -159,7 +175,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     res.status(200).json({
       success: true,
       data: {
-        ...mapUser(user as Record<string, unknown>),
+        ...mapUser(user),
         permissions: user.permissions,
       },
     });
@@ -233,7 +249,7 @@ export async function approveUser(req: Request, res: Response, next: NextFunctio
 
     res.status(200).json({
       success: true,
-      data: mapUser(user.toObject() as Record<string, unknown>),
+      data: mapUser(user.toObject()),
       message: 'User approved',
     });
   } catch (err) {
@@ -282,7 +298,7 @@ export async function rejectUser(req: Request, res: Response, next: NextFunction
 
     res.status(200).json({
       success: true,
-      data: mapUser(user.toObject() as Record<string, unknown>),
+      data: mapUser(user.toObject()),
       message: 'User rejected',
     });
   } catch (err) {
@@ -336,7 +352,7 @@ export async function setUserActive(req: Request, res: Response, next: NextFunct
 
     res.status(200).json({
       success: true,
-      data: mapUser(user.toObject() as Record<string, unknown>),
+      data: mapUser(user.toObject()),
       message: body.isActive ? 'User activated' : 'User deactivated',
     });
   } catch (err) {
