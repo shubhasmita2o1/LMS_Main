@@ -22,27 +22,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          # cache disabled — corrupted npm cache can trigger exit-handler crashes
+          cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          set -e
-          npm install -g npm@10.9.2
-          export NODE_OPTIONS=--max-old-space-size=4096
-          # Prefer a clean install; tolerate npm exit-handler bug if packages landed
-          npm install --no-audit --no-fund --no-prefer-offline || echo "npm install exited non-zero; checking packages..."
-          # Ensure critical packages exist (recover if install was incomplete)
-          if [ ! -f node_modules/vite/package.json ]; then
-            echo "vite missing — installing explicitly"
-            npm install vite@5.4.8 @vitejs/plugin-react@4.3.2 -w @university-lms/web --no-audit --no-fund --save-dev
-          fi
-          if [ ! -f node_modules/typescript/package.json ]; then
-            npm install typescript@5.6.3 -w @university-lms/web -w @university-lms/api -w @university-lms/shared --no-audit --no-fund --save-dev
-          fi
-          test -f node_modules/vite/package.json
-          test -f node_modules/typescript/package.json
-          ls -la node_modules/.bin/vite || ls -la node_modules/vite/bin/vite.js
-          echo "Install OK"
+        run: npm ci
 
       - name: Build shared package
         run: npm run build -w @university-lms/shared
