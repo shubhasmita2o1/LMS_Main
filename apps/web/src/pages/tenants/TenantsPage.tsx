@@ -222,10 +222,10 @@ export function TenantsPage() {
                 key={cat}
                 type="button"
                 onClick={() => setTypeFilter(cat)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition shadow-xs ${
                   typeFilter === cat
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                    ? 'bg-[#165239] text-white border border-[#165239]'
+                    : 'bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50'
                 }`}
               >
                 {cat}

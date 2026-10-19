@@ -407,8 +407,63 @@ export function DashboardPage() {
             </div>
           </div>
 
-          {/* Card C: Institutional Priorities (Donezo Project list) */}
-          <div className="lg:col-span-4 bg-white rounded-[26px] p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          {/* Card C: Campus Session Clock (Moved ABOVE for immediate visibility) */}
+          <div className="lg:col-span-4 bg-gradient-to-br from-[#12422e] via-[#0d3624] to-[#082217] text-white rounded-[26px] p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
+            {/* Soft background waveform / radial decorative shape */}
+            <div className="absolute right-0 bottom-0 w-44 h-44 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
+
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-emerald-200/90 tracking-wide uppercase">
+                  Campus Session Clock
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-white/10 text-emerald-200 text-[10px] font-bold">
+                  Period 3 Active
+                </span>
+              </div>
+              <p className="text-[11px] text-emerald-100/70 mt-1">
+                Synchronized with Central University Bell
+              </p>
+            </div>
+
+            {/* Large Digital Clock Display */}
+            <div className="my-5 text-center">
+              <div className="text-4xl sm:text-5xl font-mono font-extrabold tracking-wider text-white drop-shadow-sm">
+                {clockTime}
+              </div>
+              <p className="text-xs text-emerald-300 mt-2 font-medium">
+                Next Bell in 38 mins (Lunch Break)
+              </p>
+            </div>
+
+            {/* Media / Timer Controls matching Donezo Widget */}
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsClockRunning(!isClockRunning)}
+                className="w-11 h-11 rounded-full bg-white text-[#165239] hover:bg-emerald-50 flex items-center justify-center shadow-md transition"
+                title={isClockRunning ? 'Pause Clock' : 'Resume Clock'}
+              >
+                {isClockRunning ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setClockTime(new Date().toLocaleTimeString('en-GB'))}
+                className="w-11 h-11 rounded-full bg-[#ef4444] text-white hover:bg-[#dc2626] flex items-center justify-center shadow-md transition"
+                title="Sync Time"
+              >
+                <Square className="w-4 h-4 fill-current" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* BOTTOM SECTION: 3 CARDS (Priorities, Progress, Leadership) */}
+        {/* ========================================================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Card A: Institutional Priorities */}
+          <div className="lg:col-span-5 bg-white rounded-[26px] p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-slate-900">
@@ -455,76 +510,8 @@ export function DashboardPage() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* ========================================================= */}
-        {/* BOTTOM SECTION: 3 CARDS (Team, Progress, Time Tracker)   */}
-        {/* ========================================================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Card A: Department Leadership (Donezo Team Collaboration) */}
-          <div className="lg:col-span-5 bg-white rounded-[26px] p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Department Leadership
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => navigate('/faculty')}
-                  className="px-3 py-1 rounded-full border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  + Add Member
-                </button>
-              </div>
-
-              <div className="space-y-3.5">
-                {LEADERSHIP_MEMBERS.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={member.avatar}
-                        alt={member.name}
-                        className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-slate-900 truncate">
-                          {member.name}
-                        </h4>
-                        <p className="text-[10px] text-slate-500 truncate">
-                          {member.task}
-                        </p>
-                      </div>
-                    </div>
-
-                    <span
-                      className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 ${
-                        member.statusVariant === 'success'
-                          ? 'bg-emerald-50 text-[#165239] border border-emerald-200/60'
-                          : member.statusVariant === 'warning'
-                          ? 'bg-amber-50 text-amber-800 border border-amber-200/60'
-                          : 'bg-rose-50 text-rose-700 border border-rose-200/60'
-                      }`}
-                    >
-                      {member.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span>Dean Council Active</span>
-              <button
-                type="button"
-                onClick={() => navigate('/users')}
-                className="font-bold text-[#165239] hover:underline"
-              >
-                Directory →
-              </button>
-            </div>
-          </div>
-
-          {/* Card B: Project Progress Radial Gauge (Donezo Project Progress) */}
+          {/* Card B: Project Progress Radial Gauge */}
           <div className="lg:col-span-3 bg-white rounded-[26px] p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900">
@@ -596,52 +583,65 @@ export function DashboardPage() {
             </div>
           </div>
 
-          {/* Card C: Time Tracker (Donezo Dark Green Texture Card) */}
-          <div className="lg:col-span-4 bg-gradient-to-br from-[#12422e] via-[#0d3624] to-[#082217] text-white rounded-[26px] p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
-            {/* Soft background waveform / radial decorative shape */}
-            <div className="absolute right-0 bottom-0 w-44 h-44 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
-
+          {/* Card C: Department Leadership */}
+          <div className="lg:col-span-4 bg-white rounded-[26px] p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-emerald-200/90 tracking-wide uppercase">
-                  Campus Session Clock
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-white/10 text-emerald-200 text-[10px] font-bold">
-                  Period 3 Active
-                </span>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Department Leadership
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => navigate('/faculty')}
+                  className="px-3 py-1 rounded-full border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  + Add Member
+                </button>
               </div>
-              <p className="text-[11px] text-emerald-100/70 mt-1">
-                Synchronized with Central University Bell
-              </p>
+
+              <div className="space-y-3.5">
+                {LEADERSHIP_MEMBERS.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={member.avatar}
+                        alt={member.name}
+                        className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-slate-900 truncate">
+                          {member.name}
+                        </h4>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {member.task}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 ${
+                        member.statusVariant === 'success'
+                          ? 'bg-emerald-50 text-[#165239] border border-emerald-200/60'
+                          : member.statusVariant === 'warning'
+                          ? 'bg-amber-50 text-amber-800 border border-amber-200/60'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200/60'
+                      }`}
+                    >
+                      {member.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Large Digital Clock Display */}
-            <div className="my-5 text-center">
-              <div className="text-4xl sm:text-5xl font-mono font-extrabold tracking-wider text-white drop-shadow-sm">
-                {clockTime}
-              </div>
-              <p className="text-xs text-emerald-300 mt-2 font-medium">
-                Next Bell in 38 mins (Lunch Break)
-              </p>
-            </div>
-
-            {/* Media / Timer Controls matching Donezo Widget */}
-            <div className="flex items-center justify-center gap-4 pt-2">
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span>Dean Council Active</span>
               <button
                 type="button"
-                onClick={() => setIsClockRunning(!isClockRunning)}
-                className="w-11 h-11 rounded-full bg-white text-[#165239] hover:bg-emerald-50 flex items-center justify-center shadow-md transition"
-                title={isClockRunning ? 'Pause Clock' : 'Resume Clock'}
+                onClick={() => navigate('/users')}
+                className="font-bold text-[#165239] hover:underline"
               >
-                {isClockRunning ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
-              </button>
-              <button
-                type="button"
-                onClick={() => setClockTime(new Date().toLocaleTimeString('en-GB'))}
-                className="w-11 h-11 rounded-full bg-[#ef4444] text-white hover:bg-[#dc2626] flex items-center justify-center shadow-md transition"
-                title="Sync Time"
-              >
-                <Square className="w-4 h-4 fill-current" />
+                Directory →
               </button>
             </div>
           </div>

@@ -162,12 +162,12 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-[26px] border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
       {/* Table Toolbar */}
-      <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="p-4 border-b border-slate-100/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 max-w-md">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
@@ -176,16 +176,16 @@ export function DataTable<T extends Record<string, any>>({
                 setCurrentPage(1);
               }}
               placeholder={searchPlaceholder}
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+              className="w-full pl-9 pr-4 py-2 rounded-full border border-slate-200/80 bg-slate-50/70 hover:bg-white text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-600 transition shadow-2xs"
             />
           </div>
           {filterComponent && (
             <button
               type="button"
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition ${
+              className={`px-3 py-2 rounded-full border text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs ${
                 isFilterOpen
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
+                  ? 'border-primary-600 bg-primary-50 text-primary-800'
                   : 'border-slate-200 hover:bg-slate-50 text-slate-600'
               }`}
             >
@@ -202,7 +202,7 @@ export function DataTable<T extends Record<string, any>>({
             type="button"
             onClick={exportToCSV}
             title="Export CSV"
-            className="px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition"
+            className="px-4 py-2 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs"
           >
             <Download className="w-3.5 h-3.5" />
             <span className="hidden md:inline">
@@ -213,7 +213,7 @@ export function DataTable<T extends Record<string, any>>({
             type="button"
             onClick={handlePrint}
             title="Print View"
-            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center transition"
+            className="p-2 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center transition shadow-2xs"
           >
             <Printer className="w-4 h-4" />
           </button>
