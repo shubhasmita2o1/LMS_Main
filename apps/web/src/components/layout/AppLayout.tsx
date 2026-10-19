@@ -179,7 +179,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased selection:bg-primary-500 selection:text-white">
+    <div className="min-h-screen bg-[#f5f6f7] text-slate-900 flex flex-col antialiased selection:bg-primary-700 selection:text-white">
       {/* Modals & Drawers */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <NotificationDrawer isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
@@ -381,69 +381,69 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             <button
               type="button"
               onClick={() => setIsSearchOpen(true)}
-              className="w-full pl-3.5 pr-2 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-left text-xs text-slate-400 flex items-center justify-between transition group"
+              className="w-full pl-4 pr-3 py-2 rounded-full border border-slate-200/80 bg-slate-50/70 hover:bg-white hover:border-slate-300 text-left text-xs text-slate-400 flex items-center justify-between transition group shadow-2xs"
             >
-              <div className="flex items-center gap-2">
-                <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-600 transition" />
-                <span>Search students, faculty, courses, modules...</span>
+              <div className="flex items-center gap-2.5">
+                <Search className="w-4 h-4 text-slate-400 group-hover:text-primary-700 transition" />
+                <span className="text-slate-500 font-medium">Search tasks, metrics, or departments...</span>
               </div>
-              <kbd className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-mono text-slate-500 shadow-2xs">
+              <kbd className="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-[10px] font-mono text-slate-500 shadow-2xs">
                 ⌘K
               </kbd>
             </button>
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             {/* Quick Action Button */}
             <button
               type="button"
               onClick={() => setIsQuickActionOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm shadow-primary-500/20 transition"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-primary-700 hover:bg-primary-800 text-white text-xs font-semibold shadow-xs transition"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Quick Create</span>
-            </button>
-
-            {/* Theme Toggle */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
 
             {/* Notification Center */}
             <button
               type="button"
               onClick={() => setIsNotificationsOpen(true)}
-              className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
+              className="relative w-9 h-9 rounded-full border border-slate-200/80 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-slate-900 transition shadow-2xs"
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary-600 ring-2 ring-white" />
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-full border border-slate-200/80 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 transition shadow-2xs"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
 
             {/* User Profile & Role Switcher */}
-            <div className="relative pl-2 border-l border-slate-200">
+            <div className="relative pl-1 sm:pl-2 border-l border-slate-200">
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 py-1 px-1.5 rounded-xl hover:bg-slate-100 transition text-left"
+                className="flex items-center gap-2.5 py-1 px-1.5 sm:px-2 rounded-full hover:bg-slate-100 transition text-left"
               >
                 <img
                   src={rolePersona.avatar}
                   alt={rolePersona.name}
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-primary-500/30"
+                  className="w-9 h-9 rounded-full object-cover ring-2 ring-primary-700/20"
                 />
                 <div className="hidden lg:block text-left">
                   <div className="text-xs font-bold text-slate-900 leading-tight">
                     {rolePersona.name}
                   </div>
-                  <div className="text-[10px] font-semibold text-primary-600 uppercase tracking-wider">
-                    {rolePersona.label}
+                  <div className="text-[10px] font-medium text-slate-400">
+                    {rolePersona.email || `${rolePersona.role}@university.edu`}
                   </div>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden lg:block" />
@@ -567,6 +567,30 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
               </div>
             ))}
           </div>
+
+          {/* Donezo-style Mobile App Mini Card */}
+          {!sidebarCollapsed && (
+            <div className="px-3 pb-2">
+              <div className="rounded-2xl bg-gradient-to-br from-[#165239] via-[#11402c] to-[#0a271b] text-white p-4 relative overflow-hidden shadow-sm">
+                <div className="relative z-10">
+                  <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center mb-2.5">
+                    <GraduationCap className="w-4 h-4 text-emerald-300" />
+                  </div>
+                  <h4 className="text-xs font-bold leading-tight">Download our Mobile App</h4>
+                  <p className="text-[10px] text-emerald-200/80 mt-1 leading-relaxed">
+                    Get quick mobile access to LMS & campus alerts
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickActionOpen(true)}
+                    className="mt-3 w-full py-1.5 px-3 rounded-full bg-[#247c59] hover:bg-[#2e9c70] text-[11px] font-bold text-white transition text-center shadow-xs"
+                  >
+                    Quick Portal
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Sidebar Collapse Toggle */}
           <div className="p-3 border-t border-slate-200 flex items-center justify-between bg-slate-50/50">
