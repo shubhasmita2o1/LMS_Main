@@ -161,11 +161,11 @@ export function UserManagementPage() {
         )}
 
         {loading ? (
-          <div className="p-8 text-center text-slate-400 text-xs font-medium bg-white rounded-[26px] border border-slate-200/80 shadow-xs">
+          <div className="p-8 text-center text-slate-400 text-xs font-medium bg-white rounded-3xl border border-slate-200/70 shadow-card">
             Loading university user directory…
           </div>
         ) : (
-          <div className="bg-white rounded-[26px] border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-200/70 shadow-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50/80 border-b border-slate-200/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">

@@ -10,7 +10,7 @@ export interface KpiCardProps {
   change?: ReactNode;
   trend?: 'up' | 'down' | 'neutral' | string;
   subtitle?: string;
-  variant?: 'primary' | 'default';
+  variant?: 'primary' | 'emphasis' | 'default';
   icon?: any;
   to?: string;
   badge?: ReactNode;
@@ -33,7 +33,7 @@ export function KpiCard({
   badgeVariant = 'warning',
   className = '',
 }: KpiCardProps) {
-  const isPrimary = variant === 'primary';
+  const isPrimary = variant === 'primary' || variant === 'emphasis';
   const displayTitle = label || title || '';
   const resolvedHint =
     hint ||
@@ -78,11 +78,11 @@ export function KpiCard({
         <div
           className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
             isPrimary
-              ? 'bg-white/15 text-white backdrop-blur-sm'
-              : 'border border-slate-200 text-slate-500 bg-slate-50/50'
+              ? 'bg-white text-[#165239] shadow-xs'
+              : 'border border-slate-200 text-slate-500 bg-white hover:bg-slate-50 shadow-2xs'
           }`}
         >
-          <ArrowUpRight className="w-4 h-4" />
+          <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
         </div>
       </div>
 
