@@ -8,9 +8,18 @@ import { SelectTenantPage } from './pages/SelectTenantPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TenantsPage } from './pages/tenants/TenantsPage';
 import { AcademicHierarchyPage } from './pages/academic/AcademicHierarchyPage';
-import { StudentsPage } from './pages/students/StudentsPage';
-import { FacultyPage } from './pages/faculty/FacultyPage';
-import { CurriculumPage } from './pages/courses/CurriculumPage';
+import { StudentsListPage } from './pages/students/StudentsListPage';
+import { StudentDetailPage } from './pages/students/StudentDetailPage';
+import { StudentFormPage } from './pages/students/StudentFormPage';
+import { StudentMePage } from './pages/students/StudentMePage';
+import { FacultyListPage } from './pages/faculty/FacultyListPage';
+import { FacultyDetailPage } from './pages/faculty/FacultyDetailPage';
+import { FacultyFormPage } from './pages/faculty/FacultyFormPage';
+import { FacultyMePage } from './pages/faculty/FacultyMePage';
+import { CoursesListPage } from './pages/courses/CoursesListPage';
+import { CourseDetailPage } from './pages/courses/CourseDetailPage';
+import { CourseFormPage } from './pages/courses/CourseFormPage';
+import { ProfilePage } from './pages/profile/ProfilePage';
 // Phase 8–10 functional pages
 import { MyCoursesPage } from './pages/learn/MyCoursesPage';
 import { CourseLearnPage } from './pages/learn/CourseLearnPage';
@@ -82,7 +91,7 @@ function HomePage() {
                 to="/login"
                 className="inline-flex items-center px-6 py-3 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 transition shadow-sm"
               >
-                Sign In / 1-Click Demo Personas →
+                Sign In →
               </Link>
               <Link
                 to="/select-tenant"
@@ -129,6 +138,9 @@ export default function App() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/select-tenant" element={<SelectTenantPage />} />
 
+      {/* Profile */}
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
       {/* Module 1: Executive Dashboard */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
 
@@ -140,14 +152,25 @@ export default function App() {
       <Route path="/academic" element={<ProtectedRoute><AcademicHierarchyPage /></ProtectedRoute>} />
 
       {/* Module 4: Student Information System (SIS) */}
-      <Route path="/students" element={<ProtectedRoute><StudentsPage /></ProtectedRoute>} />
+      <Route path="/students" element={<ProtectedRoute><StudentsListPage /></ProtectedRoute>} />
+      <Route path="/students/me" element={<ProtectedRoute><StudentMePage /></ProtectedRoute>} />
+      <Route path="/students/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><StudentFormPage /></ProtectedRoute>} />
+      <Route path="/students/:id" element={<ProtectedRoute><StudentDetailPage /></ProtectedRoute>} />
+      <Route path="/students/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><StudentFormPage /></ProtectedRoute>} />
 
       {/* Module 5: Faculty Management & Workload */}
-      <Route path="/faculty" element={<ProtectedRoute><FacultyPage /></ProtectedRoute>} />
+      <Route path="/faculty" element={<ProtectedRoute><FacultyListPage /></ProtectedRoute>} />
+      <Route path="/faculty/me" element={<ProtectedRoute><FacultyMePage /></ProtectedRoute>} />
+      <Route path="/faculty/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><FacultyFormPage /></ProtectedRoute>} />
+      <Route path="/faculty/:id" element={<ProtectedRoute><FacultyDetailPage /></ProtectedRoute>} />
+      <Route path="/faculty/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><FacultyFormPage /></ProtectedRoute>} />
 
       {/* Module 6: Curriculum, Syllabi & OBE CO-PO Mapping */}
-      <Route path="/courses" element={<ProtectedRoute><CurriculumPage /></ProtectedRoute>} />
-      <Route path="/curriculum" element={<ProtectedRoute><CurriculumPage /></ProtectedRoute>} />
+      <Route path="/courses" element={<ProtectedRoute><CoursesListPage /></ProtectedRoute>} />
+      <Route path="/curriculum" element={<ProtectedRoute><CoursesListPage /></ProtectedRoute>} />
+      <Route path="/courses/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><CourseFormPage /></ProtectedRoute>} />
+      <Route path="/courses/:id" element={<ProtectedRoute><CourseDetailPage /></ProtectedRoute>} />
+      <Route path="/courses/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><CourseFormPage /></ProtectedRoute>} />
 
       {/* Module 7: Core LMS Theory & Lesson Viewer */}
       <Route path="/learn" element={<ProtectedRoute><LmsLearningPage /></ProtectedRoute>} />

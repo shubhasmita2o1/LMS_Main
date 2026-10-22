@@ -105,73 +105,180 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
     navigate('/login');
   };
 
-  const currentRole = user?.roles[0] || 'university_admin';
-  const rolePersona = DEMO_PERSONAS.find((p) => p.role === currentRole) || DEMO_PERSONAS[1];
+  const isStudent = user?.roles?.includes('student') && !user?.roles?.some(r => ['faculty', 'tenant_admin', 'university_admin', 'super_admin'].includes(r));
+  const isFaculty = user?.roles?.includes('faculty');
+
+  const DEMO_MODE = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true';
+  const SHOW_FUTURE_NAV = import.meta.env.VITE_SHOW_FUTURE_NAV === 'true';
 
   const tenantCampuses = getCampusesForTenant(currentTenant.id);
 
-  // Dynamic ERP Sidebar Navigation Groups
-  const navigationGroups: NavGroup[] = [
-    {
-      groupName: 'Core Operations',
-      items: [
-        { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { to: '/reports', label: 'Accreditation & Analytics', icon: BarChart3, badge: 'NAAC' },
-        { to: '/communication', label: 'Communication Hub', icon: Megaphone, badge: 3 },
-      ],
-    },
-    {
-      groupName: 'Organization',
-      items: [
-        { to: '/tenants', label: 'Tenants / Universities', icon: Building },
-        { to: '/academic', label: 'Campuses & Hierarchy', icon: Layers },
-      ],
-    },
-    {
-      groupName: 'Academic Community',
-      items: [
-        { to: '/students', label: 'Student SIS', icon: Users, badge: 14820 },
-        { to: '/faculty', label: 'Faculty Management', icon: UserCheck, badge: 840 },
-        { to: '/admissions', label: 'Admissions & Intake', icon: UserPlus, badge: 12, badgeVariant: 'warning' },
-      ],
-    },
-    {
-      groupName: 'Curriculum & Learning',
-      items: [
-        { to: '/courses', label: 'Curriculum & Syllabus', icon: BookOpen },
-        { to: '/learn', label: 'Core LMS (Theory)', icon: PlayCircle },
-        { to: '/labs', label: 'Practical & Virtual Labs', icon: FlaskConical },
-      ],
-    },
-    {
-      groupName: 'Evaluation & Exam',
-      items: [
-        { to: '/assessments', label: 'Assessments & Quizzes', icon: FileCheck2, badge: 4 },
-        { to: '/examinations', label: 'Examinations & Seating', icon: CalendarDays },
-        { to: '/attendance', label: 'Attendance Register', icon: CalendarCheck2 },
-        { to: '/results', label: 'Results & Gradebook', icon: Award },
-      ],
-    },
-    {
-      groupName: 'Campus Services',
-      items: [
-        { to: '/finance', label: 'Finance & Fees', icon: CreditCard, badge: 'Overdue', badgeVariant: 'danger' },
-        { to: '/library', label: 'Library Management', icon: Library },
-        { to: '/placement', label: 'Placement & Careers', icon: Briefcase, badge: 'Active' },
-        { to: '/documents', label: 'Documents & Certificates', icon: FileText },
-      ],
-    },
-    {
-      groupName: 'Governance & Admin',
-      items: [
-        { to: '/users', label: 'User Directory', icon: Users },
-        { to: '/roles', label: 'Roles & RBAC Matrix', icon: ShieldCheck },
-        { to: '/audit', label: 'Audit Trail & Compliance', icon: ShieldAlert },
-        { to: '/settings', label: 'System Settings', icon: Settings },
-        { to: '/support', label: 'Helpdesk & Support', icon: LifeBuoy, badge: 3 },
-      ],
-    },
-  ];
+  // Role-Aware Navigation
+  const navigationGroups: NavGroup[] = (() => {
+    const roles = user?.roles || [];
+    const groups: NavGroup[] = [];
+
+    if (roles.includes('super_admin')) {
+      groups.push({
+        groupName: 'Platform Governance',
+        items: [
+          { to: '/dashboard', label: 'Platform Dashboard', icon: LayoutDashboard },
+          { to: '/tenants', label: 'Tenants / Universities', icon: Building },
+          { to: '/users', label: 'Users & Approvals', icon: Users },
+          { to: '/roles', label: 'Roles & RBAC Matrix', icon: ShieldCheck },
+          { to: '/audit', label: 'Audit Trail', icon: ShieldAlert },
+          { to: '/settings', label: 'Platform Settings', icon: Settings },
+          { to: '/support', label: 'Support & Helpdesk', icon: LifeBuoy },
+        ],
+      });
+    } else if (roles.includes('tenant_admin') || roles.includes('university_admin')) {
+      groups.push(
+        {
+          groupName: 'Overview',
+          items: [{ to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }],
+        },
+        {
+          groupName: 'Academic Community',
+          items: [
+            { to: '/academic', label: 'Campuses & Hierarchy', icon: Layers },
+            { to: '/students', label: 'Student SIS', icon: Users },
+            { to: '/faculty', label: 'Faculty Management', icon: UserCheck },
+            { to: '/courses', label: 'Curriculum & Courses', icon: BookOpen },
+          ],
+        },
+        {
+          groupName: 'Teaching & Evaluation',
+          items: [
+            { to: '/learn', label: 'Core LMS (Theory)', icon: PlayCircle },
+            { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
+            { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
+            { to: '/quizzes', label: 'Quizzes & Tests', icon: Award },
+            { to: '/attendance', label: 'Attendance Register', icon: CalendarCheck2 },
+            { to: '/gradebook', label: 'Gradebook & Results', icon: Award },
+          ],
+        },
+        {
+          groupName: 'Governance',
+          items: [
+            { to: '/users', label: 'User Directory & Approvals', icon: Users },
+            { to: '/roles', label: 'Roles & Permissions', icon: ShieldCheck },
+            { to: '/settings', label: 'Tenant Settings', icon: Settings },
+          ],
+        }
+      );
+    } else if (roles.includes('department_head')) {
+      groups.push(
+        {
+          groupName: 'Overview',
+          items: [{ to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }],
+        },
+        {
+          groupName: 'Department Academic',
+          items: [
+            { to: '/courses', label: 'Department Courses', icon: BookOpen },
+            { to: '/students', label: 'Students (SIS)', icon: Users },
+            { to: '/faculty', label: 'Faculty', icon: UserCheck },
+          ],
+        },
+        {
+          groupName: 'Learning & Evaluation',
+          items: [
+            { to: '/learn', label: 'Core LMS', icon: PlayCircle },
+            { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
+            { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
+            { to: '/quizzes', label: 'Quizzes', icon: Award },
+            { to: '/attendance', label: 'Attendance Register', icon: CalendarCheck2 },
+            { to: '/gradebook', label: 'Gradebook & Results', icon: Award },
+          ],
+        },
+        {
+          groupName: 'Account',
+          items: [{ to: '/faculty/me', label: 'My Faculty Profile', icon: UserCheck }],
+        }
+      );
+    } else if (roles.includes('faculty')) {
+      groups.push(
+        {
+          groupName: 'Overview',
+          items: [{ to: '/dashboard', label: 'Faculty Dashboard', icon: LayoutDashboard }],
+        },
+        {
+          groupName: 'My Teaching',
+          items: [
+            { to: '/courses', label: 'My Courses', icon: BookOpen },
+            { to: '/learn', label: 'Core LMS (Teach)', icon: PlayCircle },
+            { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
+            { to: '/assignments', label: 'Assignments & Grading', icon: FileCheck2 },
+            { to: '/quizzes', label: 'Quizzes & Attempts', icon: Award },
+            { to: '/attendance', label: 'Mark Attendance', icon: CalendarCheck2 },
+            { to: '/gradebook', label: 'Gradebook', icon: Award },
+          ],
+        },
+        {
+          groupName: 'Account',
+          items: [{ to: '/faculty/me', label: 'My Faculty Profile', icon: UserCheck }],
+        }
+      );
+    } else if (isStudent) {
+      groups.push(
+        {
+          groupName: 'Overview',
+          items: [{ to: '/dashboard', label: 'Student Dashboard', icon: LayoutDashboard }],
+        },
+        {
+          groupName: 'My Academics',
+          items: [
+            { to: '/learn/my-courses', label: 'My Courses', icon: BookOpen },
+            { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
+            { to: '/quizzes', label: 'Quizzes & Tests', icon: Award },
+            { to: '/attendance', label: 'My Attendance', icon: CalendarCheck2 },
+            { to: '/gradebook/transcript', label: 'Results & Transcript', icon: Award },
+          ],
+        },
+        {
+          groupName: 'Account',
+          items: [{ to: '/students/me', label: 'My Student Profile', icon: Users }],
+        }
+      );
+    } else {
+      groups.push({
+        groupName: 'Overview',
+        items: [
+          { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { to: '/learn/my-courses', label: 'My Courses', icon: BookOpen },
+        ],
+      });
+    }
+
+    if (SHOW_FUTURE_NAV) {
+      groups.push({
+        groupName: 'Future Modules (Phase 11+)',
+        items: [
+          { to: '/labs', label: 'Practical Labs', icon: FlaskConical, badge: 'Soon' },
+          { to: '/examinations', label: 'Examinations', icon: CalendarDays, badge: 'Soon' },
+          { to: '/admissions', label: 'Admissions', icon: UserPlus, badge: 'Soon' },
+          { to: '/finance', label: 'Finance & Fees', icon: CreditCard, badge: 'Soon' },
+          { to: '/library', label: 'Library', icon: Library, badge: 'Soon' },
+          { to: '/placement', label: 'Placement', icon: Briefcase, badge: 'Soon' },
+          { to: '/documents', label: 'Certificates', icon: FileText, badge: 'Soon' },
+          { to: '/reports', label: 'Accreditation', icon: BarChart3, badge: 'Soon' },
+          { to: '/communication', label: 'Communication Hub', icon: Megaphone, badge: 'Soon' },
+        ],
+      });
+    }
+
+    return groups;
+  })();
+
+  const userName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+    : 'User';
+  const userEmail = user?.email || '';
+  const currentRole = user?.roles[0] || 'university_admin';
+  const roleLabel = currentRole.replace(/_/g, ' ').toUpperCase();
+  const userInitials = (
+    (user?.firstName?.[0] || user?.email?.[0] || 'U') + (user?.lastName?.[0] || '')
+  ).toUpperCase();
 
   const isCurrentActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
@@ -185,8 +292,8 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
       <NotificationDrawer isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
       <QuickActionModal isOpen={isQuickActionOpen} onClose={() => setIsQuickActionOpen(false)} />
 
-      {/* Role Switcher Modal (Interactive Live Demo) */}
-      {isRoleSwitcherOpen && (
+      {/* Role Switcher Modal (Interactive Live Demo - DEV only) */}
+      {isRoleSwitcherOpen && DEMO_MODE && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-scaleUp">
             <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -426,24 +533,22 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
 
-            {/* User Profile & Role Switcher */}
+            {/* User Profile */}
             <div className="relative pl-1 sm:pl-2 border-l border-slate-200">
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center gap-2.5 py-1 px-1.5 sm:px-2 rounded-full hover:bg-slate-100 transition text-left"
               >
-                <img
-                  src={rolePersona.avatar}
-                  alt={rolePersona.name}
-                  className="w-9 h-9 rounded-full object-cover ring-2 ring-primary-700/20"
-                />
+                <div className="w-9 h-9 rounded-full bg-primary-600 text-white font-bold flex items-center justify-center text-xs shadow-xs ring-2 ring-primary-700/20 shrink-0">
+                  {userInitials}
+                </div>
                 <div className="hidden lg:block text-left">
                   <div className="text-xs font-bold text-slate-900 leading-tight">
-                    {rolePersona.name}
+                    {userName}
                   </div>
                   <div className="text-[10px] font-medium text-slate-400">
-                    {rolePersona.email || `${rolePersona.role}@university.edu`}
+                    {userEmail || `${currentRole}@university.edu`}
                   </div>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden lg:block" />
@@ -453,43 +558,60 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
               {isUserMenuOpen && (
                 <div className="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-40 animate-scaleUp">
                   <div className="p-3 border-b border-slate-100 bg-slate-50/70 rounded-xl mb-1">
-                    <p className="text-xs font-bold text-slate-900">{rolePersona.name}</p>
-                    <p className="text-[11px] text-slate-500">{rolePersona.email}</p>
+                    <p className="text-xs font-bold text-slate-900">{userName}</p>
+                    <p className="text-[11px] text-slate-500">{userEmail}</p>
                     <span className="mt-1.5 inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary-100 text-primary-800">
-                      {rolePersona.label}
+                      {roleLabel}
                     </span>
                   </div>
 
                   <div className="py-1 text-xs text-slate-700 space-y-0.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsRoleSwitcherOpen(true);
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full px-3 py-2 rounded-lg text-left hover:bg-primary-50 hover:text-primary-700 font-semibold flex items-center justify-between"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-primary-600" />
-                        Switch Role Persona (9 Roles)
-                      </span>
-                    </button>
                     <Link
-                      to="/select-tenant"
+                      to="/profile"
                       onClick={() => setIsUserMenuOpen(false)}
-                      className="w-full px-3 py-2 rounded-lg text-left hover:bg-slate-100 flex items-center gap-2"
+                      className="w-full px-3 py-2 rounded-lg text-left hover:bg-slate-100 flex items-center gap-2 font-medium"
                     >
-                      <Building className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Switch University / Tenant</span>
+                      <UserCheck className="w-3.5 h-3.5 text-slate-500" />
+                      <span>My Profile</span>
                     </Link>
-                    <Link
-                      to="/settings"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="w-full px-3 py-2 rounded-lg text-left hover:bg-slate-100 flex items-center gap-2"
-                    >
-                      <Settings className="w-3.5 h-3.5 text-slate-500" />
-                      <span>System Settings</span>
-                    </Link>
+
+                    {DEMO_MODE && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsRoleSwitcherOpen(true);
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full px-3 py-2 rounded-lg text-left hover:bg-primary-50 hover:text-primary-700 font-semibold flex items-center justify-between"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Sparkles className="w-3.5 h-3.5 text-primary-600" />
+                          Switch Role (Dev Demo)
+                        </span>
+                      </button>
+                    )}
+
+                    {!isStudent && (
+                      <Link
+                        to="/select-tenant"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full px-3 py-2 rounded-lg text-left hover:bg-slate-100 flex items-center gap-2"
+                      >
+                        <Building className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Switch University / Tenant</span>
+                      </Link>
+                    )}
+
+                    {!isStudent && !isFaculty && (
+                      <Link
+                        to="/settings"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full px-3 py-2 rounded-lg text-left hover:bg-slate-100 flex items-center gap-2"
+                      >
+                        <Settings className="w-3.5 h-3.5 text-slate-500" />
+                        <span>System Settings</span>
+                      </Link>
+                    )}
                   </div>
 
                   <div className="pt-1 border-t border-slate-100 mt-1">

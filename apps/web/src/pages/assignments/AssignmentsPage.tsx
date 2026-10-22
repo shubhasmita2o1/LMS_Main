@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type { ApiResponse, AssignmentPublic, CourseListItem } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
+import { AppLayout } from '../../components/layout/AppLayout';
 
 export function AssignmentsPage() {
   const user = useAuthStore((s) => s.user);
@@ -66,18 +67,24 @@ export function AssignmentsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link to="/dashboard" className="text-sm text-slate-500 hover:text-slate-800">
-            Dashboard
-          </Link>
-          <span className="text-slate-300">/</span>
-          <h1 className="font-semibold text-slate-900">Assignments</h1>
+    <AppLayout>
+      <div className="space-y-6 pb-12">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Assignments &amp; Tasks</h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Course homework, practical assignments, and student submissions
+            </p>
+          </div>
+          {canManage && (
+            <button
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-primary-600 text-white hover:bg-primary-700 shadow-sm transition"
+              onClick={() => setShowCreate((v) => !v)}
+            >
+              {showCreate ? 'Cancel' : '+ New Assignment'}
+            </button>
+          )}
         </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         <div className="flex flex-wrap gap-3 items-center">
           <select
             className="border rounded-lg px-3 py-2 text-sm min-w-[200px]"
@@ -183,7 +190,7 @@ export function AssignmentsPage() {
             </div>
           ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

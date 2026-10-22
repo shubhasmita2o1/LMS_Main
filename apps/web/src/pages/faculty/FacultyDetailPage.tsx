@@ -8,6 +8,7 @@ import type {
   FacultyAssignmentPublic,
 } from '@university-lms/shared';
 import { Can } from '../../components/auth/Can';
+import { AppLayout } from '../../components/layout/AppLayout';
 
 export function FacultyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -61,29 +62,26 @@ export function FacultyDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/faculty" className="text-sm text-slate-600">
-              ← Faculty
+    <AppLayout>
+      <div className="max-w-4xl mx-auto space-y-6 pb-12">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/faculty"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm"
+            >
+              ← Faculty Directory
             </Link>
-            <span className="font-semibold text-slate-900">
-              {faculty.firstName} {faculty.lastName}
-            </span>
           </div>
           <Can resource="faculty" action="update">
             <Link
               to={`/faculty/${id}/edit`}
-              className="text-sm font-medium text-primary-600 hover:underline"
+              className="text-xs font-bold px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition"
             >
-              Edit
+              Edit Faculty Record
             </Link>
           </Can>
         </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         {message && (
           <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
             {message}
@@ -202,8 +200,8 @@ export function FacultyDetailPage() {
             </ul>
           )}
         </Card>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
 

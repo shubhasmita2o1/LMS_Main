@@ -16,6 +16,12 @@ studentRouter.get(
   ctrl.getMe
 );
 
+studentRouter.get(
+  '/me/dashboard-summary',
+  requireRoles('student', 'tenant_admin', 'university_admin', 'super_admin'),
+  ctrl.getDashboardSummary
+);
+
 studentRouter.get('/stats', requirePermission('student', 'read'), ctrl.stats);
 studentRouter.get('/export', requirePermission('student', 'export'), ctrl.exportList);
 studentRouter.post('/bulk', requirePermission('student', 'import'), ctrl.bulk);

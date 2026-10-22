@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type {
@@ -12,6 +11,7 @@ import type {
   Difficulty,
 } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
+import { AppLayout } from '../../components/layout/AppLayout';
 
 const QUESTION_TYPES: QuestionType[] = [
   'mcq',
@@ -137,18 +137,24 @@ export function QuestionBankPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link to="/dashboard" className="text-sm text-slate-500 hover:text-slate-800">
-            Dashboard
-          </Link>
-          <span className="text-slate-300">/</span>
-          <h1 className="font-semibold text-slate-900">Question Bank</h1>
+    <AppLayout>
+      <div className="space-y-6 pb-12">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Question Repository</h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Curate Bloom-taxonomy tagged questions by subject, unit, and difficulty
+            </p>
+          </div>
+          {canManage && (
+            <button
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-primary-600 text-white hover:bg-primary-700 shadow-sm transition"
+              onClick={() => setShowForm((v) => !v)}
+            >
+              {showForm ? 'Cancel' : '+ New Question'}
+            </button>
+          )}
         </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap gap-3 items-end">
           <div>
             <label className="block text-xs text-slate-500 mb-1">Subject</label>
@@ -345,7 +351,7 @@ export function QuestionBankPage() {
             </div>
           ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

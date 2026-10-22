@@ -11,8 +11,14 @@ facultyRouter.use(authenticate, resolveTenant);
 
 facultyRouter.get(
   '/me',
-  requireRoles('faculty', 'tenant_admin', 'university_admin', 'super_admin'),
+  requireRoles('faculty', 'tenant_admin', 'university_admin', 'super_admin', 'department_head'),
   ctrl.getMe
+);
+
+facultyRouter.get(
+  '/me/courses',
+  requireRoles('faculty', 'tenant_admin', 'university_admin', 'super_admin', 'department_head'),
+  ctrl.getMyCourses
 );
 
 facultyRouter.get('/stats', requirePermission('faculty', 'read'), ctrl.stats);

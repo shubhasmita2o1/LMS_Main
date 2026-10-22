@@ -59,6 +59,11 @@ export const listCoursesQuerySchema = z.object({
   search: z.string().optional(),
   programId: objectId.optional(),
   departmentId: objectId.optional(),
+  facultyId: objectId.optional(),
+  mine: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === 'true')),
   courseType: courseTypeEnum.optional(),
   status: courseStatusEnum.optional(),
   sort: z.string().optional(),

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type { ApiResponse, CourseListItem, CourseStats } from '@university-lms/shared';
 import { Can } from '../../components/auth/Can';
-import { useAuth } from '../../hooks/useAuth';
+import { AppLayout } from '../../components/layout/AppLayout';
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
@@ -16,7 +16,6 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 export function CoursesListPage() {
-  const { user, logout } = useAuth();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [courseType, setCourseType] = useState('');
@@ -50,28 +49,24 @@ export function CoursesListPage() {
   const meta = data?.meta as { page?: number; totalPages?: number; total?: number } | undefined;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="text-sm text-slate-600 hover:text-slate-900">
-              ← Dashboard
-            </Link>
-            <span className="font-semibold text-slate-900">Courses</span>
+    <AppLayout>
+      <div className="space-y-6 pb-12">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Curriculum &amp; Courses</h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Course catalog, credits, and syllabus structure
+            </p>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-slate-500">{user?.email}</span>
-            <button
-              onClick={() => logout()}
-              className="text-slate-600 hover:text-slate-900 px-2 py-1 rounded hover:bg-slate-100"
+          <Can resource="course" action="create">
+            <Link
+              to="/courses/new"
+              className="text-sm font-semibold px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 shadow-sm transition"
             >
-              Logout
-            </button>
-          </div>
+              + Create Course
+            </Link>
+          </Can>
         </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8">
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <StatCard label="Total" value={stats.total} />
@@ -236,7 +231,7 @@ export function CoursesListPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

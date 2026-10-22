@@ -148,3 +148,16 @@ export async function stats(req: Request, res: Response, next: NextFunction) {
     next(e);
   }
 }
+
+export async function getMyCourses(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user?.id) throw new AppError(401, 'Authentication required', 'UNAUTHORIZED');
+    ok(
+      res,
+      await svc.getFacultyCourses(tenantIdFrom(req), req.user.id, req.user.roles)
+    );
+  } catch (e) {
+    next(e);
+  }
+}
+

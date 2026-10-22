@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type {
@@ -11,15 +11,12 @@ import type {
   CourseEnrollmentPublic,
 } from '@university-lms/shared';
 import { Can } from '../../components/auth/Can';
-import { useAuthStore } from '../../stores/authStore';
+import { AppLayout } from '../../components/layout/AppLayout';
 
 type Tab = 'overview' | 'structure' | 'offerings' | 'enrollments';
 
 export function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const navigate = useNavigate();
-  const logout = () => { clearAuth(); navigate('/login'); };
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('overview');
   const [moduleTitle, setModuleTitle] = useState('');
@@ -224,36 +221,36 @@ export function CourseDetailPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/courses" className="text-sm text-slate-600 hover:text-slate-900">
-              ← Courses
+    <AppLayout>
+      <div className="space-y-6 pb-12">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/courses"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm"
+            >
+              ← Courses Directory
             </Link>
-            <span className="font-mono text-xs text-slate-500">{course.code}</span>
-            <span className="font-semibold text-slate-900">{course.name}</span>
+            <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-primary-50 text-primary-700">{course.code}</span>
+            <span className="font-bold text-slate-900 text-lg">{course.name}</span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/learn/courses/${id}`}
+              className="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-sm"
+            >
+              Open LMS View
+            </Link>
             <Can resource="course" action="update">
               <Link
                 to={`/courses/${id}/edit`}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                className="text-xs font-bold px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition"
               >
-                Edit
+                Edit Course
               </Link>
             </Can>
-            <button
-              onClick={() => logout()}
-              className="text-slate-600 hover:text-slate-900 px-2 py-1 rounded hover:bg-slate-100"
-            >
-              Logout
-            </button>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-6 py-8">
         <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-2">
           {tabs.map((t) => (
             <button
@@ -602,7 +599,7 @@ export function CourseDetailPage() {
             )}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
