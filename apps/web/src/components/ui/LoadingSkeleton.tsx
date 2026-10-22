@@ -28,3 +28,16 @@ export function LoadingSkeleton({
     </div>
   );
 }
+
+export function SkeletonCard({ className = '' }: { className?: string }) {
+  return (
+    <div className={`rounded-3xl p-6 bg-white border border-slate-200/60 shadow-card animate-pulse space-y-4 ${className}`}>
+      <div className="flex justify-between items-center">
+        <div className="h-4 w-28 bg-slate-100 rounded-full" />
+        <div className="w-8 h-8 rounded-full bg-slate-100" />
+      </div>
+      <div className="h-9 w-20 bg-slate-100 rounded-full" />
+      <div className="h-4 w-36 bg-slate-100 rounded-full" />
+    </div>
+  );
+}

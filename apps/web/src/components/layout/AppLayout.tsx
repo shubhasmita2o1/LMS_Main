@@ -286,7 +286,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col antialiased selection:bg-[#165239] selection:text-white">
+    <div className="min-h-screen bg-[#F3F5F7] text-slate-900 p-2 sm:p-3 lg:p-4 flex flex-col antialiased selection:bg-[#dcfce7] selection:text-[#165239]">
       {/* Modals & Drawers */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <NotificationDrawer isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
@@ -357,8 +357,10 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
         </div>
       )}
 
-      {/* Top Application Header */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/70 shadow-2xs">
+      {/* Floating Application Shell Container */}
+      <div className="flex-1 flex flex-col bg-white rounded-[24px] sm:rounded-[32px] border border-slate-200/70 shadow-shell overflow-hidden">
+        {/* Top Application Header */}
+        <header className="sticky top-0 z-30 bg-white border-b border-slate-200/70">
         <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Left Brand & Toggle */}
           <div className="flex items-center gap-3">
@@ -810,11 +812,12 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
         )}
 
         {/* Content Body */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-[#F4F6F8]">
           <div className={fullWidth ? 'p-4 sm:p-6 lg:p-8' : 'max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'}>
             {children}
           </div>
         </main>
+      </div>
       </div>
     </div>
   );

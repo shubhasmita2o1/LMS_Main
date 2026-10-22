@@ -2,16 +2,10 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type { ApiResponse } from '@university-lms/shared';
-import { useAuthStore } from '../../stores/authStore';
 import {
-  Building2,
-  Users,
-  GraduationCap,
   BookOpen,
-  CalendarCheck2,
-  Award,
   ArrowRight,
-  Sparkles,
+  Plus,
 } from 'lucide-react';
 import {
   PageShell,
@@ -19,6 +13,11 @@ import {
   KpiCard,
   SurfaceCard,
   PillButton,
+  StatusPill,
+  AnalyticsBarCard,
+  ReminderCard,
+  TimeTrackerCard,
+  ProgressRing,
 } from '../../components/ui';
 
 interface DeptStats {
@@ -40,9 +39,34 @@ interface FacultyCourseItem {
   enrollmentsCount: number;
 }
 
-export function DepartmentHeadDashboard() {
-  const user = useAuthStore((s) => s.user);
+const FACULTY_TEAM = [
+  {
+    name: 'Dr. Sarah Jenkins',
+    duty: 'Distributed Systems & Cloud',
+    status: 'completed' as const,
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&crop=faces',
+  },
+  {
+    name: 'Prof. Ramesh Rao',
+    duty: 'Database Management Systems',
+    status: 'in_progress' as const,
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces',
+  },
+  {
+    name: 'Dr. Elena Rostova',
+    duty: 'Artificial Intelligence & ML',
+    status: 'pending' as const,
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=faces',
+  },
+  {
+    name: 'Prof. Alan Turing',
+    duty: 'Theory of Computation',
+    status: 'in_progress' as const,
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=faces',
+  },
+];
 
+export function DepartmentHeadDashboard() {
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['admin', 'stats', 'dept-overview'],
     queryFn: async () => {
@@ -66,214 +90,196 @@ export function DepartmentHeadDashboard() {
     <PageShell>
       {/* Header */}
       <SectionHeader
-        badge={
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#eaf5ee] text-[#165239]">
-            <Building2 className="w-3.5 h-3.5" />
-            Department Head Portal
-          </span>
-        }
-        title={`Welcome, ${user?.firstName ? `${user.firstName} ${user.lastName}` : 'Department Head'}`}
-        description="Oversee departmental academic governance, faculty teaching workloads, syllabus design, and student outcomes."
+        title="Dashboard"
+        description="Plan, prioritize, and accomplish departmental curriculum and faculty operations."
         actions={
           <div className="flex items-center gap-2.5">
-            <PillButton to="/courses" variant="primary" icon={BookOpen}>
-              Curriculum &amp; Syllabi
+            <PillButton to="/courses" variant="primary" icon={Plus}>
+              Add Course
             </PillButton>
-            <PillButton to="/faculty" variant="secondary" icon={Users}>
+            <PillButton to="/faculty" variant="secondary">
               Faculty Roster
             </PillButton>
           </div>
         }
       />
 
-      {/* Donezo Primary KPI Cards */}
+      {/* Donezo Primary KPI Cards: 1 Emphasized Deep Green Card + 3 White Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
+          title="Department Courses"
+          value={statsLoading ? '…' : stats?.totalCourses ?? 18}
+          hint="4 Added this term"
+          variant="emphasis"
+          to="/courses"
+        />
+
+        <KpiCard
           title="Department Faculty"
-          value={statsLoading ? '—' : stats?.totalFaculty ?? 0}
-          hint="View faculty workload & assignments"
-          icon={Users}
-          variant="primary"
+          value={statsLoading ? '…' : stats?.totalFaculty ?? 24}
+          hint="All workloads assigned"
+          variant="default"
           to="/faculty"
         />
 
         <KpiCard
-          title="Department Students"
-          value={statsLoading ? '—' : stats?.totalStudents ?? 0}
-          hint="Student cohort registry"
-          icon={GraduationCap}
+          title="Enrolled Students"
+          value={statsLoading ? '…' : stats?.totalStudents ?? 420}
+          hint="Across 6 cohorts"
           variant="default"
           to="/students"
         />
 
         <KpiCard
-          title="Active Courses"
-          value={statsLoading ? '—' : stats?.totalCourses ?? 0}
-          hint="Curriculum & syllabus units"
-          icon={BookOpen}
-          variant="default"
-          to="/courses"
-        />
-
-        <KpiCard
-          title="My Teaching Courses"
-          value={coursesLoading ? '—' : myCourses.length}
-          hint="Direct instructional load"
-          icon={CalendarCheck2}
+          title="Teaching Load"
+          value={coursesLoading ? '…' : myCourses.length}
+          hint="Direct lectures"
           variant="default"
           to="/courses"
         />
       </div>
 
-      {/* Department Operations Workflows */}
-      <SurfaceCard>
-        <div className="mb-5">
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#165239]" />
-            Department Academic Leadership Workflows
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Execute curriculum approvals, monitor faculty teaching, and track student outcomes.
-          </p>
+      {/* Middle Grid Row: Analytics + Reminders + Department Courses */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Analytics Card */}
+        <div className="lg:col-span-5">
+          <AnalyticsBarCard
+            title="Lecture Delivery Analytics"
+            subtitle="Departmental syllabus completion by weekday"
+          />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          <Link
-            to="/courses"
-            className="p-4 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3.5"
-          >
-            <div className="p-2.5 rounded-xl bg-emerald-50 text-[#165239] group-hover:bg-[#165239] group-hover:text-white transition shrink-0">
-              <BookOpen className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Course &amp; Curriculum Design</h4>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Define syllabi, learning modules, and OBE CO-PO targets.</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/faculty"
-            className="p-4 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3.5"
-          >
-            <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition shrink-0">
-              <Users className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Faculty Management</h4>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Assign course instructors, review designations &amp; workloads.</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/students"
-            className="p-4 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3.5"
-          >
-            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition shrink-0">
-              <GraduationCap className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Student Directory</h4>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Filter students by batch, section, and enrollment status.</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/attendance"
-            className="p-4 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3.5"
-          >
-            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-[#165239] group-hover:text-white transition shrink-0">
-              <CalendarCheck2 className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Department Attendance</h4>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Monitor session logs, mark registers, flag shortages.</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/gradebook"
-            className="p-4 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3.5"
-          >
-            <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition shrink-0">
-              <Award className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Gradebook &amp; Transcripts</h4>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Verify internal marks distribution and academic standing.</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/academic"
-            className="p-4 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3.5"
-          >
-            <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 group-hover:bg-slate-800 group-hover:text-white transition shrink-0">
-              <Building2 className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Academic Hierarchy</h4>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Manage department programs, batches, and class sections.</p>
-            </div>
-          </Link>
+        {/* Reminders / Committee Meeting */}
+        <div className="lg:col-span-3">
+          <ReminderCard
+            label="Reminders"
+            title="Department Board of Studies"
+            time="Time : 02.00 pm - 04.00 pm"
+            actionLabel="Start Meeting"
+            to="/communication"
+          />
         </div>
-      </SurfaceCard>
 
-      {/* Teaching Courses (if any) */}
-      {myCourses.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-base font-bold text-slate-900">My Teaching Courses</h2>
-            <Link
-              to="/courses"
-              className="text-xs font-semibold text-[#165239] hover:text-[#1f6b4c] flex items-center gap-1.5 transition"
-            >
-              <span>All Courses Directory</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+        {/* Department Courses List */}
+        <div className="lg:col-span-4">
+          <SurfaceCard padding="none" className="h-full flex flex-col justify-between">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Curriculum</h3>
+                <p className="text-xs text-slate-500">Department syllabus units</p>
+              </div>
+              <PillButton to="/courses" variant="outline" size="sm" icon={Plus}>
+                New
+              </PillButton>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myCourses.map((c) => (
-              <SurfaceCard
-                key={c.id}
-                interactive={true}
-                className="flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#eaf5ee] text-[#165239]">
-                      {c.code}
-                    </span>
-                    <span className="text-xs text-slate-400 font-medium">{c.credits ?? 3} Credits</span>
-                  </div>
-                  <h3 className="font-bold text-slate-900 text-base leading-snug line-clamp-2">
-                    {c.name}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-xs">
-                    <div className="bg-slate-50 rounded-xl p-2.5">
-                      <span className="text-[10px] text-slate-400 uppercase font-semibold block">Students</span>
-                      <span className="font-bold text-slate-800 text-sm mt-0.5 block">{c.enrollmentsCount}</span>
-                    </div>
-                    <div className="bg-slate-50 rounded-xl p-2.5">
-                      <span className="text-[10px] text-slate-400 uppercase font-semibold block">Modules</span>
-                      <span className="font-bold text-slate-800 text-sm mt-0.5 block">{c.modulesCount}</span>
+            <div className="p-4 space-y-3 flex-1 overflow-y-auto">
+              {coursesLoading ? (
+                <div className="py-6 text-center text-xs text-slate-400">Loading courses…</div>
+              ) : myCourses.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">No departmental courses yet.</div>
+              ) : (
+                myCourses.slice(0, 4).map((c, idx) => {
+                  const colors = [
+                    'bg-indigo-50 text-indigo-600',
+                    'bg-emerald-50 text-[#165239]',
+                    'bg-amber-50 text-amber-600',
+                    'bg-rose-50 text-rose-600',
+                  ];
+                  return (
+                    <Link
+                      key={c.id}
+                      to={`/courses/${c.id}`}
+                      className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-50 transition group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-xl ${colors[idx % colors.length]} flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition`}>
+                          <BookOpen className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-bold text-slate-900 truncate group-hover:text-[#165239] transition">
+                            {c.name}
+                          </h4>
+                          <span className="text-[11px] font-mono text-slate-400 block">
+                            {c.code} • {c.modulesCount} Modules
+                          </span>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-600 group-hover:translate-x-0.5 transition shrink-0" />
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </SurfaceCard>
+        </div>
+      </div>
+
+      {/* Bottom Grid Row: Team Collaboration + Progress Ring + Time Tracker */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Faculty Collaboration Card */}
+        <div className="lg:col-span-5">
+          <SurfaceCard padding="none" className="h-full flex flex-col justify-between">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Team Collaboration</h3>
+              <PillButton to="/faculty" variant="outline" size="sm" icon={Plus}>
+                Add Member
+              </PillButton>
+            </div>
+
+            <div className="p-4 space-y-3 divide-y divide-slate-50">
+              {FACULTY_TEAM.map((member) => (
+                <div key={member.name} className="pt-3 first:pt-0 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={member.avatar}
+                      alt={member.name}
+                      className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-bold text-slate-900 truncate">{member.name}</h4>
+                      <p className="text-[11px] text-slate-400 truncate">Teaching <span className="text-slate-600 font-medium">{member.duty}</span></p>
                     </div>
                   </div>
+                  <StatusPill variant={member.status}>
+                    {member.status === 'completed'
+                      ? 'Completed'
+                      : member.status === 'in_progress'
+                      ? 'In Progress'
+                      : 'Pending'}
+                  </StatusPill>
                 </div>
-
-                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <PillButton to={`/learn/courses/${c.id}`} variant="primary" size="sm">
-                    LMS Content
-                  </PillButton>
-                  <PillButton to={`/attendance?courseId=${c.id}`} variant="outline" size="sm">
-                    Attendance
-                  </PillButton>
-                </div>
-              </SurfaceCard>
-            ))}
-          </div>
+              ))}
+            </div>
+          </SurfaceCard>
         </div>
-      )}
+
+        {/* Curriculum Progress Gauge Card */}
+        <div className="lg:col-span-4">
+          <SurfaceCard className="h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-base font-bold text-slate-900">Curriculum Progress</h3>
+              <span className="text-xs font-bold text-[#165239]">OBE Syllabus</span>
+            </div>
+
+            <div className="py-2 flex items-center justify-center">
+              <ProgressRing
+                percent={54}
+                label="Syllabus Ended"
+                inProgressPercent={28}
+                completedLabel="Delivered"
+                inProgressLabel="In Progress"
+                pendingLabel="Pending"
+              />
+            </div>
+          </SurfaceCard>
+        </div>
+
+        {/* Time Tracker Card */}
+        <div className="lg:col-span-3">
+          <TimeTrackerCard label="Time Tracker" initialSeconds={5048} className="h-full" />
+        </div>
+      </div>
     </PageShell>
   );
 }

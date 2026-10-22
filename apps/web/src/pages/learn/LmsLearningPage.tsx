@@ -135,15 +135,15 @@ export function LmsLearningPage() {
 
       <div className="grid lg:grid-cols-12 gap-6">
         {/* Left: Course Units & Lesson Syllabus Sidebar */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs h-fit space-y-4">
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+        <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200/70 p-5 shadow-card h-fit space-y-4">
+          <div className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100">
             <div className="flex items-center justify-between text-xs mb-1.5">
               <span className="font-bold text-slate-700">Course Completion Rate</span>
-              <span className="font-extrabold text-primary-700">{progressPercent}%</span>
+              <span className="font-extrabold text-[#165239]">{progressPercent}%</span>
             </div>
             <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
               <div
-                className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                className="bg-[#165239] h-2 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -153,7 +153,7 @@ export function LmsLearningPage() {
             {modules.map((mod) => (
               <div key={mod.unitNumber} className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary-100 text-primary-800">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#eaf5ee] text-[#165239]">
                     Unit {mod.unitNumber}
                   </span>
                   <h4 className="text-xs font-bold text-slate-800 truncate">
@@ -169,15 +169,15 @@ export function LmsLearningPage() {
                         key={lesson.id}
                         type="button"
                         onClick={() => setActiveLessonId(lesson.id)}
-                        className={`w-full p-2.5 rounded-xl text-left text-xs transition flex items-center justify-between gap-2 ${
+                        className={`w-full p-2.5 rounded-2xl text-left text-xs transition flex items-center justify-between gap-2 ${
                           isActive
-                            ? 'bg-primary-50 text-primary-900 border border-primary-200 font-bold'
+                            ? 'bg-[#eaf5ee] text-[#165239] border border-emerald-200 font-bold'
                             : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           {lesson.isCompleted ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <CheckCircle2 className="w-4 h-4 text-[#165239] shrink-0" />
                           ) : (
                             <Circle className="w-4 h-4 text-slate-300 shrink-0" />
                           )}
@@ -196,11 +196,11 @@ export function LmsLearningPage() {
         {/* Right: Main Lecture Player & Collaborative Notes */}
         <div className="lg:col-span-8 space-y-6">
           {/* Simulated Video Player */}
-          <div className="bg-slate-950 rounded-2xl overflow-hidden shadow-lg border border-slate-800 relative group aspect-video flex flex-col justify-between">
+          <div className="bg-slate-950 rounded-3xl overflow-hidden shadow-card border border-slate-800 relative group aspect-video flex flex-col justify-between">
             {/* Top Video Overlay */}
             <div className="p-4 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-between text-white z-10">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono bg-primary-600 px-2 py-0.5 rounded font-bold">
+                <span className="text-xs font-mono bg-[#165239] px-2.5 py-0.5 rounded-full font-bold">
                   CS301 LECTURE
                 </span>
                 <span className="text-xs font-medium truncate max-w-sm">
@@ -215,7 +215,7 @@ export function LmsLearningPage() {
               <button
                 type="button"
                 onClick={() => setIsPlaying(!isPlaying)}
-                className="w-16 h-16 rounded-full bg-primary-600/90 text-white flex items-center justify-center hover:scale-110 hover:bg-primary-500 transition shadow-xl"
+                className="w-16 h-16 rounded-full bg-[#165239]/90 text-white flex items-center justify-center hover:scale-110 hover:bg-[#12422e] transition shadow-pill"
               >
                 {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
               </button>
@@ -225,7 +225,7 @@ export function LmsLearningPage() {
             <div className="p-4 bg-gradient-to-t from-black/90 to-transparent text-white space-y-2 z-10">
               {/* Scrub line */}
               <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden cursor-pointer">
-                <div className="bg-primary-500 h-1.5 rounded-full w-2/5" />
+                <div className="bg-[#4ade80] h-1.5 rounded-full w-2/5" />
               </div>
 
               <div className="flex items-center justify-between text-xs">
@@ -237,7 +237,7 @@ export function LmsLearningPage() {
                   <span className="text-[11px] text-slate-300">14:20 / {activeLesson?.duration}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="px-2 py-0.5 rounded bg-white/10 text-[11px]">1.0x Speed</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-[11px]">1.0x Speed</span>
                   <Maximize2 className="w-4 h-4 text-slate-300 cursor-pointer" />
                 </div>
               </div>
@@ -245,7 +245,7 @@ export function LmsLearningPage() {
           </div>
 
           {/* Action Row: Mark Complete, Download Notes, Slides */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="bg-white rounded-3xl border border-slate-200/70 p-5 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900">{activeLesson?.title}</h3>
               <p className="text-xs text-slate-500 mt-0.5">{activeLesson?.summary}</p>
@@ -255,19 +255,19 @@ export function LmsLearningPage() {
               <button
                 type="button"
                 onClick={handleToggleComplete}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition ${
+                className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition shadow-2xs ${
                   activeLesson?.isCompleted
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
-                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                    ? 'bg-[#eaf5ee] text-[#165239] border border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-[#165239] text-white hover:bg-[#12422e] shadow-pill'
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>{activeLesson?.isCompleted ? 'Completed ✓' : 'Mark Lesson Complete'}</span>
+                <span>{activeLesson?.isCompleted ? 'Completed ✓' : 'Mark Complete'}</span>
               </button>
 
               <button
                 type="button"
-                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition"
+                className="w-9 h-9 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-600 flex items-center justify-center transition shadow-2xs"
                 title="Download Lecture Slides (PDF)"
               >
                 <Download className="w-4 h-4" />
@@ -276,18 +276,18 @@ export function LmsLearningPage() {
           </div>
 
           {/* Student Study Notes Section */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3">
+          <div className="bg-white rounded-3xl border border-slate-200/70 p-6 shadow-card space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-primary-600" />
+                <FileText className="w-4 h-4 text-[#165239]" />
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Personal Lesson Notes & Bookmarks
+                  Personal Lesson Notes &amp; Bookmarks
                 </h4>
               </div>
               <button
                 type="button"
                 onClick={handleSaveNote}
-                className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition"
+                className="px-4 py-1.5 rounded-full bg-[#165239] text-white text-xs font-bold hover:bg-[#12422e] transition shadow-xs"
               >
                 {isSavedNote ? 'Saved ✓' : 'Save Notes'}
               </button>
@@ -296,15 +296,15 @@ export function LmsLearningPage() {
               rows={4}
               value={userNote}
               onChange={(e) => setUserNote(e.target.value)}
-              className="w-full p-3 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono leading-relaxed"
+              className="w-full p-3.5 rounded-2xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 font-mono leading-relaxed bg-slate-50/50 hover:bg-white focus:bg-white transition"
             />
           </div>
 
           {/* Lesson Q&A Discussion Forum */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+          <div className="bg-white rounded-3xl border border-slate-200/70 p-6 shadow-card space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-primary-600" />
+                <MessageSquare className="w-4 h-4 text-[#165239]" />
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                   Lesson Discussion Thread ({discussions.length})
                 </h4>
@@ -314,11 +314,11 @@ export function LmsLearningPage() {
 
             <div className="space-y-3">
               {discussions.map((d) => (
-                <div key={d.id} className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 text-xs">
+                <div key={d.id} className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 text-xs">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900">{d.author}</span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white text-slate-600 border border-slate-200">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200">
                         {d.role}
                       </span>
                     </div>
@@ -335,11 +335,11 @@ export function LmsLearningPage() {
                 value={newQuestion}
                 onChange={(e) => setNewQuestion(e.target.value)}
                 placeholder="Ask Prof. Rostova or classmates a question about this topic..."
-                className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 px-4 py-2.5 rounded-full border border-slate-200/80 bg-slate-50/70 hover:bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                className="px-5 py-2.5 rounded-full bg-[#165239] hover:bg-[#12422e] text-white text-xs font-bold flex items-center gap-1.5 shadow-pill transition"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Post</span>

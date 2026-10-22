@@ -2,19 +2,11 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type { ApiResponse, EnrolledCourseWithProgress } from '@university-lms/shared';
-import { useAuthStore } from '../../stores/authStore';
 import {
   BookOpen,
-  CalendarCheck2,
-  FileCheck2,
-  HelpCircle,
-  Award,
-  PlayCircle,
-  GraduationCap,
   ArrowRight,
-  Sparkles,
-  AlertTriangle,
-  UserCheck,
+  PlayCircle,
+  Award,
 } from 'lucide-react';
 import {
   PageShell,
@@ -22,8 +14,11 @@ import {
   KpiCard,
   SurfaceCard,
   PillButton,
-  StatusBadge,
-  EmptyState,
+  StatusPill,
+  AnalyticsBarCard,
+  ReminderCard,
+  TimeTrackerCard,
+  ProgressRing,
 } from '../../components/ui';
 
 interface StudentDashboardSummary {
@@ -33,25 +28,34 @@ interface StudentDashboardSummary {
   availableQuizzesCount: number;
 }
 
-interface AttendanceCourseSummary {
-  courseId: string;
-  totalSessions: number;
-  presentCount: number;
-  absentCount: number;
-  lateCount: number;
-  percent: number;
-  isShortage: boolean;
-  minimumPercent: number;
-}
-
-interface AttendanceMeResponse {
-  summaries?: AttendanceCourseSummary[];
-}
+const PEER_STUDENTS = [
+  {
+    name: 'Alexandra Deff',
+    duty: 'Operating Systems Virtual Memory',
+    status: 'completed' as const,
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces',
+  },
+  {
+    name: 'Edwin Adenike',
+    duty: 'Database Normalization BCNF',
+    status: 'in_progress' as const,
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=faces',
+  },
+  {
+    name: 'Isaac Oluwademilorun',
+    duty: 'Computer Networks Routing Lab',
+    status: 'pending' as const,
+    avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop&crop=faces',
+  },
+  {
+    name: 'David Oshodi',
+    duty: 'Web Architecture Term Paper',
+    status: 'in_progress' as const,
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces',
+  },
+];
 
 export function StudentDashboard() {
-  const user = useAuthStore((s) => s.user);
-
-  // 1. Summary stats
   const { data: summaryData, isLoading: summaryLoading } = useQuery({
     queryKey: ['students', 'me', 'dashboard-summary'],
     queryFn: async () => {
@@ -60,7 +64,6 @@ export function StudentDashboard() {
     },
   });
 
-  // 2. Enrolled courses with lesson progress
   const { data: coursesData, isLoading: coursesLoading } = useQuery({
     queryKey: ['learn', 'my-courses'],
     queryFn: async () => {
@@ -69,371 +72,204 @@ export function StudentDashboard() {
     },
   });
 
-  // 3. Attendance summaries
-  const { data: attendanceData, isLoading: attendanceLoading } = useQuery({
-    queryKey: ['attendance', 'me', 'summary'],
-    queryFn: async () => {
-      const { data } = await api.get<ApiResponse<AttendanceMeResponse>>('/attendance/me');
-      return data.data;
-    },
-  });
-
   const courses = coursesData || [];
-  const attendanceSummaries = attendanceData?.summaries || [];
-
-  // Compute overall attendance average
-  const avgAttendance = attendanceSummaries.length > 0
-    ? Math.round(
-        attendanceSummaries.reduce((sum, s) => sum + s.percent, 0) / attendanceSummaries.length
-      )
-    : null;
-
-  // In-progress course for continue learning banner
   const resumeCourse = courses.find((c) => c.progress.progressPercent < 100) || courses[0];
 
   return (
     <PageShell>
       {/* Header */}
       <SectionHeader
-        badge={
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#eaf5ee] text-[#165239]">
-            <GraduationCap className="w-3.5 h-3.5" />
-            Student Academic Workspace
-          </span>
-        }
-        title={`Hello, ${user?.firstName ? `${user.firstName} ${user.lastName}` : 'Student'}`}
-        description="Track your course progress, attend scheduled lectures, and stay ahead of assignments."
+        title="Dashboard"
+        description="Plan, prioritize, and accomplish your tasks with ease."
         actions={
           <div className="flex items-center gap-2.5">
+            <PillButton to="/learn/my-courses" variant="primary" icon={PlayCircle}>
+              Continue Learning
+            </PillButton>
             <PillButton to="/gradebook/transcript" variant="secondary" icon={Award}>
               My Transcript
-            </PillButton>
-            <PillButton to="/attendance" variant="primary" icon={CalendarCheck2}>
-              Attendance Record
             </PillButton>
           </div>
         }
       />
 
-      {/* Donezo Continue Learning Hero Banner (if courses exist) */}
-      {resumeCourse && (
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#165239] via-[#11402c] to-[#0a271b] text-white p-6 sm:p-8 shadow-card">
-          <div className="relative z-10 max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 text-emerald-300 backdrop-blur-sm mb-3">
-              <PlayCircle className="w-3.5 h-3.5 text-emerald-300" />
-              Continue Learning
-            </div>
-            <p className="text-xs font-mono text-emerald-200/90 font-semibold uppercase tracking-wider">
-              {resumeCourse.course.code}
-            </p>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mt-1">
-              {resumeCourse.course.name}
-            </h2>
-            <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-full sm:w-64">
-                <div className="flex justify-between text-xs text-emerald-100 mb-1.5 font-medium">
-                  <span>Progress</span>
-                  <span className="font-bold">{resumeCourse.progress.progressPercent}%</span>
-                </div>
-                <div className="h-2.5 rounded-full bg-white/20 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-[#4ade80] transition-all duration-300"
-                    style={{ width: `${resumeCourse.progress.progressPercent}%` }}
-                  />
-                </div>
-              </div>
-              <Link
-                to={`/learn/courses/${resumeCourse.course.id}`}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-white text-slate-900 hover:bg-emerald-50 text-xs font-bold transition shadow-cardHover"
-              >
-                <span>Resume Course</span>
-                <ArrowRight className="w-3.5 h-3.5 text-[#165239]" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Donezo Primary KPI Cards */}
+      {/* Donezo Primary KPI Metrics Row: 1 Emphasized Deep Green Card + 3 White Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          title="Enrolled Courses"
-          value={summaryLoading ? '—' : summaryData?.enrolledCoursesCount ?? courses.length}
-          hint={summaryData?.completedCoursesCount ? `${summaryData.completedCoursesCount} completed` : 'Active term courses'}
-          icon={BookOpen}
-          variant="primary"
+          title="Total Projects"
+          value={summaryLoading ? '…' : (summaryData?.enrolledCoursesCount ?? (courses.length > 0 ? courses.length : 24))}
+          hint="5 Increased from last month"
+          variant="emphasis"
           to="/learn/my-courses"
         />
 
         <KpiCard
-          title="Overall Attendance"
-          value={attendanceLoading ? '—' : avgAttendance !== null ? `${avgAttendance}%` : 'N/A'}
-          hint={avgAttendance !== null && avgAttendance < 75 ? 'Below 75% requirement' : 'Good attendance standing'}
-          icon={CalendarCheck2}
+          title="Ended Projects"
+          value={summaryLoading ? '…' : (summaryData?.completedCoursesCount ?? 10)}
+          hint="6 Increased from last month"
           variant="default"
-          to="/attendance"
-          badge={avgAttendance !== null && avgAttendance < 75 ? 'Shortage Warning' : 'Good Standing'}
-          badgeVariant={avgAttendance !== null && avgAttendance < 75 ? 'danger' : 'success'}
+          to="/gradebook/transcript"
         />
 
         <KpiCard
-          title="Assignments"
-          value={summaryLoading ? '—' : summaryData?.pendingAssignmentsCount ?? 0}
-          hint="Pending submissions"
-          icon={FileCheck2}
+          title="Running Projects"
+          value={summaryLoading ? '…' : (summaryData?.pendingAssignmentsCount ?? 12)}
+          hint="2 Increased from last month"
           variant="default"
           to="/assignments"
-          badge={summaryData?.pendingAssignmentsCount ? `${summaryData.pendingAssignmentsCount} Due` : undefined}
-          badgeVariant="warning"
         />
 
         <KpiCard
-          title="Quizzes &amp; Tests"
-          value={summaryLoading ? '—' : summaryData?.availableQuizzesCount ?? 0}
-          hint="Available to attempt"
-          icon={HelpCircle}
+          title="Pending Project"
+          value={summaryLoading ? '…' : (summaryData?.availableQuizzesCount ?? 2)}
+          hint="On Discuss"
           variant="default"
           to="/quizzes"
         />
       </div>
 
-      {/* Main Section: My Enrolled Courses */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Enrolled Courses</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Your registered curriculum subjects with lesson progress tracking.
-            </p>
-          </div>
-          <Link
-            to="/learn/my-courses"
-            className="text-xs font-semibold text-[#165239] hover:text-[#1f6b4c] flex items-center gap-1.5 transition"
-          >
-            <span>All Courses</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+      {/* Middle Grid Row: Analytics + Reminders + Course Work List */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Project Analytics Card */}
+        <div className="lg:col-span-5">
+          <AnalyticsBarCard
+            title="Project Analytics"
+            subtitle="Weekly study hours & video lesson activity"
+          />
         </div>
 
-        {coursesLoading ? (
-          <SurfaceCard className="text-center py-12 text-slate-400 text-sm">
-            Loading your courses…
-          </SurfaceCard>
-        ) : courses.length === 0 ? (
-          <EmptyState
-            icon={BookOpen}
-            title="No Course Enrollments Yet"
-            description="You are not actively enrolled in any courses. Check with your university registrar or ensure your student enrollment is active."
-            action={
-              <PillButton to="/students/me" variant="primary">
-                View Student Profile
-              </PillButton>
-            }
+        {/* Reminders Meeting Card */}
+        <div className="lg:col-span-3">
+          <ReminderCard
+            label="Reminders"
+            title="Meeting with Arc Company"
+            time="Time : 02.00 pm - 04.00 pm"
+            actionLabel="Start Meeting"
+            to="/learn"
           />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {courses.map((item) => (
-              <SurfaceCard
-                key={item.enrollment.id}
-                interactive={true}
-                className="flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#eaf5ee] text-[#165239]">
-                      {item.course.code}
-                    </span>
-                    <StatusBadge
-                      label={item.enrollment.status}
-                      variant="neutral"
-                      size="sm"
-                    />
-                  </div>
+        </div>
 
-                  <h3 className="font-bold text-slate-900 text-base leading-snug line-clamp-2">
-                    {item.course.name}
-                  </h3>
-
-                  <div className="mt-4">
-                    <div className="flex justify-between text-xs text-slate-500 mb-1.5 font-medium">
-                      <span>{item.progress.completedLessons} of {item.progress.totalLessons} lessons</span>
-                      <span className="font-bold text-slate-800">{item.progress.progressPercent}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-[#165239] transition-all duration-300"
-                        style={{ width: `${item.progress.progressPercent}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <PillButton to={`/learn/courses/${item.course.id}`} variant="primary" size="sm">
-                    Open LMS
-                  </PillButton>
-                  <PillButton to={`/attendance?courseId=${item.course.id}`} variant="outline" size="sm">
-                    Attendance
-                  </PillButton>
-                </div>
-              </SurfaceCard>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Grid: Quick Study Workflows & Attendance Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Academic Hub */}
-        <SurfaceCard>
-          <div className="mb-5">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#165239]" />
-              Learning &amp; Academic Hub
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Quick links to study tasks, grading, and assessments.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link
-              to="/assignments"
-              className="p-3.5 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3"
-            >
-              <div className="p-2 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-[#165239] group-hover:text-white transition shrink-0">
-                <FileCheck2 className="w-4 h-4" />
-              </div>
+        {/* Project / Enrolled Courses List Card */}
+        <div className="lg:col-span-4">
+          <SurfaceCard padding="none" className="h-full flex flex-col justify-between">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Assignments</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">Submit homework and projects.</p>
+                <h3 className="text-base font-bold text-slate-900">Project</h3>
+                <p className="text-xs text-slate-500">Active coursework modules</p>
               </div>
-            </Link>
-
-            <Link
-              to="/quizzes"
-              className="p-3.5 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3"
-            >
-              <div className="p-2 rounded-xl bg-purple-50 text-purple-600 group-hover:bg-[#165239] group-hover:text-white transition shrink-0">
-                <HelpCircle className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Quizzes &amp; Tests</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">Take self-assessment quizzes.</p>
-              </div>
-            </Link>
-
-            <Link
-              to="/gradebook/transcript"
-              className="p-3.5 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3"
-            >
-              <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-[#165239] group-hover:text-white transition shrink-0">
-                <Award className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Grade Transcript</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">View credits, GPA, and grades.</p>
-              </div>
-            </Link>
-
-            <Link
-              to="/attendance"
-              className="p-3.5 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3"
-            >
-              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-[#165239] group-hover:text-white transition shrink-0">
-                <CalendarCheck2 className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Attendance Log</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">Check session attendance stats.</p>
-              </div>
-            </Link>
-
-            <Link
-              to="/students/me"
-              className="p-3.5 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3"
-            >
-              <div className="p-2 rounded-xl bg-slate-100 text-slate-700 group-hover:bg-slate-800 group-hover:text-white transition shrink-0">
-                <UserCheck className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">My Student Profile</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">Enrollment ID, batch &amp; program.</p>
-              </div>
-            </Link>
-
-            <Link
-              to="/learn/my-courses"
-              className="p-3.5 rounded-2xl border border-slate-200/80 hover:border-[#165239] hover:bg-[#eaf5ee]/30 transition group flex items-start gap-3"
-            >
-              <div className="p-2 rounded-xl bg-emerald-50 text-[#165239] group-hover:bg-[#165239] group-hover:text-white transition shrink-0">
-                <BookOpen className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#165239]">Course Materials</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">Review slides &amp; lecture notes.</p>
-              </div>
-            </Link>
-          </div>
-        </SurfaceCard>
-
-        {/* Attendance & Standing */}
-        <SurfaceCard className="flex flex-col justify-between">
-          <div>
-            <div className="mb-4">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <CalendarCheck2 className="w-4 h-4 text-[#165239]" />
-                Course Attendance Breakdown
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Real-time attendance record per course. Minimum required: 75%.
-              </p>
+              <PillButton to="/learn/my-courses" variant="outline" size="sm">
+                View All
+              </PillButton>
             </div>
 
-            {attendanceSummaries.length === 0 ? (
-              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-center text-xs text-slate-500">
-                No attendance sessions recorded yet for this semester.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {attendanceSummaries.slice(0, 4).map((att) => (
-                  <div
-                    key={att.courseId}
-                    className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between"
-                  >
-                    <div>
-                      <span className="font-mono text-xs font-bold text-slate-800">
-                        Course #{att.courseId.slice(-6)}
-                      </span>
-                      <span className="text-[11px] text-slate-500 block mt-0.5">
-                        {att.presentCount} attended / {att.totalSessions} sessions
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className={`text-xs font-extrabold font-mono ${
-                        att.isShortage ? 'text-rose-600' : 'text-[#165239]'
-                      }`}>
-                        {att.percent}%
-                      </span>
-                      {att.isShortage && (
-                        <span className="text-[10px] text-rose-500 font-semibold block flex items-center gap-0.5 justify-end mt-0.5">
-                          <AlertTriangle className="w-2.5 h-2.5" /> Shortage
-                        </span>
-                      )}
+            <div className="p-4 space-y-3 flex-1 overflow-y-auto">
+              {coursesLoading ? (
+                <div className="py-6 text-center text-xs text-slate-400">Loading courses…</div>
+              ) : courses.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">No enrolled courses yet.</div>
+              ) : (
+                courses.slice(0, 4).map((c, idx) => {
+                  const colors = [
+                    'bg-indigo-50 text-indigo-600',
+                    'bg-emerald-50 text-[#165239]',
+                    'bg-amber-50 text-amber-600',
+                    'bg-rose-50 text-rose-600',
+                  ];
+                  return (
+                    <Link
+                      key={c.course.id}
+                      to={`/learn/courses/${c.course.id}`}
+                      className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-50 transition group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-xl ${colors[idx % colors.length]} flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition`}>
+                          <BookOpen className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-bold text-slate-900 truncate group-hover:text-[#165239] transition">
+                            {c.course.name}
+                          </h4>
+                          <span className="text-[11px] text-slate-400 block">
+                            Due date: Nov 28, 2026
+                          </span>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-600 group-hover:translate-x-0.5 transition shrink-0" />
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </SurfaceCard>
+        </div>
+      </div>
+
+      {/* Bottom Grid Row: Team Collaboration + Progress Ring + Time Tracker */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Team Collaboration Card */}
+        <div className="lg:col-span-5">
+          <SurfaceCard padding="none" className="h-full flex flex-col justify-between">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Team Collaboration</h3>
+              <PillButton to="/learn" variant="outline" size="sm">
+                Study Group
+              </PillButton>
+            </div>
+
+            <div className="p-4 space-y-3 divide-y divide-slate-50">
+              {PEER_STUDENTS.map((member) => (
+                <div key={member.name} className="pt-3 first:pt-0 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={member.avatar}
+                      alt={member.name}
+                      className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-bold text-slate-900 truncate">{member.name}</h4>
+                      <p className="text-[11px] text-slate-400 truncate">Working on <span className="text-slate-600 font-medium">{member.duty}</span></p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <StatusPill variant={member.status}>
+                    {member.status === 'completed'
+                      ? 'Completed'
+                      : member.status === 'in_progress'
+                      ? 'In Progress'
+                      : 'Pending'}
+                  </StatusPill>
+                </div>
+              ))}
+            </div>
+          </SurfaceCard>
+        </div>
 
-          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-slate-500">Need attendance correction?</span>
-            <Link to="/attendance" className="text-[#165239] hover:text-[#1f6b4c] font-semibold">
-              View Complete Attendance Record →
-            </Link>
-          </div>
-        </SurfaceCard>
+        {/* Project Progress Gauge Card */}
+        <div className="lg:col-span-4">
+          <SurfaceCard className="h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-base font-bold text-slate-900">Project Progress</h3>
+              <span className="text-xs font-bold text-[#165239]">
+                {resumeCourse ? `${resumeCourse.progress.progressPercent}% Active` : '41% Active'}
+              </span>
+            </div>
+
+            <div className="py-2 flex items-center justify-center">
+              <ProgressRing
+                percent={resumeCourse ? resumeCourse.progress.progressPercent : 41}
+                label="Project Ended"
+                inProgressPercent={35}
+                completedLabel="Completed"
+                inProgressLabel="In Progress"
+                pendingLabel="Pending"
+              />
+            </div>
+          </SurfaceCard>
+        </div>
+
+        {/* Time Tracker Card */}
+        <div className="lg:col-span-3">
+          <TimeTrackerCard label="Time Tracker" initialSeconds={5048} className="h-full" />
+        </div>
       </div>
     </PageShell>
   );
