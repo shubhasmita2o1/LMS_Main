@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, RefreshCw, Lock, Unlock, Send, Award } from 'lucide-react';
 import api from '../../lib/api';
 import type {
   ApiResponse,
@@ -10,6 +11,7 @@ import type {
 } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
 import { AppLayout } from '../../components/layout/AppLayout';
+import { PageShell, SurfaceCard, SectionHeader, PillButton, StatusBadge } from '../../components/ui';
 
 export function GradebookDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -120,139 +122,173 @@ export function GradebookDetailPage() {
   if (isStudent) {
     return (
       <AppLayout>
-        <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-          <Link to="/gradebook" className="text-sm text-slate-500 hover:text-slate-800">
-            ← Gradebooks
-          </Link>
+        <PageShell>
+          <SectionHeader
+            title={myResult?.title || 'Academic Performance & Grades'}
+            subtitle="Published grade breakdown and component contributions"
+            actions={
+              <PillButton variant="outline" href="/gradebook" leftIcon={<ArrowLeft className="w-4 h-4" />}>
+                Gradebooks
+              </PillButton>
+            }
+          />
+
           {!myResult ? (
-            <p className="text-slate-500">No published result for you yet.</p>
+            <SurfaceCard className="py-12 text-center text-xs text-slate-400">
+              No published grades available for your account yet.
+            </SurfaceCard>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-sm">
-              <h1 className="text-xl font-semibold">{myResult.title || 'My grades'}</h1>
-              <div className="flex gap-6 text-sm">
-                <div>
-                  <div className="text-slate-500">Total</div>
-                  <div className="text-2xl font-semibold text-slate-900">
-                    {myResult.weightedPercent}%
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Letter</div>
-                  <div className="text-2xl font-semibold text-indigo-600">
+            <div className="space-y-6">
+              <div className="grid sm:grid-cols-3 gap-6">
+                <SurfaceCard className="bg-[#165239] text-white">
+                  <span className="text-emerald-200 text-xs font-semibold uppercase tracking-wider">
+                    Cumulative Weighted Total
+                  </span>
+                  <div className="text-3xl font-extrabold mt-1">{myResult.weightedPercent}%</div>
+                </SurfaceCard>
+                <SurfaceCard>
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                    Letter Grade
+                  </span>
+                  <div className="text-3xl font-extrabold text-[#165239] mt-1">
                     {myResult.letterGrade || '—'}
                   </div>
-                </div>
-                <div>
-                  <div className="text-slate-500">GP</div>
-                  <div className="text-2xl font-semibold">{myResult.gradePoint ?? '—'}</div>
-                </div>
+                </SurfaceCard>
+                <SurfaceCard>
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                    Grade Points
+                  </span>
+                  <div className="text-3xl font-extrabold text-slate-900 mt-1">
+                    {myResult.gradePoint ?? '—'}
+                  </div>
+                </SurfaceCard>
               </div>
-              <table className="w-full text-sm">
-                <thead className="text-left text-slate-500 border-b">
-                  <tr>
-                    <th className="py-2">Component</th>
-                    <th className="py-2">Weight</th>
-                    <th className="py-2">Marks</th>
-                    <th className="py-2">%</th>
-                    <th className="py-2">Contribution</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {myResult.components?.map((c) => (
-                    <tr key={c.key}>
-                      <td className="py-2">{c.name}</td>
-                      <td className="py-2">{c.weightPercent}%</td>
-                      <td className="py-2">
-                        {c.rawMarks}/{c.maxMarks}
-                      </td>
-                      <td className="py-2">{c.percent}%</td>
-                      <td className="py-2">{c.contribution}</td>
+
+              <SurfaceCard title="Evaluation Components & Breakdown" className="p-0 overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50/80 border-b border-slate-200/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">Component</th>
+                      <th className="px-5 py-3.5">Weight</th>
+                      <th className="px-5 py-3.5">Marks Obtained</th>
+                      <th className="px-5 py-3.5">Percentage</th>
+                      <th className="px-5 py-3.5 text-right">Contribution</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {myResult.components?.map((c) => (
+                      <tr key={c.key} className="hover:bg-slate-50/60 transition">
+                        <td className="px-5 py-3 font-semibold text-slate-900">{c.name}</td>
+                        <td className="px-5 py-3 text-slate-500 font-mono">{c.weightPercent}%</td>
+                        <td className="px-5 py-3 font-medium text-slate-800">
+                          {c.rawMarks} / {c.maxMarks}
+                        </td>
+                        <td className="px-5 py-3 font-semibold text-slate-900">{c.percent}%</td>
+                        <td className="px-5 py-3 font-bold text-[#165239] text-right">
+                          {c.contribution} pts
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </SurfaceCard>
             </div>
           )}
-        </div>
+        </PageShell>
       </AppLayout>
     );
   }
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to="/gradebook" className="text-sm text-slate-500 hover:text-slate-800">
-            ← Gradebooks
-          </Link>
-          <h1 className="text-xl font-semibold text-slate-900">{gb?.title || 'Gradebook'}</h1>
-          {gb && (
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full border ${
-                gb.status === 'open'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : gb.status === 'locked'
-                    ? 'bg-amber-50 text-amber-700 border-amber-200'
-                    : 'bg-blue-50 text-blue-700 border-blue-200'
-              }`}
-            >
-              {gb.status}
-            </span>
-          )}
-        </div>
+      <PageShell>
+        <SectionHeader
+          title={gb?.title || 'Course Gradebook'}
+          subtitle={gb ? `Course ID: ${gb.courseId || '—'} · Term Offering: ${gb.offeringId || '—'}` : 'Evaluation matrix'}
+          badge={
+            gb ? (
+              <StatusBadge
+                status={gb.status === 'published' ? 'success' : gb.status === 'locked' ? 'warning' : 'primary'}
+                label={gb.status}
+              />
+            ) : undefined
+          }
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <PillButton variant="outline" href="/gradebook" leftIcon={<ArrowLeft className="w-4 h-4" />}>
+                Gradebooks
+              </PillButton>
+              {canManage && gb && (
+                <>
+                  {gb.status === 'open' && (
+                    <>
+                      <PillButton
+                        variant="secondary"
+                        onClick={() => recomputeMut.mutate()}
+                        loading={recomputeMut.isPending}
+                        leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+                      >
+                        Recompute Scores
+                      </PillButton>
+                      <PillButton
+                        variant="outline"
+                        onClick={() => lockMut.mutate()}
+                        leftIcon={<Lock className="w-3.5 h-3.5" />}
+                      >
+                        Lock
+                      </PillButton>
+                    </>
+                  )}
+                  {gb.status === 'locked' && (
+                    <>
+                      <PillButton
+                        variant="outline"
+                        onClick={() => unlockMut.mutate()}
+                        leftIcon={<Unlock className="w-3.5 h-3.5" />}
+                      >
+                        Unlock
+                      </PillButton>
+                      <PillButton
+                        variant="primary"
+                        onClick={() => publishMut.mutate()}
+                        leftIcon={<Send className="w-3.5 h-3.5" />}
+                      >
+                        Publish Results
+                      </PillButton>
+                    </>
+                  )}
+                  {gb.status === 'open' && (
+                    <PillButton
+                      variant="primary"
+                      onClick={() => publishMut.mutate()}
+                      leftIcon={<Send className="w-3.5 h-3.5" />}
+                    >
+                      Publish Results
+                    </PillButton>
+                  )}
+                </>
+              )}
+            </div>
+          }
+        />
 
-        {canManage && gb && (
-          <div className="flex flex-wrap gap-2">
-            {gb.status === 'open' && (
-              <>
-                <button
-                  className="px-3 py-1.5 text-sm rounded-lg bg-indigo-600 text-white disabled:opacity-50"
-                  disabled={recomputeMut.isPending}
-                  onClick={() => recomputeMut.mutate()}
-                >
-                  {recomputeMut.isPending ? 'Recomputing…' : 'Recompute from assignments/quizzes'}
-                </button>
-                <button
-                  className="px-3 py-1.5 text-sm rounded-lg border border-amber-300 text-amber-800 bg-amber-50"
-                  onClick={() => lockMut.mutate()}
-                >
-                  Lock
-                </button>
-              </>
-            )}
-            {gb.status === 'locked' && (
-              <>
-                <button
-                  className="px-3 py-1.5 text-sm rounded-lg border border-slate-300"
-                  onClick={() => unlockMut.mutate()}
-                >
-                  Unlock
-                </button>
-                <button
-                  className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 text-white"
-                  onClick={() => publishMut.mutate()}
-                >
-                  Publish results
-                </button>
-              </>
-            )}
-            {gb.status === 'open' && (
-              <button
-                className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 text-white"
-                onClick={() => publishMut.mutate()}
-              >
-                Publish results
-              </button>
-            )}
-          </div>
+        {(gbLoading || rosterLoading) && (
+          <SurfaceCard className="py-12 text-center text-xs text-slate-400">
+            Loading gradebook ledger…
+          </SurfaceCard>
         )}
 
-        {(gbLoading || rosterLoading) && <p className="text-sm text-slate-500">Loading…</p>}
-
-        {gb && (
-          <div className="flex flex-wrap gap-2 text-xs text-slate-600">
-            {gb.components?.map((c) => (
-              <span key={c.key} className="px-2 py-1 bg-slate-100 rounded-md">
+        {gb && gb.components && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+              Grading Schema:
+            </span>
+            {gb.components.map((c) => (
+              <span
+                key={c.key}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-white border border-slate-200/80 text-slate-700 shadow-2xs"
+              >
+                <Award className="w-3.5 h-3.5 text-[#165239]" />
                 {c.name} ({c.weightPercent}%) · {c.source}
               </span>
             ))}
@@ -260,122 +296,135 @@ export function GradebookDetailPage() {
         )}
 
         {canManage && rows.length > 0 && (
-          <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
-            <table className="w-full text-sm min-w-[800px]">
-              <thead className="bg-slate-50 text-slate-600 text-left">
-                <tr>
-                  <th className="px-3 py-2 font-medium sticky left-0 bg-slate-50">Student</th>
-                  {gb?.components?.map((c) => (
-                    <th key={c.key} className="px-3 py-2 font-medium whitespace-nowrap">
-                      {c.name}
-                      <span className="block text-[10px] font-normal text-slate-400">
-                        /{c.maxMarks}
-                      </span>
-                    </th>
-                  ))}
-                  <th className="px-3 py-2 font-medium">Total %</th>
-                  <th className="px-3 py-2 font-medium">Letter</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rows.map((row) => (
-                  <tr key={row.studentId} className="hover:bg-slate-50/80">
-                    <td className="px-3 py-2 sticky left-0 bg-white">
-                      <div className="font-medium text-slate-900">
-                        {row.studentName || row.studentId}
-                      </div>
-                      {row.studentCode && (
-                        <div className="text-xs text-slate-400">{row.studentCode}</div>
-                      )}
-                    </td>
-                    {gb?.components?.map((c) => {
-                      const e = row.entries[c.key];
-                      const marks =
-                        e?.overriddenMarks != null ? e.overriddenMarks : e?.rawMarks;
-                      return (
-                        <td key={c.key} className="px-3 py-2 tabular-nums">
-                          {e ? (
-                            <span
-                              className={
-                                e.overriddenMarks != null ? 'text-amber-700 font-medium' : ''
-                              }
-                              title={e.overrideReason || undefined}
-                            >
-                              {marks != null ? Number(marks).toFixed(1) : '—'}
-                            </span>
-                          ) : (
-                            <span className="text-slate-300">—</span>
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td className="px-3 py-2 font-medium tabular-nums">
-                      {row.total?.weightedPercent != null
-                        ? `${row.total.weightedPercent}%`
-                        : '—'}
-                    </td>
-                    <td className="px-3 py-2">{row.total?.letterGrade || '—'}</td>
+          <SurfaceCard className="p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left min-w-[700px]">
+                <thead className="bg-slate-50/80 border-b border-slate-200/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="px-5 py-3.5 sticky left-0 bg-slate-50/90 backdrop-blur-xs">Student</th>
+                    {gb?.components?.map((c) => (
+                      <th key={c.key} className="px-4 py-3.5 whitespace-nowrap">
+                        {c.name}
+                        <span className="block text-[10px] font-normal text-slate-400">
+                          Max {c.maxMarks}
+                        </span>
+                      </th>
+                    ))}
+                    <th className="px-4 py-3.5 font-bold text-[#165239]">Total %</th>
+                    <th className="px-4 py-3.5">Letter</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {rows.map((row) => (
+                    <tr key={row.studentId} className="hover:bg-slate-50/60 transition">
+                      <td className="px-5 py-3 sticky left-0 bg-white">
+                        <div className="font-bold text-slate-900">{row.studentName || row.studentId}</div>
+                        {row.studentCode && (
+                          <div className="text-[10px] font-mono text-slate-400">{row.studentCode}</div>
+                        )}
+                      </td>
+                      {gb?.components?.map((c) => {
+                        const e = row.entries[c.key];
+                        const marks = e?.overriddenMarks != null ? e.overriddenMarks : e?.rawMarks;
+                        return (
+                          <td key={c.key} className="px-4 py-3 tabular-nums">
+                            {e ? (
+                              <span
+                                className={e.overriddenMarks != null ? 'text-amber-700 font-bold' : 'font-medium text-slate-800'}
+                                title={e.overrideReason || undefined}
+                              >
+                                {marks != null ? Number(marks).toFixed(1) : '—'}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td className="px-4 py-3 font-bold text-[#165239] tabular-nums">
+                        {row.total?.weightedPercent != null ? `${row.total.weightedPercent}%` : '—'}
+                      </td>
+                      <td className="px-4 py-3 font-bold text-slate-800">{row.total?.letterGrade || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </SurfaceCard>
         )}
 
         {canManage && gb?.status !== 'published' && (
-          <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 max-w-xl">
-            <h3 className="font-medium text-sm text-slate-800">Override marks</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                className="border rounded-lg px-2 py-1.5 text-sm"
-                value={overrideStudent}
-                onChange={(e) => setOverrideStudent(e.target.value)}
-              >
-                <option value="">Student</option>
-                {rows.map((r) => (
-                  <option key={r.studentId} value={r.studentId}>
-                    {r.studentName || r.studentId}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="border rounded-lg px-2 py-1.5 text-sm"
-                value={overrideKey}
-                onChange={(e) => setOverrideKey(e.target.value)}
-              >
-                <option value="">Component</option>
-                {gb?.components?.map((c) => (
-                  <option key={c.key} value={c.key}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                className="border rounded-lg px-2 py-1.5 text-sm"
-                placeholder="Marks"
-                value={overrideMarks}
-                onChange={(e) => setOverrideMarks(e.target.value)}
-              />
-              <input
-                className="border rounded-lg px-2 py-1.5 text-sm"
-                placeholder="Reason"
-                value={overrideReason}
-                onChange={(e) => setOverrideReason(e.target.value)}
-              />
+          <SurfaceCard title="Manual Grade Override & Adjustment">
+            <p className="text-xs text-slate-500 mb-4">
+              Directly override a student's component score with mandatory audit justification.
+            </p>
+            <div className="grid sm:grid-cols-4 gap-3 items-end">
+              <div>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Target Student</label>
+                <select
+                  className="w-full border border-slate-200 rounded-full px-3 py-2 text-xs bg-white text-slate-800"
+                  value={overrideStudent}
+                  onChange={(e) => setOverrideStudent(e.target.value)}
+                >
+                  <option value="">Select Student</option>
+                  {rows.map((r) => (
+                    <option key={r.studentId} value={r.studentId}>
+                      {r.studentName || r.studentId}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Component</label>
+                <select
+                  className="w-full border border-slate-200 rounded-full px-3 py-2 text-xs bg-white text-slate-800"
+                  value={overrideKey}
+                  onChange={(e) => setOverrideKey(e.target.value)}
+                >
+                  <option value="">Select Component</option>
+                  {gb?.components?.map((c) => (
+                    <option key={c.key} value={c.key}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">New Marks</label>
+                <input
+                  type="number"
+                  className="w-full border border-slate-200 rounded-full px-3 py-2 text-xs bg-white text-slate-800"
+                  placeholder="e.g. 18.5"
+                  value={overrideMarks}
+                  onChange={(e) => setOverrideMarks(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Audit Justification</label>
+                <input
+                  className="w-full border border-slate-200 rounded-full px-4 py-2 text-xs bg-white text-slate-800"
+                  placeholder="Medical excuse / re-eval"
+                  value={overrideReason}
+                  onChange={(e) => setOverrideReason(e.target.value)}
+                />
+              </div>
             </div>
-            <button
-              className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 text-white disabled:opacity-50"
-              disabled={!overrideStudent || !overrideKey || overrideMarks === ''}
-              onClick={() => overrideMut.mutate()}
-            >
-              Save override
-            </button>
-          </div>
+            <div className="flex justify-end mt-4">
+              <PillButton
+                variant="primary"
+                disabled={!overrideStudent || !overrideKey || overrideMarks === '' || overrideMut.isPending}
+                loading={overrideMut.isPending}
+                onClick={() => overrideMut.mutate()}
+              >
+                Save Score Override
+              </PillButton>
+            </div>
+          </SurfaceCard>
         )}
-      </div>
+      </PageShell>
     </AppLayout>
   );
 }
 
 export default GradebookDetailPage;
+

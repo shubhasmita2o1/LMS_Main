@@ -64,24 +64,24 @@ function HomePage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-      <div className="max-w-3xl w-full bg-white rounded-3xl shadow-sm border border-slate-200 p-10 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-600 text-white text-2xl font-bold mb-6 shadow-md shadow-primary-500/20">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-6 antialiased selection:bg-[#165239] selection:text-white">
+      <div className="max-w-3xl w-full bg-white rounded-3xl shadow-card border border-slate-200/70 p-8 sm:p-12 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-[#165239] text-white text-2xl font-black mb-6 shadow-pill">
           UL
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-3">
           University Learning Management &amp; Academic ERP
         </h1>
-        <p className="text-slate-500 text-sm max-w-xl mx-auto mb-8 leading-relaxed">
+        <p className="text-slate-500 text-xs sm:text-sm max-w-xl mx-auto mb-8 leading-relaxed">
           Enterprise Multi-Tenant SaaS Platform for Higher Education Institutions.
           Full-cycle academic governance, curriculum design, student information systems, examination management, and compliance analytics.
         </p>
 
-        <div className="flex flex-wrap gap-3 justify-center mb-10">
+        <div className="flex flex-wrap gap-3.5 justify-center mb-10">
           {isAuthenticated() ? (
             <Link
               to="/dashboard"
-              className="inline-flex items-center px-6 py-3 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 transition shadow-sm"
+              className="inline-flex items-center px-6 py-3 rounded-full bg-[#165239] text-white font-bold hover:bg-[#1f6b4c] transition shadow-pill text-xs sm:text-sm"
             >
               Go to Academic ERP Dashboard →
             </Link>
@@ -89,13 +89,13 @@ function HomePage() {
             <>
               <Link
                 to="/login"
-                className="inline-flex items-center px-6 py-3 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 transition shadow-sm"
+                className="inline-flex items-center px-6 py-3 rounded-full bg-[#165239] text-white font-bold hover:bg-[#1f6b4c] transition shadow-pill text-xs sm:text-sm"
               >
                 Sign In →
               </Link>
               <Link
                 to="/select-tenant"
-                className="inline-flex items-center px-6 py-3 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition"
+                className="inline-flex items-center px-6 py-3 rounded-full border border-slate-200/90 text-slate-800 font-semibold hover:bg-slate-50 transition shadow-xs text-xs sm:text-sm"
               >
                 Select University Tenant
               </Link>
@@ -103,22 +103,22 @@ function HomePage() {
           )}
         </div>
 
-        <div className="pt-8 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-[11px] font-bold text-primary-700 uppercase tracking-wider block">Tenancy</span>
-            <span className="text-xs text-slate-700 font-medium">Multi-University Isolation</span>
+        <div className="pt-8 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3.5 text-left">
+          <div className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100">
+            <span className="text-[10px] font-bold text-[#165239] uppercase tracking-wider block">Tenancy</span>
+            <span className="text-xs text-slate-800 font-semibold mt-0.5 block">Multi-University Isolation</span>
           </div>
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-[11px] font-bold text-primary-700 uppercase tracking-wider block">Personas</span>
-            <span className="text-xs text-slate-700 font-medium">9 Distinct Roles</span>
+          <div className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100">
+            <span className="text-[10px] font-bold text-[#165239] uppercase tracking-wider block">Personas</span>
+            <span className="text-xs text-slate-800 font-semibold mt-0.5 block">9 Distinct Roles</span>
           </div>
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-[11px] font-bold text-primary-700 uppercase tracking-wider block">Modules</span>
-            <span className="text-xs text-slate-700 font-medium">25 Integrated Suites</span>
+          <div className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100">
+            <span className="text-[10px] font-bold text-[#165239] uppercase tracking-wider block">Modules</span>
+            <span className="text-xs text-slate-800 font-semibold mt-0.5 block">25 Integrated Suites</span>
           </div>
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-[11px] font-bold text-primary-700 uppercase tracking-wider block">Accreditation</span>
-            <span className="text-xs text-slate-700 font-medium">NAAC / NBA / ABET Ready</span>
+          <div className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100">
+            <span className="text-[10px] font-bold text-[#165239] uppercase tracking-wider block">Accreditation</span>
+            <span className="text-xs text-slate-800 font-semibold mt-0.5 block">NAAC / NBA / ABET Ready</span>
           </div>
         </div>
       </div>

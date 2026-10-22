@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Building2, Plus, Search } from 'lucide-react';
 import api from '../../lib/api';
 import type { ApiResponse, TenantPublic, PlatformStats } from '@university-lms/shared';
-import { useAuthStore } from '../../stores/authStore';
+import { AppLayout } from '../../components/layout/AppLayout';
+import { PageShell, SectionHeader, KpiCard, SurfaceCard, PillButton, StatusBadge } from '../../components/ui';
 
 export function AdminTenantsPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const queryClient = useQueryClient();
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const user = useAuthStore((s) => s.user);
 
   const { data: stats } = useQuery({
     queryKey: ['admin', 'stats'],
@@ -42,141 +42,144 @@ export function AdminTenantsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary-600 text-white flex items-center justify-center font-bold text-sm">
-              UL
-            </div>
-            <span className="font-semibold text-slate-900">Platform Admin</span>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            <Link to="/dashboard" className="text-slate-600 hover:text-slate-900">
-              Dashboard
-            </Link>
-            <span className="text-slate-500">{user?.email}</span>
-            <button
-              onClick={() => clearAuth()}
-              className="text-slate-600 hover:text-slate-900 px-2 py-1 rounded hover:bg-slate-100"
+    <AppLayout>
+      <PageShell>
+        <SectionHeader
+          title="Institutional Tenants"
+          subtitle="Super Admin multi-tenant control plane and university provisioning"
+          actions={
+            <PillButton
+              variant="primary"
+              href="/admin/tenants/new"
+              leftIcon={<Plus className="w-4 h-4" />}
             >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Tenants</h1>
-            <p className="text-slate-500 text-sm">Super Admin control plane</p>
-          </div>
-          <Link
-            to="/admin/tenants/new"
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700"
-          >
-            + Create Tenant
-          </Link>
-        </div>
+              Provision New Tenant
+            </PillButton>
+          }
+        />
 
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            {[
-              { label: 'Total tenants', value: stats.totalTenants },
-              { label: 'Active', value: stats.activeTenants },
-              { label: 'Trialing', value: stats.trialingTenants },
-              { label: 'Users', value: stats.totalUsers },
-            ].map((c) => (
-              <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-4">
-                <div className="text-xs text-slate-400 uppercase tracking-wide">{c.label}</div>
-                <div className="text-2xl font-bold text-slate-900 mt-1">{c.value}</div>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard
+              variant="primary"
+              label="Active Universities"
+              value={stats.activeTenants}
+              change={`${stats.totalTenants} total tenants`}
+              trend="up"
+            />
+            <KpiCard
+              label="Evaluation Trials"
+              value={stats.trialingTenants}
+              change="Active sandboxes"
+              trend="neutral"
+            />
+            <KpiCard
+              label="Platform Users"
+              value={stats.totalUsers}
+              change="Accounts across tenants"
+              trend="up"
+            />
+            <KpiCard
+              label="Total Deployments"
+              value={stats.totalTenants}
+              change="Multi-tenant shards"
+              trend="neutral"
+            />
           </div>
         )}
 
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex flex-wrap gap-3">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name or slug…"
-              className="flex-1 min-w-[180px] px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+        <SurfaceCard className="p-0 overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex flex-wrap gap-3 items-center">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search tenant name or slug…"
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-full text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#165239]/20"
+              />
+            </div>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
+              className="px-4 py-2 border border-slate-200 rounded-full text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#165239]/20"
             >
-              <option value="">All statuses</option>
+              <option value="">All Statuses</option>
               <option value="active">Active</option>
               <option value="trialing">Trialing</option>
-              <option value="past_due">Past due</option>
+              <option value="past_due">Past Due</option>
               <option value="suspended">Suspended</option>
               <option value="canceled">Canceled</option>
             </select>
           </div>
 
-          {isLoading && <div className="p-8 text-center text-slate-400">Loading…</div>}
+          {isLoading && <div className="p-10 text-center text-xs text-slate-400">Loading university tenants…</div>}
           {error && (
-            <div className="p-8 text-center text-red-600 text-sm">Failed to load tenants</div>
+            <div className="p-10 text-center text-rose-600 text-xs">Failed to load institutional tenants</div>
           )}
 
           {data && (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-500 text-left">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-50/80 border-b border-slate-200/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <tr>
-                    <th className="px-4 py-3 font-medium">Name</th>
-                    <th className="px-4 py-3 font-medium">Slug</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Plan</th>
-                    <th className="px-4 py-3 font-medium">Created</th>
-                    <th className="px-4 py-3 font-medium">Actions</th>
+                    <th className="px-5 py-3.5">Institution Name</th>
+                    <th className="px-5 py-3.5">Tenant Slug</th>
+                    <th className="px-5 py-3.5">Status</th>
+                    <th className="px-5 py-3.5">Plan Tier</th>
+                    <th className="px-5 py-3.5">Created Date</th>
+                    <th className="px-5 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {data.items.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                        No tenants yet
+                      <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
+                        No tenants matching criteria
                       </td>
                     </tr>
                   )}
                   {data.items.map((t) => (
-                    <tr key={t.id} className="hover:bg-slate-50/80">
-                      <td className="px-4 py-3">
+                    <tr key={t.id} className="hover:bg-slate-50/60 transition">
+                      <td className="px-5 py-3">
                         <Link
                           to={`/admin/tenants/${t.id}`}
-                          className="font-medium text-primary-600 hover:underline"
+                          className="font-bold text-slate-900 hover:text-[#165239] transition flex items-center gap-2"
                         >
-                          {t.name}
+                          <Building2 className="w-3.5 h-3.5 text-[#165239]" />
+                          <span>{t.name}</span>
                         </Link>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-slate-600">{t.slug}</td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={t.status} />
+                      <td className="px-5 py-3 font-mono text-[11px] text-slate-500">{t.slug}</td>
+                      <td className="px-5 py-3">
+                        <StatusBadge
+                          status={t.status === 'active' ? 'success' : t.status === 'suspended' ? 'danger' : 'neutral'}
+                          label={t.status}
+                        />
                       </td>
-                      <td className="px-4 py-3 capitalize">{t.planTier}</td>
-                      <td className="px-4 py-3 text-slate-500">
+                      <td className="px-5 py-3 font-semibold capitalize text-slate-700">{t.planTier}</td>
+                      <td className="px-5 py-3 text-slate-400 text-[11px]">
                         {new Date(t.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3 space-x-2">
+                      <td className="px-5 py-3 text-right space-x-2">
                         {t.status === 'suspended' ? (
-                          <button
+                          <PillButton
+                            variant="secondary"
+                            size="sm"
                             onClick={() => activateMut.mutate(t.id)}
-                            className="text-xs font-medium text-emerald-700 hover:underline"
+                            loading={activateMut.isPending}
                           >
                             Activate
-                          </button>
+                          </PillButton>
                         ) : (
-                          <button
+                          <PillButton
+                            variant="outline"
+                            size="sm"
                             onClick={() => suspendMut.mutate(t.id)}
-                            className="text-xs font-medium text-amber-700 hover:underline"
+                            loading={suspendMut.isPending}
                           >
                             Suspend
-                          </button>
+                          </PillButton>
                         )}
                       </td>
                     </tr>
@@ -185,25 +188,10 @@ export function AdminTenantsPage() {
               </table>
             </div>
           )}
-        </div>
-      </main>
-    </div>
+        </SurfaceCard>
+      </PageShell>
+    </AppLayout>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    active: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    trialing: 'bg-sky-50 text-sky-700 border-sky-100',
-    past_due: 'bg-amber-50 text-amber-800 border-amber-100',
-    suspended: 'bg-red-50 text-red-700 border-red-100',
-    canceled: 'bg-slate-100 text-slate-600 border-slate-200',
-  };
-  return (
-    <span
-      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${colors[status] || colors.canceled}`}
-    >
-      {status}
-    </span>
-  );
-}
+export default AdminTenantsPage;

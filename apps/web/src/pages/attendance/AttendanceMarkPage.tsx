@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type {
@@ -8,6 +8,7 @@ import type {
   AttendanceRecordPublic,
 } from '@university-lms/shared';
 import { AppLayout } from '../../components/layout/AppLayout';
+import { PageShell, SurfaceCard, SectionHeader, PillButton, StatusBadge } from '../../components/ui';
 
 type Status = 'present' | 'absent' | 'late' | 'excused' | 'holiday';
 
@@ -119,89 +120,89 @@ export function AttendanceMarkPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to="/attendance" className="text-sm text-slate-500 hover:text-slate-800">
-            ← Attendance
-          </Link>
-          <h1 className="text-xl font-semibold text-slate-900">
-            {session
-              ? `${new Date(session.date).toLocaleDateString()} · ${session.sessionType}`
-              : 'Mark attendance'}
-          </h1>
-          {session && (
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full border ${
-                session.status === 'open'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-slate-50 text-slate-600'
-              }`}
-            >
-              {session.status}
-            </span>
-          )}
-        </div>
-
-        {session && (
-          <p className="text-sm text-slate-600">
-            {session.title || session.topic || 'Session'} · method: {session.method}
-          </p>
-        )}
+      <PageShell>
+        <SectionHeader
+          title={session ? `${new Date(session.date).toLocaleDateString()} · ${session.sessionType}` : 'Session Attendance'}
+          subtitle={session ? `${session.title || session.topic || 'Class Session'} · Method: ${session.method}` : 'Mark and track class attendance'}
+          badge={session ? (
+            <StatusBadge
+              status={session.status === 'open' ? 'success' : 'neutral'}
+              label={session.status}
+            />
+          ) : undefined}
+          actions={
+            <div className="flex items-center gap-2">
+              <PillButton variant="outline" href="/attendance">
+                ← Attendance Overview
+              </PillButton>
+            </div>
+          }
+        />
 
         {isLoading ? (
-          <p className="text-sm text-slate-500">Loading…</p>
+          <SurfaceCard className="py-12 text-center text-xs text-slate-400">
+            Loading session roster…
+          </SurfaceCard>
         ) : (
-          <>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className="px-3 py-1 text-xs rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200"
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <PillButton
+                variant="secondary"
+                size="sm"
                 onClick={() => setAll('present')}
               >
-                All present
-              </button>
-              <button
-                className="px-3 py-1 text-xs rounded-md bg-red-50 text-red-700 border border-red-200"
+                Mark All Present
+              </PillButton>
+              <PillButton
+                variant="outline"
+                size="sm"
                 onClick={() => setAll('absent')}
               >
-                All absent
-              </button>
-              <button
-                className="ml-auto px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white disabled:opacity-50"
-                disabled={saveMut.isPending || session?.status === 'closed'}
-                onClick={() => saveMut.mutate()}
-              >
-                {saveMut.isPending ? 'Saving…' : 'Save marks'}
-              </button>
-              {session?.status === 'open' && (
-                <button
-                  className="px-4 py-2 text-sm rounded-lg border border-slate-300"
-                  onClick={() => closeMut.mutate()}
+                Mark All Absent
+              </PillButton>
+
+              <div className="ml-auto flex items-center gap-2">
+                {session?.status === 'open' && (
+                  <PillButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => closeMut.mutate()}
+                  >
+                    Close Session
+                  </PillButton>
+                )}
+                <PillButton
+                  variant="primary"
+                  size="sm"
+                  disabled={saveMut.isPending || session?.status === 'closed'}
+                  loading={saveMut.isPending}
+                  onClick={() => saveMut.mutate()}
                 >
-                  Close session
-                </button>
-              )}
+                  Save Attendance Marks
+                </PillButton>
+              </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-600 text-left">
+            <SurfaceCard className="p-0 overflow-hidden">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-50/80 border-b border-slate-200/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <tr>
-                    <th className="px-4 py-3 font-medium">Student</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3.5">Student Name & ID</th>
+                    <th className="px-5 py-3.5 text-right">Attendance Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {roster.map((r) => (
-                    <tr key={r.studentId} className="hover:bg-slate-50/80">
-                      <td className="px-4 py-2">
-                        <div className="font-medium">{r.studentName || r.studentId}</div>
+                    <tr key={r.studentId} className="hover:bg-slate-50/60 transition">
+                      <td className="px-5 py-3">
+                        <div className="font-bold text-slate-900">{r.studentName || r.studentId}</div>
                         {r.studentCode && (
-                          <div className="text-xs text-slate-400">{r.studentCode}</div>
+                          <div className="text-[11px] font-mono text-slate-400">{r.studentCode}</div>
                         )}
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-5 py-3 text-right">
                         <select
-                          className="border rounded-lg px-2 py-1.5 text-sm"
+                          className="border border-slate-200 rounded-full px-3 py-1.5 text-xs font-medium text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#165239]/20"
                           value={marks[r.studentId] || 'absent'}
                           disabled={session?.status === 'closed'}
                           onChange={(e) =>
@@ -220,17 +221,19 @@ export function AttendanceMarkPage() {
                       </td>
                     </tr>
                   ))}
+                  {roster.length === 0 && (
+                    <tr>
+                      <td colSpan={2} className="p-8 text-center text-slate-400 text-xs">
+                        No enrolled students found for this course session.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
-              {roster.length === 0 && (
-                <p className="p-6 text-sm text-slate-500 text-center">
-                  No enrolled students found for this course.
-                </p>
-              )}
-            </div>
-          </>
+            </SurfaceCard>
+          </div>
         )}
-      </div>
+      </PageShell>
     </AppLayout>
   );
 }

@@ -18,6 +18,14 @@ import {
   XCircle,
   ShieldCheck,
 } from 'lucide-react';
+import {
+  PageShell,
+  SectionHeader,
+  KpiCard,
+  SurfaceCard,
+  PillButton,
+  StatusBadge,
+} from '../../components/ui';
 
 interface TenantOverviewStats {
   scope: string;
@@ -89,161 +97,91 @@ export function TenantAdminDashboard() {
   const pendingUsers = pendingUsersData || [];
 
   return (
-    <div className="space-y-8 pb-12">
+    <PageShell>
       {/* Executive Welcome & Institutional Context */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+      <SectionHeader
+        badge={
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#eaf5ee] text-[#165239] border border-emerald-200/50">
               <Building className="w-3.5 h-3.5" />
               {currentTenant?.name || 'University'} ({currentTenant?.code || 'MAIN'})
             </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
               {currentCampus?.name || 'Main Campus'}
             </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700">
-              <Clock className="w-3.5 h-3.5" />
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-[#165239]">
+              <Clock className="w-3.5 h-3.5 text-[#165239]" />
               {academicYear} • {currentTerm}
             </span>
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Welcome, {user?.firstName} {user?.lastName}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Academic Operations & Institutional Administration Dashboard
-          </p>
-        </div>
+        }
+        title={`Welcome, ${user?.firstName || 'Administrator'} ${user?.lastName || ''}`}
+        description="Academic Operations & Institutional Administration Dashboard"
+        actions={
+          <div className="flex items-center gap-2.5">
+            <PillButton to="/academic" variant="primary" icon={Layers}>
+              Academic Tree
+            </PillButton>
+            <PillButton to="/students" variant="secondary" icon={Users}>
+              Student SIS
+            </PillButton>
+          </div>
+        }
+      />
 
-        <div className="flex items-center gap-2">
-          <Link
-            to="/academic"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold shadow-sm transition"
-          >
-            <Layers className="w-4 h-4" />
-            <span>Academic Tree</span>
-          </Link>
-          <Link
-            to="/students"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition bg-white"
-          >
-            <Users className="w-4 h-4" />
-            <span>Student SIS</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
+      {/* Donezo Primary KPI Row: 1 Emphasized Deep Green Card + 3 White Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link
+        <KpiCard
+          title="Enrolled Students"
+          value={statsLoading ? '…' : stats?.activeStudents ?? stats?.totalStudents ?? 0}
+          hint={`/ ${statsLoading ? '…' : stats?.totalStudents ?? 0} total enrolled`}
+          icon={Users}
+          variant="primary"
           to="/students"
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-primary-400 transition group block"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Enrolled Students
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-900">
-              {statsLoading ? '…' : stats?.activeStudents ?? stats?.totalStudents ?? 0}
-            </span>
-            <span className="text-xs text-slate-400 font-medium">
-              / {statsLoading ? '…' : stats?.totalStudents ?? 0} total
-            </span>
-          </div>
-          <span className="text-[11px] font-semibold text-primary-600 group-hover:underline mt-1 block">
-            Manage SIS directory →
-          </span>
-        </Link>
+        />
 
-        <Link
+        <KpiCard
+          title="Teaching Faculty"
+          value={statsLoading ? '…' : stats?.activeFaculty ?? stats?.totalFaculty ?? 0}
+          hint={`/ ${statsLoading ? '…' : stats?.totalFaculty ?? 0} total active`}
+          icon={UserCheck}
+          variant="default"
           to="/faculty"
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-primary-400 transition group block"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Teaching Faculty
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition">
-              <UserCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-900">
-              {statsLoading ? '…' : stats?.activeFaculty ?? stats?.totalFaculty ?? 0}
-            </span>
-            <span className="text-xs text-slate-400 font-medium">
-              / {statsLoading ? '…' : stats?.totalFaculty ?? 0} total
-            </span>
-          </div>
-          <span className="text-[11px] font-semibold text-primary-600 group-hover:underline mt-1 block">
-            Manage faculty directory →
-          </span>
-        </Link>
+        />
 
-        <Link
+        <KpiCard
+          title="Active Courses"
+          value={statsLoading ? '…' : stats?.activeCourses ?? stats?.totalCourses ?? 0}
+          hint={`/ ${statsLoading ? '…' : stats?.totalCourses ?? 0} total offerings`}
+          icon={BookOpen}
+          variant="default"
           to="/courses"
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-primary-400 transition group block"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Active Courses
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition">
-              <BookOpen className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-900">
-              {statsLoading ? '…' : stats?.activeCourses ?? stats?.totalCourses ?? 0}
-            </span>
-            <span className="text-xs text-slate-400 font-medium">
-              / {statsLoading ? '…' : stats?.totalCourses ?? 0} total
-            </span>
-          </div>
-          <span className="text-[11px] font-semibold text-primary-600 group-hover:underline mt-1 block">
-            Curriculum & offerings →
-          </span>
-        </Link>
+        />
 
-        <Link
+        <KpiCard
+          title="Pending Approvals"
+          value={statsLoading ? '…' : stats?.pendingUsers ?? 0}
+          hint="Review registration requests"
+          icon={Clock}
+          variant="default"
           to="/users"
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-amber-400 transition group block"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Pending Approvals
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-slate-900">
-              {statsLoading ? '…' : stats?.pendingUsers ?? 0}
-            </span>
-          </div>
-          <span className="text-[11px] font-semibold text-amber-700 group-hover:underline mt-1 block">
-            Review registration requests →
-          </span>
-        </Link>
+          badge={stats?.pendingUsers ? `${stats.pendingUsers} Pending` : undefined}
+          badgeVariant="warning"
+        />
       </div>
 
       {/* Pending Approvals Widget */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+      <SurfaceCard padding="none">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Pending User Approvals</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-base font-bold text-slate-900">Pending User Approvals</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
               Institutional registrations awaiting verification and role assignment
             </p>
           </div>
           <Link
             to="/users"
-            className="text-xs font-bold text-primary-700 hover:text-primary-800 flex items-center gap-1"
+            className="text-xs font-bold text-[#165239] hover:text-[#1f6b4c] flex items-center gap-1.5 transition"
           >
             <span>View All Approvals</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -262,139 +200,139 @@ export function TenantAdminDashboard() {
           )}
 
           {pendingUsers.map((p) => (
-            <div key={p.id} className="p-4 sm:px-6 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition">
+            <div
+              key={p.id}
+              className="p-4 sm:px-6 flex items-center justify-between gap-4 hover:bg-slate-50/70 transition"
+            >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-xs sm:text-sm text-slate-900 truncate">
                     {p.firstName} {p.lastName}
                   </span>
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                    {p.roles?.[0] || 'User'}
-                  </span>
+                  <StatusBadge
+                    label={p.roles?.[0] || 'User'}
+                    variant="neutral"
+                    size="sm"
+                  />
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">{p.email}</p>
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
+                <PillButton
+                  variant="primary"
+                  size="sm"
+                  icon={CheckCircle2}
                   onClick={() => approveMut.mutate(p.id)}
-                  disabled={approveMut.isPending}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 disabled:opacity-50"
+                  loading={approveMut.isPending}
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Approve</span>
-                </button>
-                <button
-                  type="button"
+                  Approve
+                </PillButton>
+                <PillButton
+                  variant="outline"
+                  size="sm"
+                  icon={XCircle}
                   onClick={() => rejectMut.mutate(p.id)}
-                  disabled={rejectMut.isPending}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1 disabled:opacity-50"
+                  loading={rejectMut.isPending}
                 >
-                  <XCircle className="w-3.5 h-3.5" />
-                  <span>Reject</span>
-                </button>
+                  Reject
+                </PillButton>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </SurfaceCard>
 
-      {/* Core Academic Operations Shortcuts */}
+      {/* Core Academic Operations Suites */}
       <div>
-        <h2 className="text-sm font-bold text-slate-900 mb-3">Academic Management Suites</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Link
-            to="/academic"
-            className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary-400 transition shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
-              <Layers className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-700 transition">
-              Academic Hierarchy
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Campuses, schools, departments, degree programs, batches, and sections.
-            </p>
-          </Link>
+        <h2 className="text-sm font-bold text-slate-900 mb-3 px-1">Academic Management Suites</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <SurfaceCard interactive={true} className="group">
+            <Link to="/academic" className="block">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                <Layers className="w-5 h-5 text-[#165239]" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#165239] transition">
+                Academic Hierarchy
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Campuses, schools, departments, degree programs, batches, and sections.
+              </p>
+            </Link>
+          </SurfaceCard>
 
-          <Link
-            to="/courses"
-            className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary-400 transition shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-700 transition">
-              Curriculum & Courses
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Manage course codes, OBE outcome mappings, syllabus modules, and running offerings.
-            </p>
-          </Link>
+          <SurfaceCard interactive={true} className="group">
+            <Link to="/courses" className="block">
+              <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#165239] transition">
+                Curriculum &amp; Courses
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Manage course codes, OBE outcome mappings, syllabus modules, and running offerings.
+              </p>
+            </Link>
+          </SurfaceCard>
 
-          <Link
-            to="/attendance"
-            className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary-400 transition shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
-              <CalendarCheck2 className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-700 transition">
-              Attendance Register
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Course attendance registers, session marking, percentage summaries, and shortage lists.
-            </p>
-          </Link>
+          <SurfaceCard interactive={true} className="group">
+            <Link to="/attendance" className="block">
+              <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                <CalendarCheck2 className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#165239] transition">
+                Attendance Register
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Course attendance registers, session marking, percentage summaries, and shortage lists.
+              </p>
+            </Link>
+          </SurfaceCard>
 
-          <Link
-            to="/gradebook"
-            className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary-400 transition shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-              <Award className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-700 transition">
-              Gradebook & Results
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Course gradebooks, score sheets, 10-point letter grading, and publishing transcripts.
-            </p>
-          </Link>
+          <SurfaceCard interactive={true} className="group">
+            <Link to="/gradebook" className="block">
+              <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                <Award className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#165239] transition">
+                Gradebook &amp; Results
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Course gradebooks, score sheets, 10-point letter grading, and publishing transcripts.
+              </p>
+            </Link>
+          </SurfaceCard>
 
-          <Link
-            to="/question-bank"
-            className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary-400 transition shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-700 transition">
-              Question Bank
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Repository of MCQ, true/false, subjective, and numerical questions with Bloom rubrics.
-            </p>
-          </Link>
+          <SurfaceCard interactive={true} className="group">
+            <Link to="/question-bank" className="block">
+              <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#165239] transition">
+                Question Bank
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Repository of MCQ, true/false, subjective, and numerical questions with Bloom rubrics.
+              </p>
+            </Link>
+          </SurfaceCard>
 
-          <Link
-            to="/settings"
-            className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary-400 transition shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-3">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-700 transition">
-              Tenant Settings & Governance
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Tenant academic policies, minimum attendance percentage, grading scale, and terms.
-            </p>
-          </Link>
+          <SurfaceCard interactive={true} className="group">
+            <Link to="/settings" className="block">
+              <div className="w-11 h-11 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#165239] transition">
+                Tenant Settings &amp; Governance
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Tenant academic policies, minimum attendance percentage, grading scale, and terms.
+              </p>
+            </Link>
+          </SurfaceCard>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
+export default TenantAdminDashboard;

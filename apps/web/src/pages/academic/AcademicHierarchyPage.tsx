@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AppLayout } from '../../components/layout/AppLayout';
+import { PageShell } from '../../components/ui';
 import { ModuleHeader } from '../../components/common/ModuleHeader';
 import { DataTable, type Column } from '../../components/common/DataTable';
 import { DetailDrawer } from '../../components/common/DetailDrawer';
@@ -127,7 +128,8 @@ export function AcademicHierarchyPage() {
 
   return (
     <AppLayout>
-      <ModuleHeader
+      <PageShell>
+        <ModuleHeader
         title="Campus & Academic Hierarchy"
         subtitle="Manage campuses, academic schools, departments, degree programs, batches, and sections"
         breadcrumbs={[{ label: 'Home', href: '/dashboard' }, { label: 'Academic Hierarchy' }]}
@@ -400,6 +402,7 @@ export function AcademicHierarchyPage() {
         itemName={programToDelete ? `${programToDelete.name} (${programToDelete.code})` : ''}
         confirmLabel="Confirm Archive"
       />
+      </PageShell>
     </AppLayout>
   );
 }
