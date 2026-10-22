@@ -1,7 +1,10 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import api from '../../lib/api';
 import type { ApiResponse, TenantPublic } from '@university-lms/shared';
+import { AppLayout } from '../../components/layout/AppLayout';
+import { PageShell, SectionHeader, SurfaceCard, PillButton, StatusBadge } from '../../components/ui';
 
 export function TenantDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,130 +30,139 @@ export function TenantDetailPage() {
   });
 
   if (isLoading) {
-    return <div className="p-10 text-center text-slate-400">Loading…</div>;
+    return (
+      <AppLayout>
+        <PageShell>
+          <div className="py-20 text-center text-slate-400 font-medium">Loading institutional tenant…</div>
+        </PageShell>
+      </AppLayout>
+    );
   }
   if (error || !tenant) {
     return (
-      <div className="p-10 text-center">
-        <p className="text-red-600 mb-4">Tenant not found</p>
-        <Link to="/admin/tenants" className="text-primary-600 text-sm">
-          Back to list
-        </Link>
-      </div>
+      <AppLayout>
+        <PageShell>
+          <SurfaceCard className="text-center py-12">
+            <h2 className="text-lg font-bold text-slate-900 mb-1">Tenant Not Found</h2>
+            <p className="text-sm text-slate-500 mb-4">The requested university tenant could not be found.</p>
+            <PillButton variant="outline" href="/admin/tenants" leftIcon={<ArrowLeft className="w-4 h-4" />}>
+              Back to Tenants Directory
+            </PillButton>
+          </SurfaceCard>
+        </PageShell>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/admin/tenants" className="text-sm text-slate-600 hover:text-slate-900">
-            ← Tenants
-          </Link>
-          <span className="font-semibold text-slate-900">{tenant.name}</span>
-          <span className="text-xs font-mono text-slate-400">{tenant.id}</span>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-        <div className="flex flex-wrap gap-3 items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{tenant.name}</h1>
-            <p className="text-sm text-slate-500 font-mono">{tenant.slug}</p>
-          </div>
-          <div className="flex gap-2">
-            {tenant.status === 'suspended' ? (
-              <button
-                onClick={() => activateMut.mutate()}
-                className="px-3 py-1.5 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
-              >
-                Activate
-              </button>
-            ) : (
-              <button
-                onClick={() => suspendMut.mutate()}
-                className="px-3 py-1.5 text-sm rounded-lg bg-amber-600 text-white hover:bg-amber-700"
-              >
-                Suspend
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Card title="Status & plan">
-            <Row label="Status" value={tenant.status} />
-            <Row label="Plan" value={tenant.planTier} />
-            <Row
-              label="Trial ends"
-              value={
-                tenant.trialEndsAt
-                  ? new Date(tenant.trialEndsAt).toLocaleString()
-                  : '—'
-              }
+    <AppLayout>
+      <PageShell>
+        <SectionHeader
+          title={tenant.name}
+          subtitle={`Slug: ${tenant.slug} · ID: ${tenant.id}`}
+          badge={
+            <StatusBadge
+              status={tenant.status === 'active' ? 'success' : tenant.status === 'suspended' ? 'danger' : 'neutral'}
+              label={tenant.status}
             />
-            <Row
-              label="Period end"
-              value={
-                tenant.currentPeriodEnd
-                  ? new Date(tenant.currentPeriodEnd).toLocaleString()
-                  : '—'
-              }
-            />
-          </Card>
+          }
+          actions={
+            <div className="flex items-center gap-2">
+              <PillButton variant="outline" href="/admin/tenants" leftIcon={<ArrowLeft className="w-4 h-4" />}>
+                Directory
+              </PillButton>
+              {tenant.status === 'suspended' ? (
+                <PillButton
+                  variant="secondary"
+                  onClick={() => activateMut.mutate()}
+                  loading={activateMut.isPending}
+                >
+                  Activate Tenant
+                </PillButton>
+              ) : (
+                <PillButton
+                  variant="danger"
+                  onClick={() => suspendMut.mutate()}
+                  loading={suspendMut.isPending}
+                >
+                  Suspend Tenant
+                </PillButton>
+              )}
+            </div>
+          }
+        />
 
-          <Card title="Branding">
-            <Row label="Display name" value={tenant.branding?.name || tenant.name} />
-            <Row label="Primary color" value={tenant.branding?.primaryColor || '—'} />
-            <Row label="Custom domain" value={tenant.customDomain || '—'} />
-            <Row label="Logo" value={tenant.branding?.logoUrl ? 'Set' : '—'} />
-          </Card>
+        <div className="grid sm:grid-cols-2 gap-6">
+          <SurfaceCard title="Subscription & Lifecycle">
+            <div className="space-y-3">
+              <Row label="Status" value={tenant.status} />
+              <Row label="Plan Tier" value={tenant.planTier} />
+              <Row
+                label="Trial Expiration"
+                value={tenant.trialEndsAt ? new Date(tenant.trialEndsAt).toLocaleString() : '—'}
+              />
+              <Row
+                label="Billing Period End"
+                value={tenant.currentPeriodEnd ? new Date(tenant.currentPeriodEnd).toLocaleString() : '—'}
+              />
+            </div>
+          </SurfaceCard>
 
-          <Card title="Limits">
-            <Row label="Max students" value={String(tenant.limits?.maxStudents ?? '—')} />
-            <Row label="Max faculty" value={String(tenant.limits?.maxFaculty ?? '—')} />
-            <Row label="Max courses" value={String(tenant.limits?.maxCourses ?? '—')} />
-            <Row label="Storage (GB)" value={String(tenant.limits?.maxStorageGB ?? '—')} />
-          </Card>
+          <SurfaceCard title="Institutional Branding">
+            <div className="space-y-3">
+              <Row label="Display Name" value={tenant.branding?.name || tenant.name} />
+              <Row label="Primary Accent Color" value={tenant.branding?.primaryColor || '—'} />
+              <Row label="Custom Domain" value={tenant.customDomain || '—'} />
+              <Row label="Institutional Logo" value={tenant.branding?.logoUrl ? 'Configured' : '—'} />
+            </div>
+          </SurfaceCard>
 
-          <Card title="Feature flags">
-            <ul className="space-y-1 max-h-40 overflow-y-auto">
+          <SurfaceCard title="Resource Quotas & Limits">
+            <div className="space-y-3">
+              <Row label="Max Student Enrollment" value={String(tenant.limits?.maxStudents ?? 'Unlimited')} />
+              <Row label="Max Faculty Members" value={String(tenant.limits?.maxFaculty ?? 'Unlimited')} />
+              <Row label="Max Active Courses" value={String(tenant.limits?.maxCourses ?? 'Unlimited')} />
+              <Row label="Allocated Cloud Storage (GB)" value={String(tenant.limits?.maxStorageGB ?? 'Unlimited')} />
+            </div>
+          </SurfaceCard>
+
+          <SurfaceCard title="Active Feature Flags">
+            <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
               {Object.entries(tenant.featureFlags || {}).map(([k, v]) => (
-                <li key={k} className="flex justify-between text-sm">
-                  <span className="font-mono text-xs text-slate-600">{k}</span>
-                  <span className={v ? 'text-emerald-600' : 'text-slate-400'}>
-                    {v ? 'on' : 'off'}
+                <div key={k} className="flex justify-between items-center py-2 text-xs">
+                  <span className="font-mono text-[11px] text-slate-600">{k}</span>
+                  <span
+                    className={`font-semibold px-2 py-0.5 rounded-full text-[10px] ${
+                      v ? 'bg-emerald-50 text-[#165239]' : 'bg-slate-100 text-slate-400'
+                    }`}
+                  >
+                    {v ? 'Active' : 'Disabled'}
                   </span>
-                </li>
+                </div>
               ))}
-            </ul>
-          </Card>
+            </div>
+          </SurfaceCard>
         </div>
 
-        <Card title="Billing">
-          <Row label="Provider" value={tenant.subscription?.provider || 'none'} />
-          <Row label="Customer ID" value={tenant.subscription?.customerId || '—'} />
-          <Row label="Subscription ID" value={tenant.subscription?.subscriptionId || '—'} />
-        </Card>
-      </main>
-    </div>
-  );
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl p-5">
-      <h2 className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">{title}</h2>
-      <div className="space-y-2">{children}</div>
-    </div>
+        <SurfaceCard title="Billing Provider & Account">
+          <div className="grid sm:grid-cols-3 gap-4">
+            <Row label="Payment Provider" value={tenant.subscription?.provider || 'Direct Invoice'} />
+            <Row label="Customer ID" value={tenant.subscription?.customerId || '—'} />
+            <Row label="Subscription ID" value={tenant.subscription?.subscriptionId || '—'} />
+          </div>
+        </SurfaceCard>
+      </PageShell>
+    </AppLayout>
   );
 }
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between text-sm gap-4">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-slate-900 text-right truncate">{value}</span>
+    <div className="flex justify-between items-center text-xs py-1 gap-4">
+      <span className="text-slate-500 font-medium">{label}</span>
+      <span className="font-semibold text-slate-900 text-right truncate">{value}</span>
     </div>
   );
 }
+
+export default TenantDetailPage;

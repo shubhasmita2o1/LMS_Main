@@ -12,6 +12,8 @@ import type {
 } from '@university-lms/shared';
 import { Can } from '../../components/auth/Can';
 import { AppLayout } from '../../components/layout/AppLayout';
+import { PageShell, SurfaceCard, SectionHeader, PillButton, StatusBadge } from '../../components/ui';
+import { ArrowLeft, BookOpen, Edit3 } from 'lucide-react';
 
 type Tab = 'overview' | 'structure' | 'offerings' | 'enrollments';
 
@@ -196,70 +198,86 @@ export function CourseDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500">
-        Loading course…
-      </div>
+      <AppLayout>
+        <PageShell>
+          <div className="py-20 text-center text-slate-400 font-medium">
+            Loading course details…
+          </div>
+        </PageShell>
+      </AppLayout>
     );
   }
 
   if (error || !course) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
-        <p className="text-red-600">Course not found</p>
-        <Link to="/courses" className="text-primary-600 text-sm">
-          Back to courses
-        </Link>
-      </div>
+      <AppLayout>
+        <PageShell>
+          <SurfaceCard className="text-center py-12">
+            <h2 className="text-lg font-bold text-slate-900 mb-1">Course Not Found</h2>
+            <p className="text-sm text-slate-500 mb-4">The course record could not be found.</p>
+            <PillButton variant="outline" href="/courses" leftIcon={<ArrowLeft className="w-4 h-4" />}>
+              Back to Courses Directory
+            </PillButton>
+          </SurfaceCard>
+        </PageShell>
+      </AppLayout>
     );
   }
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
-    { key: 'structure', label: 'Structure' },
+    { key: 'structure', label: 'Curriculum Structure' },
     { key: 'offerings', label: 'Offerings' },
     { key: 'enrollments', label: 'Enrollments' },
   ];
 
   return (
     <AppLayout>
-      <div className="space-y-6 pb-12">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/courses"
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm"
-            >
-              ← Courses Directory
-            </Link>
-            <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-primary-50 text-primary-700">{course.code}</span>
-            <span className="font-bold text-slate-900 text-lg">{course.name}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to={`/learn/courses/${id}`}
-              className="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-sm"
-            >
-              Open LMS View
-            </Link>
-            <Can resource="course" action="update">
-              <Link
-                to={`/courses/${id}/edit`}
-                className="text-xs font-bold px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition"
+      <PageShell>
+        <SectionHeader
+          title={course.name}
+          subtitle={`Course Code: ${course.code}`}
+          badge={
+            <StatusBadge
+              status={course.status === 'active' ? 'success' : 'neutral'}
+              label={course.status}
+            />
+          }
+          actions={
+            <div className="flex items-center gap-2">
+              <PillButton variant="outline" href="/courses" leftIcon={<ArrowLeft className="w-4 h-4" />}>
+                Directory
+              </PillButton>
+              <PillButton
+                variant="secondary"
+                href={`/learn/courses/${id}`}
+                leftIcon={<BookOpen className="w-4 h-4" />}
               >
-                Edit Course
-              </Link>
-            </Can>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-2">
+                LMS Player
+              </PillButton>
+              <Can resource="course" action="update">
+                <PillButton
+                  variant="primary"
+                  href={`/courses/${id}/edit`}
+                  leftIcon={<Edit3 className="w-4 h-4" />}
+                >
+                  Edit Course
+                </PillButton>
+              </Can>
+            </div>
+          }
+        />
+
+        {/* Tab Pills */}
+        <div className="flex flex-wrap gap-2 mb-2">
           {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              className={`px-4 py-2 rounded-full text-xs font-bold transition shadow-2xs ${
                 tab === t.key
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-[#165239] text-white'
+                  : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
               }`}
             >
               {t.label}
@@ -268,70 +286,72 @@ export function CourseDetailPage() {
         </div>
 
         {tab === 'overview' && (
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-slate-400 text-xs uppercase">Type</span>
-                <p className="capitalize font-medium text-slate-800">{course.courseType}</p>
+          <SurfaceCard className="space-y-6">
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/60">
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Course Type</span>
+                <p className="capitalize font-bold text-slate-800 mt-1">{course.courseType}</p>
               </div>
-              <div>
-                <span className="text-slate-400 text-xs uppercase">Status</span>
-                <p className="capitalize font-medium text-slate-800">{course.status}</p>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/60">
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Status</span>
+                <p className="capitalize font-bold text-slate-800 mt-1">{course.status}</p>
               </div>
-              <div>
-                <span className="text-slate-400 text-xs uppercase">Credits</span>
-                <p className="font-medium text-slate-800">
-                  {course.credits?.total ?? 0} (Theory {course.credits?.theory ?? 0} / Practical{' '}
-                  {course.credits?.practical ?? 0})
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/60">
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Total Credits</span>
+                <p className="font-bold text-slate-800 mt-1">
+                  {course.credits?.total ?? 0} Credits
                 </p>
               </div>
-              <div>
-                <span className="text-slate-400 text-xs uppercase">Structure</span>
-                <p className="font-medium text-slate-800">
-                  {course.modulesCount ?? 0} modules · {course.lessonsCount ?? 0} lessons
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/60">
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Structure</span>
+                <p className="font-bold text-slate-800 mt-1">
+                  {course.modulesCount ?? 0} Modules · {course.lessonsCount ?? 0} Lessons
                 </p>
               </div>
             </div>
+
             {course.description && (
               <div>
-                <span className="text-slate-400 text-xs uppercase">Description</span>
-                <p className="text-sm text-slate-700 mt-1 whitespace-pre-wrap">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Description</h3>
+                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
                   {course.description}
                 </p>
               </div>
             )}
-            {course.learningOutcomes?.length > 0 && (
-              <div>
-                <span className="text-slate-400 text-xs uppercase">Learning outcomes</span>
-                <ul className="mt-2 space-y-1">
+
+            {course.learningOutcomes && course.learningOutcomes.length > 0 && (
+              <div className="pt-4 border-t border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Learning Outcomes</h3>
+                <ul className="space-y-1.5">
                   {course.learningOutcomes.map((o, i) => (
-                    <li key={i} className="text-sm text-slate-700 flex gap-2">
-                      <span className="text-slate-400">{i + 1}.</span>
-                      {o.description}
+                    <li key={i} className="text-xs text-slate-700 flex gap-2">
+                      <span className="font-bold text-[#165239]">{i + 1}.</span>
+                      <span>{o.description}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-            {course.prerequisites?.length > 0 && (
-              <div>
-                <span className="text-slate-400 text-xs uppercase">Prerequisites</span>
-                <ul className="mt-1 text-sm text-slate-700">
+
+            {course.prerequisites && course.prerequisites.length > 0 && (
+              <div className="pt-4 border-t border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Prerequisites</h3>
+                <ul className="space-y-1">
                   {course.prerequisites.map((p) => (
-                    <li key={p.courseId}>
+                    <li key={p.courseId} className="text-xs text-slate-700">
                       <Link
                         to={`/courses/${p.courseId}`}
-                        className="text-primary-600 hover:underline font-mono text-xs"
+                        className="text-[#165239] font-bold font-mono hover:underline mr-1"
                       >
                         {p.courseId}
-                      </Link>{' '}
+                      </Link>
                       <span className="text-slate-400">({p.type})</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-          </div>
+          </SurfaceCard>
         )}
 
         {tab === 'structure' && (
@@ -599,7 +619,7 @@ export function CourseDetailPage() {
             )}
           </div>
         )}
-      </div>
+      </PageShell>
     </AppLayout>
   );
 }

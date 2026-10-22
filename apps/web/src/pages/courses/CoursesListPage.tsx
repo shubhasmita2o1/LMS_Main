@@ -1,19 +1,18 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type { ApiResponse, CourseListItem, CourseStats } from '@university-lms/shared';
 import { Can } from '../../components/auth/Can';
 import { AppLayout } from '../../components/layout/AppLayout';
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 px-4 py-3">
-      <div className="text-xs text-slate-400 uppercase tracking-wide">{label}</div>
-      <div className="text-xl font-semibold text-slate-900 mt-0.5">{value}</div>
-    </div>
-  );
-}
+import {
+  PageShell,
+  SectionHeader,
+  KpiCard,
+  SurfaceCard,
+  PillButton,
+  StatusBadge,
+} from '../../components/ui';
+import { BookOpen, Plus, Search } from 'lucide-react';
 
 export function CoursesListPage() {
   const [search, setSearch] = useState('');
@@ -50,188 +49,218 @@ export function CoursesListPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6 pb-12">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Curriculum &amp; Courses</h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              Course catalog, credits, and syllabus structure
-            </p>
-          </div>
-          <Can resource="course" action="create">
-            <Link
-              to="/courses/new"
-              className="text-sm font-semibold px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 shadow-sm transition"
-            >
-              + Create Course
-            </Link>
-          </Can>
-        </div>
+      <PageShell>
+        {/* Header */}
+        <SectionHeader
+          title="Curriculum &amp; Courses"
+          subtitle="Course catalog, academic credits, syllabus modules, and OBE outcome mappings"
+          actions={
+            <Can resource="course" action="create">
+              <PillButton
+                to="/courses/new"
+                variant="primary"
+                icon={Plus}
+              >
+                Create Course
+              </PillButton>
+            </Can>
+          }
+        />
+
+        {/* Donezo Primary KPI Row */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <StatCard label="Total" value={stats.total} />
-            <StatCard label="Active" value={stats.byStatus?.active || 0} />
-            <StatCard label="Draft" value={stats.byStatus?.draft || 0} />
-            <StatCard label="Core" value={stats.byType?.core || 0} />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <KpiCard
+              title="Total Courses"
+              value={stats.total}
+              hint="Catalogued curriculum courses"
+              icon={BookOpen}
+              variant="primary"
+            />
+            <KpiCard
+              title="Active Offerings"
+              value={stats.byStatus?.active || 0}
+              hint="Running this academic term"
+              icon={BookOpen}
+              variant="default"
+            />
+            <KpiCard
+              title="Draft Syllabi"
+              value={stats.byStatus?.draft || 0}
+              hint="Pending approval & review"
+              icon={BookOpen}
+              variant="default"
+            />
+            <KpiCard
+              title="Core Subjects"
+              value={stats.byType?.core || 0}
+              hint="Mandatory degree coursework"
+              icon={BookOpen}
+              variant="default"
+            />
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          <input
-            type="search"
-            placeholder="Search code or name…"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-            className="px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
-          >
-            <option value="">All statuses</option>
-            <option value="draft">Draft</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="archived">Archived</option>
-          </select>
-          <select
-            value={courseType}
-            onChange={(e) => {
-              setCourseType(e.target.value);
-              setPage(1);
-            }}
-            className="px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
-          >
-            <option value="">All types</option>
-            <option value="core">Core</option>
-            <option value="elective">Elective</option>
-            <option value="lab">Lab</option>
-            <option value="project">Project</option>
-            <option value="seminar">Seminar</option>
-            <option value="audit">Audit</option>
-            <option value="other">Other</option>
-          </select>
-          <Can resource="course" action="create">
-            <Link
-              to="/courses/new"
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700"
-            >
-              + Add Course
-            </Link>
-          </Can>
-        </div>
-
-        {isLoading && <p className="text-slate-500 text-sm">Loading courses…</p>}
-        {error && (
-          <p className="text-red-600 text-sm">Failed to load courses. Check permissions.</p>
-        )}
-        {!isLoading && items.length === 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-slate-500">
-            No courses found. Create the first course to get started.
-          </div>
-        )}
-
-        {items.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Code</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Name</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Type</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Credits</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Status</th>
-                  <th className="text-right px-4 py-3 font-medium text-slate-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((c) => (
-                  <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3 font-mono text-xs font-medium text-slate-800">
-                      {c.code}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link
-                        to={`/courses/${c.id}`}
-                        className="text-primary-600 hover:underline font-medium"
-                      >
-                        {c.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 capitalize text-slate-600">{c.courseType}</td>
-                    <td className="px-4 py-3 text-slate-700">
-                      {c.credits?.total ?? 0}
-                      <span className="text-slate-400 text-xs ml-1">
-                        (T{c.credits?.theory ?? 0}/P{c.credits?.practical ?? 0})
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                          c.status === 'active'
-                            ? 'bg-green-50 text-green-700'
-                            : c.status === 'draft'
-                              ? 'bg-amber-50 text-amber-700'
-                              : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        {c.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        to={`/courses/${c.id}`}
-                        className="text-slate-600 hover:text-primary-600 text-xs mr-2"
-                      >
-                        View
-                      </Link>
-                      <Can resource="course" action="update">
-                        <Link
-                          to={`/courses/${c.id}/edit`}
-                          className="text-slate-600 hover:text-primary-600 text-xs"
-                        >
-                          Edit
-                        </Link>
-                      </Can>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {meta && (meta.totalPages || 1) > 1 && (
-          <div className="flex items-center justify-between mt-4 text-sm text-slate-600">
-            <span>
-              Page {meta.page || page} of {meta.totalPages} ({meta.total} total)
-            </span>
-            <div className="flex gap-2">
-              <button
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3 py-1 rounded border border-slate-300 disabled:opacity-40 hover:bg-white"
-              >
-                Previous
-              </button>
-              <button
-                disabled={page >= (meta.totalPages || 1)}
-                onClick={() => setPage((p) => p + 1)}
-                className="px-3 py-1 rounded border border-slate-300 disabled:opacity-40 hover:bg-white"
-              >
-                Next
-              </button>
+        {/* Filters Card */}
+        <SurfaceCard padding="sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="search"
+                placeholder="Search course code or name…"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-9 pr-4 py-2 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+              />
             </div>
+
+            <select
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+              }}
+              className="px-3.5 py-2 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+            >
+              <option value="">All statuses</option>
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="archived">Archived</option>
+            </select>
+
+            <select
+              value={courseType}
+              onChange={(e) => {
+                setCourseType(e.target.value);
+                setPage(1);
+              }}
+              className="px-3.5 py-2 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+            >
+              <option value="">All types</option>
+              <option value="core">Core</option>
+              <option value="elective">Elective</option>
+              <option value="lab">Lab</option>
+              <option value="project">Project</option>
+              <option value="seminar">Seminar</option>
+              <option value="audit">Audit</option>
+              <option value="other">Other</option>
+            </select>
           </div>
+        </SurfaceCard>
+
+        {error && (
+          <SurfaceCard className="bg-rose-50 border-rose-200 text-rose-800 text-sm">
+            Failed to load courses. Please verify permissions.
+          </SurfaceCard>
         )}
-      </div>
+
+        {/* Courses Table Container */}
+        <SurfaceCard padding="none">
+          {isLoading && (
+            <div className="p-8 text-center text-xs text-slate-400">Loading courses catalog…</div>
+          )}
+
+          {!isLoading && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th className="px-5 py-3.5">Code</th>
+                    <th className="px-5 py-3.5">Course Name</th>
+                    <th className="px-5 py-3.5">Type</th>
+                    <th className="px-5 py-3.5">Credits</th>
+                    <th className="px-5 py-3.5">Status</th>
+                    <th className="px-5 py-3.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {items.map((c) => (
+                    <tr key={c.id} className="hover:bg-slate-50/70 transition">
+                      <td className="px-5 py-3.5 font-mono font-bold">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#eaf5ee] text-[#165239]">
+                          {c.code}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-bold text-slate-900">
+                        {c.name}
+                      </td>
+                      <td className="px-5 py-3.5 capitalize text-slate-600">
+                        {(c as any).type || (c as any).courseType || 'core'}
+                      </td>
+                      <td className="px-5 py-3.5 font-mono text-slate-600">
+                        {typeof c.credits === 'object' && c.credits !== null
+                          ? c.credits.total
+                          : (c.credits as any) ?? 3}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <StatusBadge
+                          label={c.status}
+                          variant={
+                            c.status === 'active'
+                              ? 'success'
+                              : c.status === 'draft'
+                              ? 'warning'
+                              : 'neutral'
+                          }
+                          size="sm"
+                        />
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <PillButton
+                          to={`/courses/${c.id}`}
+                          variant="outline"
+                          size="sm"
+                        >
+                          View
+                        </PillButton>
+                      </td>
+                    </tr>
+                  ))}
+                  {items.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
+                        No courses found matching current filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {meta && (meta.totalPages || 1) > 1 && (
+            <div className="px-5 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span>
+                Page {page} of {meta.totalPages}
+              </span>
+              <div className="flex gap-2">
+                <PillButton
+                  variant="secondary"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </PillButton>
+                <PillButton
+                  variant="secondary"
+                  size="sm"
+                  disabled={page >= (meta.totalPages || 1)}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                </PillButton>
+              </div>
+            </div>
+          )}
+        </SurfaceCard>
+      </PageShell>
     </AppLayout>
   );
 }
+export default CoursesListPage;

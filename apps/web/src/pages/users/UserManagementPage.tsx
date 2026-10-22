@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppLayout } from '../../components/layout/AppLayout';
+import { PageShell } from '../../components/ui';
 import { ModuleHeader } from '../../components/common/ModuleHeader';
 import api from '../../lib/api';
 import { isAxiosError } from 'axios';
@@ -117,7 +118,7 @@ export function UserManagementPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-6xl mx-auto space-y-4">
+      <PageShell>
         <ModuleHeader
           title="User management"
           subtitle="Review registrations, assign roles and tenants, activate accounts"
@@ -311,7 +312,7 @@ export function UserManagementPage() {
             </div>
           </div>
         )}
-      </div>
+      </PageShell>
     </AppLayout>
   );
 }

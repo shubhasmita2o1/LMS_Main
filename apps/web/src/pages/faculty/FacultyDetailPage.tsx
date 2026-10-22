@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Edit3, CheckCircle2, AlertCircle, BookOpen, Award } from 'lucide-react';
 import api from '../../lib/api';
 import type {
   ApiResponse,
@@ -9,6 +10,7 @@ import type {
 } from '@university-lms/shared';
 import { Can } from '../../components/auth/Can';
 import { AppLayout } from '../../components/layout/AppLayout';
+import { PageShell, SurfaceCard, SectionHeader, PillButton, StatusBadge, Avatar } from '../../components/ui';
 
 export function FacultyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -43,178 +45,222 @@ export function FacultyDetailPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['faculty', id] });
-      setMessage('Status updated');
+      setMessage('Faculty status updated successfully');
     },
   });
 
   if (isLoading) {
-    return <div className="min-h-screen bg-slate-50 p-10 text-slate-400">Loading…</div>;
-  }
-  if (error || !faculty) {
     return (
-      <div className="min-h-screen bg-slate-50 p-10">
-        <p className="text-red-600">Faculty not found</p>
-        <Link to="/faculty" className="text-primary-600 text-sm">
-          ← Back
-        </Link>
-      </div>
+      <AppLayout>
+        <PageShell>
+          <div className="py-20 text-center text-slate-400 font-medium">
+            Loading faculty profile…
+          </div>
+        </PageShell>
+      </AppLayout>
     );
   }
 
+  if (error || !faculty) {
+    return (
+      <AppLayout>
+        <PageShell>
+          <SurfaceCard className="text-center py-12">
+            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900 mb-1">Faculty Not Found</h2>
+            <p className="text-sm text-slate-500 mb-4">The requested faculty record could not be found.</p>
+            <PillButton variant="outline" href="/faculty" leftIcon={<ArrowLeft className="w-4 h-4" />}>
+              Back to Faculty Directory
+            </PillButton>
+          </SurfaceCard>
+        </PageShell>
+      </AppLayout>
+    );
+  }
+
+  const fullName = `${faculty.firstName} ${faculty.middleName ? faculty.middleName + ' ' : ''}${faculty.lastName}`;
+
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto space-y-6 pb-12">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/faculty"
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm"
-            >
-              ← Faculty Directory
-            </Link>
-          </div>
-          <Can resource="faculty" action="update">
-            <Link
-              to={`/faculty/${id}/edit`}
-              className="text-xs font-bold px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition"
-            >
-              Edit Faculty Record
-            </Link>
-          </Can>
-        </div>
-        {message && (
-          <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-            {message}
-          </div>
-        )}
-
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
-          <h1 className="text-xl font-bold text-slate-900">
-            {faculty.firstName} {faculty.middleName} {faculty.lastName}
-          </h1>
-          <p className="font-mono text-sm text-slate-500 mt-0.5">{faculty.employeeId}</p>
-          <div className="flex flex-wrap gap-2 mt-2">
-            <Badge>{faculty.status}</Badge>
-            {faculty.designation && <Badge>{faculty.designation}</Badge>}
-            {faculty.employmentType && (
-              <Badge>{faculty.employmentType.replace('_', ' ')}</Badge>
-            )}
-          </div>
-          {faculty.bio && <p className="text-sm text-slate-600 mt-4">{faculty.bio}</p>}
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Card title="Contact">
-            <Row label="Email" value={faculty.email} />
-            <Row label="Phone" value={faculty.phone} />
-            <Row label="Office" value={faculty.officeLocation} />
-            <Row label="Hours" value={faculty.officeHours} />
-          </Card>
-          <Card title="Employment">
-            <Row label="Department" value={faculty.departmentId} mono />
-            <Row
-              label="Joined"
-              value={
-                faculty.dateOfJoining
-                  ? String(faculty.dateOfJoining).slice(0, 10)
-                  : undefined
-              }
-            />
-            <Row
-              label="Experience"
-              value={
-                faculty.experienceYears !== undefined
-                  ? `${faculty.experienceYears} yrs`
-                  : undefined
-              }
-            />
-          </Card>
-        </div>
-
-        {faculty.qualifications?.length > 0 && (
-          <Card title="Qualifications">
-            {faculty.qualifications.map((q, i) => (
-              <div key={i} className="text-sm py-1 border-b border-slate-50 last:border-0">
-                <span className="font-medium">{q.degree}</span>
-                {q.institution && (
-                  <span className="text-slate-500 ml-2">— {q.institution}</span>
-                )}
-                {q.year && <span className="text-slate-400 ml-2">({q.year})</span>}
-              </div>
-            ))}
-          </Card>
-        )}
-
-        {faculty.specializations?.length > 0 && (
-          <Card title="Specializations">
-            <div className="flex flex-wrap gap-2">
-              {faculty.specializations.map((s) => (
-                <Badge key={s}>{s}</Badge>
-              ))}
+      <PageShell>
+        <SectionHeader
+          title="Faculty Profile"
+          subtitle={`Faculty ID: ${faculty.employeeId}`}
+          badge={<StatusBadge status={faculty.status === 'active' ? 'success' : 'neutral'} label={faculty.status} />}
+          actions={
+            <div className="flex items-center gap-2">
+              <PillButton variant="outline" href="/faculty" leftIcon={<ArrowLeft className="w-4 h-4" />}>
+                Directory
+              </PillButton>
+              <Can resource="faculty" action="update">
+                <PillButton variant="primary" href={`/faculty/${id}/edit`} leftIcon={<Edit3 className="w-4 h-4" />}>
+                  Edit Profile
+                </PillButton>
+              </Can>
             </div>
-          </Card>
+          }
+        />
+
+        {message && (
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#165239] bg-[#f0f7f4] border border-[#c2decf]/80 rounded-2xl px-4 py-3">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-[#165239]" />
+            <span>{message}</span>
+          </div>
         )}
 
+        {/* Hero Card */}
+        <SurfaceCard>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <Avatar name={fullName} size="xl" />
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h1 className="text-2xl font-bold text-slate-900">{fullName}</h1>
+                <StatusBadge status={faculty.status === 'active' ? 'success' : 'neutral'} label={faculty.status} />
+                {faculty.designation && (
+                  <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#165239] border border-emerald-100">
+                    {faculty.designation}
+                  </span>
+                )}
+                {faculty.employmentType && (
+                  <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                    {faculty.employmentType.replace('_', ' ')}
+                  </span>
+                )}
+              </div>
+              <p className="font-mono text-xs text-slate-500">Employee ID: {faculty.employeeId}</p>
+              {faculty.bio && <p className="text-xs text-slate-600 mt-3 max-w-2xl">{faculty.bio}</p>}
+            </div>
+          </div>
+        </SurfaceCard>
+
+        {/* Details Grid */}
+        <div className="grid sm:grid-cols-2 gap-6">
+          <SurfaceCard title="Contact Information">
+            <div className="space-y-3">
+              <DetailRow label="Official Email" value={faculty.email} />
+              <DetailRow label="Direct Phone" value={faculty.phone} />
+              <DetailRow label="Office Location" value={faculty.officeLocation} />
+              <DetailRow label="Consulting Hours" value={faculty.officeHours} />
+            </div>
+          </SurfaceCard>
+
+          <SurfaceCard title="Institutional Appointment">
+            <div className="space-y-3">
+              <DetailRow label="Department ID" value={faculty.departmentId} mono />
+              <DetailRow
+                label="Date Joined"
+                value={faculty.dateOfJoining ? String(faculty.dateOfJoining).slice(0, 10) : undefined}
+              />
+              <DetailRow
+                label="Teaching Experience"
+                value={faculty.experienceYears !== undefined ? `${faculty.experienceYears} Years` : undefined}
+              />
+            </div>
+          </SurfaceCard>
+        </div>
+
+        {/* Qualifications & Specializations */}
+        <div className="grid sm:grid-cols-2 gap-6">
+          <SurfaceCard title="Academic Qualifications">
+            {faculty.qualifications && faculty.qualifications.length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {faculty.qualifications.map((q, i) => (
+                  <div key={i} className="py-2.5 flex items-center justify-between text-xs first:pt-0 last:pb-0">
+                    <div>
+                      <span className="font-semibold text-slate-900">{q.degree}</span>
+                      {q.institution && <span className="text-slate-500 ml-1.5">— {q.institution}</span>}
+                    </div>
+                    {q.year && <span className="text-slate-400 font-mono text-[11px]">({q.year})</span>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400">No qualifications recorded</p>
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard title="Areas of Specialization">
+            {faculty.specializations && faculty.specializations.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {faculty.specializations.map((s) => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-[#f0f7f4] text-[#165239] border border-[#c2decf]/80"
+                  >
+                    <Award className="w-3 h-3 text-[#165239]" />
+                    {s}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400">No specializations specified</p>
+            )}
+          </SurfaceCard>
+        </div>
+
+        {/* Lifecycle Status Management */}
         <Can resource="faculty" action="manage">
-          <Card title="Change status">
-            <div className="flex flex-wrap gap-2">
+          <SurfaceCard title="Faculty Status Management">
+            <div className="flex flex-wrap items-center gap-3">
               <select
                 value={status || faculty.status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                className="px-4 py-2 border border-slate-200 rounded-full text-xs font-medium text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#165239]/20"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
-                <option value="on_leave">On leave</option>
+                <option value="on_leave">On Leave</option>
                 <option value="retired">Retired</option>
                 <option value="terminated">Terminated</option>
               </select>
-              <button
+              <PillButton
+                variant="primary"
                 onClick={() => statusMut.mutate()}
-                disabled={statusMut.isPending}
-                className="text-sm px-3 py-2 rounded-lg bg-primary-600 text-white"
+                loading={statusMut.isPending}
               >
-                Update status
-              </button>
+                Update Status
+              </PillButton>
             </div>
-          </Card>
+          </SurfaceCard>
         </Can>
 
-        <Card title="Course / section assignments">
-          <p className="text-xs text-slate-400 mb-2">
-            Ready for Phase 7 courses. Assignments can store courseId, sectionId, workload.
-          </p>
+        {/* Course & Section Assignments */}
+        <SurfaceCard title="Course & Instructional Assignments">
           {(assignments || []).length === 0 ? (
-            <p className="text-sm text-slate-400">No assignments yet</p>
+            <p className="py-4 text-center text-xs text-slate-400">No teaching assignments recorded yet.</p>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100">
               {(assignments || []).map((a) => (
-                <li key={a.id} className="py-2 text-sm flex justify-between">
-                  <span className="capitalize">{a.role}</span>
-                  <span className="font-mono text-xs text-slate-500">
-                    course: {a.courseId || '—'} · section: {a.sectionId || '—'}
-                    {a.workloadHours != null ? ` · ${a.workloadHours}h` : ''}
-                  </span>
-                </li>
+                <div key={a.id} className="py-3 flex items-center justify-between text-xs first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                      <BookOpen className="w-3.5 h-3.5 text-[#165239]" />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-900 capitalize">{a.role}</span>
+                      <p className="text-[11px] text-slate-400 font-mono">
+                        Course: {a.courseId || '—'} · Section: {a.sectionId || '—'}
+                      </p>
+                    </div>
+                  </div>
+                  {a.workloadHours != null && (
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                      {a.workloadHours} hrs / week
+                    </span>
+                  )}
+                </div>
               ))}
-            </ul>
+            </div>
           )}
-        </Card>
-      </div>
+        </SurfaceCard>
+      </PageShell>
     </AppLayout>
   );
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl p-5">
-      <h2 className="font-semibold text-slate-900 mb-3">{title}</h2>
-      {children}
-    </div>
-  );
-}
-
-function Row({
+function DetailRow({
   label,
   value,
   mono,
@@ -224,19 +270,12 @@ function Row({
   mono?: boolean;
 }) {
   return (
-    <div className="flex justify-between text-sm py-1">
-      <span className="text-slate-500">{label}</span>
-      <span className={`text-slate-900 ${mono ? 'font-mono text-xs' : ''}`}>
+    <div className="flex items-center justify-between text-xs py-1">
+      <span className="text-slate-500 font-medium">{label}</span>
+      <span className={`text-slate-900 font-semibold ${mono ? 'font-mono text-[11px]' : ''}`}>
         {value || '—'}
       </span>
     </div>
   );
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full border border-slate-200 text-slate-600">
-      {children}
-    </span>
-  );
-}
