@@ -35,7 +35,7 @@ function idStr(v: unknown): string | null {
   return String(v);
 }
 
-function baseFilter(tenantId: string, extra: Record<string, unknown> = {}) {
+function baseFilter(tenantId: string, extra: Record<string, unknown> = {}): Record<string, any> {
   return { tenantId: tid(tenantId), isDeleted: false, ...extra };
 }
 

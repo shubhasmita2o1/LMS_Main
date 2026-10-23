@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppLayout } from '../../components/layout/AppLayout';
-import { ModuleHeader } from '../../components/common/ModuleHeader';
+import { SectionHeader } from '../../components/ui/SectionHeader';
 import { labsApi } from '../../lib/labsApi';
 import { useAuthStore } from '../../stores/authStore';
 import type { PracticalPublic } from '@university-lms/shared';
-import { FlaskConical, Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 
 export function LabsPage() {
   const user = useAuthStore((s) => s.user);
@@ -58,10 +58,9 @@ export function LabsPage() {
   return (
     <AppLayout>
       <div className="p-6 max-w-6xl mx-auto space-y-6">
-        <ModuleHeader
+        <SectionHeader
           title="Practical & Labs"
           subtitle="Course-linked practical work, experiments, and isolated code execution"
-          icon={<FlaskConical className="w-6 h-6" />}
           actions={
             isStaff ? (
               <button
