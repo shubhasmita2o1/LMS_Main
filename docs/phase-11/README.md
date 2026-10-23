@@ -16,7 +16,7 @@ Student browser → Main API (auth, enqueue only) → Queue / ExecutionJob
 - **Never** run student code inside Express request handlers or the main API process.
 - API creates `LabSubmission` + `ExecutionJob`, calls `ExecutionAdapter.enqueue`.
 - `MockExecutionAdapter` (default `LAB_EXECUTOR=mock`): deterministic fake results; **no real code execution**.
-- `DockerExecutionAdapter` / `apps/lab-worker`: production path skeleton — refuses in-process run.
+- `DockerExecutionAdapter` / `workers/lab-worker`: production path skeleton — refuses in-process run.
 
 ### Production hardening checklist
 

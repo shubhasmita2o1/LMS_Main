@@ -31,7 +31,7 @@ MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 ### Phase 11 — Lab execution
 
 - Default: `LAB_EXECUTOR=mock` (deterministic fake results; **no student code runs**).
-- Production: separate `apps/lab-worker` + Docker isolation (`network=none`, cgroup limits, non-root). See `docs/phase-11/README.md` and `apps/lab-worker/README.md`.
+- Production: separate `workers/lab-worker` + Docker isolation (`network=none`, cgroup limits, non-root). See `docs/phase-11/README.md` and `workers/lab-worker/README.md`.
 - API: `/api/v1/labs` — practicals → labs → experiments → submissions / executions.
 
 ---
