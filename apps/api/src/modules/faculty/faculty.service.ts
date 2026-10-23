@@ -2,6 +2,12 @@ import mongoose from 'mongoose';
 import { AppError } from '../../middleware/errorHandler';
 import { checkLimit } from '../../services/featureFlags';
 import { Faculty, FacultyAssignment } from './faculty.model';
+import {
+  Course,
+  CourseModule,
+  CourseOffering,
+  CourseEnrollment,
+} from '../courses/course.model';
 
 function tid(tenantId: string) {
   return new mongoose.Types.ObjectId(tenantId);
@@ -340,3 +346,81 @@ export async function countActiveFaculty(tenantId: string): Promise<number> {
     status: { $in: ['active', 'on_leave'] },
   });
 }
+
+export async function getFacultyCourses(
+  tenantId: string,
+  userId: string,
+  roles: string[] = []
+) {
+  const faculty = await Faculty.findOne(baseFilter(tenantId, { userId: tid(userId) })).lean();
+  const isAdmin = roles.some((r) =>
+    ['super_admin', 'tenant_admin', 'university_admin', 'department_head'].includes(r)
+  );
+
+  let courseIds: mongoose.Types.ObjectId[] = [];
+  if (faculty) {
+    const assignments = await FacultyAssignment.find({
+      tenantId: tid(tenantId),
+      facultyId: faculty._id,
+      isDeleted: false,
+    }).lean();
+    for (const a of assignments) {
+      if (a.courseId) courseIds.push(a.courseId as mongoose.Types.ObjectId);
+    }
+
+    const offerings = await CourseOffering.find({
+      tenantId: tid(tenantId),
+      facultyIds: faculty._id,
+      isDeleted: false,
+    }).lean();
+    for (const o of offerings) {
+      if (o.courseId) courseIds.push(o.courseId as mongoose.Types.ObjectId);
+    }
+  }
+
+  let filter: Record<string, unknown> = baseFilter(tenantId);
+  if (courseIds.length > 0) {
+    filter._id = { $in: courseIds };
+  } else if (isAdmin || !faculty) {
+    // If admin or unlinked faculty test user, show all tenant courses
+    filter.status = { $ne: 'archived' };
+  } else {
+    // Linked faculty has no assigned courses yet
+    return [];
+  }
+
+  const courses = await Course.find(filter).sort({ code: 1 }).lean();
+
+  const results = await Promise.all(
+    courses.map(async (c) => {
+      const [modulesCount, enrollmentsCount] = await Promise.all([
+        CourseModule.countDocuments({
+          tenantId: tid(tenantId),
+          courseId: c._id,
+          isDeleted: false,
+        }),
+        CourseEnrollment.countDocuments({
+          tenantId: tid(tenantId),
+          courseId: c._id,
+          status: { $in: ['enrolled', 'completed'] },
+          isDeleted: false,
+        }),
+      ]);
+      return {
+        id: String(c._id),
+        code: c.code,
+        name: c.name,
+        shortName: c.shortName,
+        courseType: c.courseType,
+        credits: c.credits,
+        status: c.status,
+        departmentId: idStr(c.departmentId),
+        modulesCount,
+        enrollmentsCount,
+      };
+    })
+  );
+
+  return results;
+}
+

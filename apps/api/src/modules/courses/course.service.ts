@@ -9,6 +9,7 @@ import {
   CurriculumEntry,
   CourseEnrollment,
 } from './course.model';
+import { FacultyAssignment } from '../faculty/faculty.model';
 
 function tid(tenantId: string) {
   return new mongoose.Types.ObjectId(tenantId);
@@ -185,6 +186,7 @@ export async function listCourses(
     courseType?: string;
     status?: string;
     sort?: string;
+    facultyId?: string;
   }
 ) {
   const filter: Record<string, unknown> = baseFilter(tenantId);
@@ -192,6 +194,23 @@ export async function listCourses(
   if (q.departmentId) filter.departmentId = tid(q.departmentId);
   if (q.courseType) filter.courseType = q.courseType;
   if (q.status) filter.status = q.status;
+
+  if (q.facultyId) {
+    const fId = tid(q.facultyId);
+    const [assignments, offerings] = await Promise.all([
+      FacultyAssignment.find({ tenantId: tid(tenantId), facultyId: fId, isDeleted: false })
+        .select('courseId')
+        .lean(),
+      CourseOffering.find({ tenantId: tid(tenantId), facultyIds: fId, isDeleted: false })
+        .select('courseId')
+        .lean(),
+    ]);
+    const fCourseIds = [
+      ...assignments.map((a) => a.courseId).filter(Boolean),
+      ...offerings.map((o) => o.courseId).filter(Boolean),
+    ];
+    filter._id = { $in: fCourseIds };
+  }
   if (q.search) {
     filter.$or = [
       { code: new RegExp(q.search, 'i') },

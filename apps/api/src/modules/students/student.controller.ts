@@ -59,6 +59,16 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export async function getDashboardSummary(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user?.id) throw new AppError(401, 'Authentication required', 'UNAUTHORIZED');
+    ok(res, await svc.getStudentDashboardSummary(tenantIdFrom(req), req.user.id));
+  } catch (e) {
+    next(e);
+  }
+}
+
+
 export async function getById(req: Request, res: Response, next: NextFunction) {
   try {
     ok(res, await svc.getStudent(tenantIdFrom(req), req.params.id));

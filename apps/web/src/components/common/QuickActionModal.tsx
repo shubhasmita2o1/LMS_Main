@@ -1,15 +1,17 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../stores/authStore';
 import {
   X,
   UserPlus,
   BookPlus,
-  Megaphone,
   CalendarCheck,
   Award,
-  CreditCard,
-  LifeBuoy,
-  GraduationCap,
   Sparkles,
+  BookOpen,
+  FileCheck,
+  Building,
+  ShieldCheck,
+  Settings,
 } from 'lucide-react';
 
 export interface QuickActionModalProps {
@@ -19,67 +21,177 @@ export interface QuickActionModalProps {
 
 export function QuickActionModal({ isOpen, onClose }: QuickActionModalProps) {
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
 
   if (!isOpen) return null;
 
-  const quickActions = [
-    {
-      title: 'Enroll New Student',
-      desc: 'Register student profile, allocate roll number and batch',
-      icon: UserPlus,
-      url: '/students',
-      color: 'bg-blue-50 text-blue-600',
-    },
-    {
-      title: 'Create Course / Syllabus',
-      desc: 'Add course code, curriculum, credit units, and outcomes',
-      icon: BookPlus,
-      url: '/courses',
-      color: 'bg-emerald-50 text-emerald-600',
-    },
-    {
-      title: 'Post Official Announcement',
-      desc: 'Broadcast circular to students, faculty, or all campus',
-      icon: Megaphone,
-      url: '/communication',
-      color: 'bg-purple-50 text-purple-600',
-    },
-    {
-      title: 'Record Class Attendance',
-      desc: 'Launch period attendance register or biometric review',
-      icon: CalendarCheck,
-      url: '/attendance',
-      color: 'bg-amber-50 text-amber-600',
-    },
-    {
-      title: 'Schedule Examination & Hall',
-      desc: 'Plan mid-term/end-term slots and seating allocation',
-      icon: GraduationCap,
-      url: '/examinations',
-      color: 'bg-indigo-50 text-indigo-600',
-    },
-    {
-      title: 'Generate Fee Invoice',
-      desc: 'Issue semester tuition, hostel, or exam fee demand',
-      icon: CreditCard,
-      url: '/finance',
-      color: 'bg-cyan-50 text-cyan-600',
-    },
-    {
-      title: 'Issue Certificate / Bonafide',
-      desc: 'Generate verified student document with secure QR code',
-      icon: Award,
-      url: '/documents',
-      color: 'bg-pink-50 text-pink-600',
-    },
-    {
-      title: 'Submit Support Ticket',
-      desc: 'Report IT, academic or infrastructure issue to helpdesk',
-      icon: LifeBuoy,
-      url: '/support',
-      color: 'bg-rose-50 text-rose-600',
-    },
-  ];
+  const roles = user?.roles || [];
+  const isSuperAdmin = roles.includes('super_admin');
+  const isTenantAdmin = roles.includes('tenant_admin') || roles.includes('university_admin');
+  const isFaculty = roles.includes('faculty') || roles.includes('department_head');
+
+  let quickActions: Array<{
+    title: string;
+    desc: string;
+    icon: any;
+    url: string;
+    color: string;
+  }> = [];
+
+  if (isSuperAdmin) {
+    quickActions = [
+      {
+        title: 'Manage Universities / Tenants',
+        desc: 'Review, provision, and configure university tenants',
+        icon: Building,
+        url: '/tenants',
+        color: 'bg-emerald-50 text-emerald-600',
+      },
+      {
+        title: 'User Approvals & Directory',
+        desc: 'Review and approve pending institutional users',
+        icon: UserPlus,
+        url: '/users',
+        color: 'bg-blue-50 text-blue-600',
+      },
+      {
+        title: 'RBAC & Permission Matrix',
+        desc: 'Inspect granular role capabilities and policies',
+        icon: ShieldCheck,
+        url: '/roles',
+        color: 'bg-purple-50 text-purple-600',
+      },
+      {
+        title: 'Platform System Settings',
+        desc: 'Configure security, tokens, and multi-tenant defaults',
+        icon: Settings,
+        url: '/settings',
+        color: 'bg-slate-100 text-slate-700',
+      },
+    ];
+  } else if (isTenantAdmin) {
+    quickActions = [
+      {
+        title: 'Enroll New Student (SIS)',
+        desc: 'Register student profile, allocate roll number and batch',
+        icon: UserPlus,
+        url: '/students',
+        color: 'bg-blue-50 text-blue-600',
+      },
+      {
+        title: 'Create Course / Syllabus',
+        desc: 'Add course code, curriculum, credit units, and outcomes',
+        icon: BookPlus,
+        url: '/courses',
+        color: 'bg-emerald-50 text-emerald-600',
+      },
+      {
+        title: 'Record Attendance Session',
+        desc: 'Launch period attendance register or biometric review',
+        icon: CalendarCheck,
+        url: '/attendance',
+        color: 'bg-amber-50 text-amber-600',
+      },
+      {
+        title: 'Gradebook & Results',
+        desc: 'Compute semester grades and publish results',
+        icon: Award,
+        url: '/gradebook',
+        color: 'bg-indigo-50 text-indigo-600',
+      },
+      {
+        title: 'Question Bank Repository',
+        desc: 'Manage objective and descriptive question items',
+        icon: BookOpen,
+        url: '/question-bank',
+        color: 'bg-purple-50 text-purple-600',
+      },
+      {
+        title: 'Pending User Approvals',
+        desc: 'Activate pending campus accounts for students and faculty',
+        icon: UserPlus,
+        url: '/users',
+        color: 'bg-rose-50 text-rose-600',
+      },
+    ];
+  } else if (isFaculty) {
+    quickActions = [
+      {
+        title: 'Create Assignment',
+        desc: 'Post new course assignment, due dates, and grading rubric',
+        icon: FileCheck,
+        url: '/assignments',
+        color: 'bg-blue-50 text-blue-600',
+      },
+      {
+        title: 'Build Quiz / Assessment',
+        desc: 'Draft online quiz with multiple question types',
+        icon: Award,
+        url: '/quizzes',
+        color: 'bg-emerald-50 text-emerald-600',
+      },
+      {
+        title: 'Mark Attendance',
+        desc: 'Record lecture or lab attendance for your enrolled batch',
+        icon: CalendarCheck,
+        url: '/attendance',
+        color: 'bg-amber-50 text-amber-600',
+      },
+      {
+        title: 'Question Bank',
+        desc: 'Add or browse questions for quizzes and examinations',
+        icon: BookOpen,
+        url: '/question-bank',
+        color: 'bg-purple-50 text-purple-600',
+      },
+      {
+        title: 'My Teaching Courses',
+        desc: 'Access your assigned course syllabi and lecture content',
+        icon: BookPlus,
+        url: '/courses',
+        color: 'bg-indigo-50 text-indigo-600',
+      },
+    ];
+  } else {
+    // Student
+    quickActions = [
+      {
+        title: 'My Enrolled Courses',
+        desc: 'Continue learning from where you left off',
+        icon: BookOpen,
+        url: '/learn/my-courses',
+        color: 'bg-emerald-50 text-emerald-600',
+      },
+      {
+        title: 'Assignments & Submissions',
+        desc: 'Check pending homework and submit your answers',
+        icon: FileCheck,
+        url: '/assignments',
+        color: 'bg-blue-50 text-blue-600',
+      },
+      {
+        title: 'Quizzes & Tests',
+        desc: 'Attempt active tests and view results',
+        icon: Award,
+        url: '/quizzes',
+        color: 'bg-purple-50 text-purple-600',
+      },
+      {
+        title: 'Attendance Records',
+        desc: 'Check your overall percentage and attendance summary',
+        icon: CalendarCheck,
+        url: '/attendance',
+        color: 'bg-amber-50 text-amber-600',
+      },
+      {
+        title: 'Official Academic Transcript',
+        desc: 'View completed credits, grade points, and semester GPA',
+        icon: Award,
+        url: '/gradebook/transcript',
+        color: 'bg-indigo-50 text-indigo-600',
+      },
+    ];
+  }
 
   const handleAction = (url: string) => {
     navigate(url);

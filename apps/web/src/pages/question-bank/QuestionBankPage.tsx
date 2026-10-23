@@ -1,17 +1,25 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type {
   ApiResponse,
   QBankSubjectPublic,
   QBankUnitPublic,
-  QBankTopicPublic,
   QuestionPublic,
   QuestionType,
   Difficulty,
 } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
+import { AppLayout } from '../../components/layout/AppLayout';
+import {
+  PageShell,
+  SectionHeader,
+  SurfaceCard,
+  PillButton,
+  StatusBadge,
+  EmptyState,
+} from '../../components/ui';
+import { BookOpen, Plus } from 'lucide-react';
 
 const QUESTION_TYPES: QuestionType[] = [
   'mcq',
@@ -72,17 +80,6 @@ export function QuestionBankPage() {
     },
   });
 
-  useQuery({
-    queryKey: ['qb', 'topics', unitId],
-    enabled: !!unitId,
-    queryFn: async () => {
-      const { data } = await api.get<ApiResponse<QBankTopicPublic[]>>('/question-bank/topics', {
-        params: { unitId, limit: 100 },
-      });
-      return data.data ?? [];
-    },
-  });
-
   const { data: questions = [], isLoading } = useQuery({
     queryKey: ['qb', 'questions', subjectId, unitId, topicId, typeFilter],
     queryFn: async () => {
@@ -137,146 +134,182 @@ export function QuestionBankPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link to="/dashboard" className="text-sm text-slate-500 hover:text-slate-800">
-            Dashboard
-          </Link>
-          <span className="text-slate-300">/</span>
-          <h1 className="font-semibold text-slate-900">Question Bank</h1>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap gap-3 items-end">
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">Subject</label>
-            <select
-              className="border rounded-lg px-3 py-2 text-sm min-w-[160px]"
-              value={subjectId}
-              onChange={(e) => {
-                setSubjectId(e.target.value);
-                setUnitId('');
-                setTopicId('');
-              }}
-            >
-              <option value="">All</option>
-              {subjects.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">Unit</label>
-            <select
-              className="border rounded-lg px-3 py-2 text-sm min-w-[140px]"
-              value={unitId}
-              onChange={(e) => {
-                setUnitId(e.target.value);
-                setTopicId('');
-              }}
-              disabled={!subjectId}
-            >
-              <option value="">All</option>
-              {units.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">Type</label>
-            <select
-              className="border rounded-lg px-3 py-2 text-sm"
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
-              <option value="">All types</option>
-              {QUESTION_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          {canManage && (
-            <>
-              <div className="flex gap-2 items-end">
-                <input
-                  className="border rounded-lg px-3 py-2 text-sm"
-                  placeholder="New subject name"
-                  value={newSubject}
-                  onChange={(e) => setNewSubject(e.target.value)}
-                />
-                <button
-                  className="px-3 py-2 text-sm rounded-lg bg-slate-800 text-white"
-                  onClick={() => newSubject && createSubject.mutate(newSubject)}
-                >
-                  + Subject
-                </button>
-              </div>
-              <button
-                className="ml-auto px-4 py-2 text-sm rounded-lg bg-primary-600 text-white"
+    <AppLayout>
+      <PageShell>
+        {/* Header */}
+        <SectionHeader
+          title="Question Repository"
+          subtitle="Curate Bloom-taxonomy tagged questions by subject, syllabus unit, and cognitive difficulty"
+          actions={
+            canManage && (
+              <PillButton
+                variant={showForm ? 'secondary' : 'primary'}
+                icon={Plus}
                 onClick={() => setShowForm((v) => !v)}
               >
                 {showForm ? 'Cancel' : 'New Question'}
-              </button>
-            </>
-          )}
-        </div>
+              </PillButton>
+            )
+          }
+        />
 
-        {showForm && canManage && (
-          <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
-            <h2 className="font-medium text-slate-900">Create question</h2>
-            {!subjectId && (
-              <p className="text-sm text-amber-700">Select a subject first.</p>
-            )}
-            <textarea
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-              rows={3}
-              placeholder="Question stem"
-              value={form.stem}
-              onChange={(e) => setForm({ ...form, stem: e.target.value })}
-            />
-            <div className="flex flex-wrap gap-3">
+        {/* Filters Card */}
+        <SurfaceCard padding="sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                Subject
+              </label>
               <select
-                className="border rounded-lg px-3 py-2 text-sm"
-                value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value as QuestionType })}
+                className="px-3.5 py-1.5 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white text-slate-700 min-w-[160px] focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                value={subjectId}
+                onChange={(e) => {
+                  setSubjectId(e.target.value);
+                  setUnitId('');
+                  setTopicId('');
+                }}
               >
-                {QUESTION_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                <option value="">All subjects</option>
+                {subjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
                   </option>
                 ))}
               </select>
-              <input
-                type="number"
-                className="border rounded-lg px-3 py-2 text-sm w-24"
-                value={form.marks}
-                min={0}
-                onChange={(e) => setForm({ ...form, marks: Number(e.target.value) })}
-              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                Unit
+              </label>
               <select
-                className="border rounded-lg px-3 py-2 text-sm"
-                value={form.difficulty}
-                onChange={(e) =>
-                  setForm({ ...form, difficulty: e.target.value as Difficulty })
-                }
+                className="px-3.5 py-1.5 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white text-slate-700 min-w-[140px] disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                value={unitId}
+                onChange={(e) => {
+                  setUnitId(e.target.value);
+                  setTopicId('');
+                }}
+                disabled={!subjectId}
               >
-                <option value="easy">easy</option>
-                <option value="medium">medium</option>
-                <option value="hard">hard</option>
+                <option value="">All units</option>
+                {units.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
               </select>
             </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                Question Type
+              </label>
+              <select
+                className="px-3.5 py-1.5 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+              >
+                <option value="">All types</option>
+                {QUESTION_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t.replace('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {canManage && (
+              <div className="ml-auto flex items-end gap-2 pt-3 sm:pt-0">
+                <input
+                  className="px-3 py-1.5 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                  placeholder="New subject name…"
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                />
+                <PillButton
+                  variant="secondary"
+                  size="sm"
+                  disabled={!newSubject || createSubject.isPending}
+                  loading={createSubject.isPending}
+                  onClick={() => newSubject && createSubject.mutate(newSubject)}
+                >
+                  + Add Subject
+                </PillButton>
+              </div>
+            )}
+          </div>
+        </SurfaceCard>
+
+        {/* Question Creation Form */}
+        {showForm && canManage && (
+          <SurfaceCard className="border-[#165239]/30 bg-[#eaf5ee]/20 space-y-4">
+            <h3 className="text-sm font-bold text-slate-900">Add Item to Question Bank</h3>
+            {!subjectId && (
+              <p className="text-xs text-amber-700 font-semibold">Please select a subject from the filters above first.</p>
+            )}
+
+            <textarea
+              className="w-full px-4 py-3 border border-slate-200/80 rounded-2xl text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+              rows={3}
+              placeholder="Question prompt / problem stem…"
+              value={form.stem}
+              onChange={(e) => setForm({ ...form, stem: e.target.value })}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Type
+                </label>
+                <select
+                  className="w-full px-3.5 py-2 border border-slate-200/80 rounded-full text-xs bg-white text-slate-800 capitalize focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value as QuestionType })}
+                >
+                  {QUESTION_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Marks
+                </label>
+                <input
+                  type="number"
+                  className="w-full px-3.5 py-2 border border-slate-200/80 rounded-full text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                  value={form.marks}
+                  min={0}
+                  onChange={(e) => setForm({ ...form, marks: Number(e.target.value) })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Difficulty
+                </label>
+                <select
+                  className="w-full px-3.5 py-2 border border-slate-200/80 rounded-full text-xs bg-white text-slate-800 capitalize focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                  value={form.difficulty}
+                  onChange={(e) =>
+                    setForm({ ...form, difficulty: e.target.value as Difficulty })
+                  }
+                >
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+            </div>
+
             {['mcq', 'multi_select'].includes(form.type) && (
-              <div className="space-y-2">
+              <div className="space-y-2 pt-2">
+                <span className="text-xs font-bold text-slate-700 block">MCQ Options (Check the correct answer)</span>
                 {form.options.map((o, i) => (
-                  <div key={o.key} className="flex gap-2 items-center">
+                  <div key={o.key} className="flex gap-2.5 items-center">
                     <input
                       type="radio"
                       name="correct"
@@ -290,62 +323,106 @@ export function QuestionBankPage() {
                           })),
                         })
                       }
+                      className="accent-[#165239]"
                     />
-                    <span className="text-sm font-medium w-6">{o.key}</span>
+                    <span className="text-xs font-mono font-bold w-5">{o.key}.</span>
                     <input
-                      className="flex-1 border rounded-lg px-3 py-1.5 text-sm"
+                      className="flex-1 px-3 py-1.5 border border-slate-200/80 rounded-full text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
                       value={o.text}
                       onChange={(e) => {
                         const options = [...form.options];
                         options[i] = { ...options[i], text: e.target.value };
                         setForm({ ...form, options });
                       }}
-                      placeholder={`Option ${o.key}`}
+                      placeholder={`Option ${o.key} text…`}
                     />
                   </div>
                 ))}
               </div>
             )}
+
             {['fill_blank', 'numerical', 'short', 'true_false'].includes(form.type) && (
-              <input
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-                placeholder="Correct answer"
-                value={form.correctAnswer}
-                onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
-              />
+              <div className="pt-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Correct Answer Key
+                </label>
+                <input
+                  className="w-full px-4 py-2 border border-slate-200/80 rounded-full text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                  placeholder="Expected answer or numerical target…"
+                  value={form.correctAnswer}
+                  onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
+                />
+              </div>
             )}
-            <button
-              className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm disabled:opacity-50"
-              disabled={!subjectId || !form.stem || createQuestion.isPending}
-              onClick={() => createQuestion.mutate()}
-            >
-              Save question
-            </button>
-          </div>
+
+            <div className="pt-2 flex justify-end">
+              <PillButton
+                variant="primary"
+                disabled={!subjectId || !form.stem || createQuestion.isPending}
+                loading={createQuestion.isPending}
+                onClick={() => createQuestion.mutate()}
+              >
+                Save to Repository
+              </PillButton>
+            </div>
+          </SurfaceCard>
         )}
 
-        <div className="bg-white rounded-xl border border-slate-200 divide-y">
-          {isLoading && <p className="p-4 text-sm text-slate-500">Loading…</p>}
-          {!isLoading && questions.length === 0 && (
-            <p className="p-4 text-sm text-slate-500">No questions yet.</p>
+        {/* Questions Roster */}
+        <SurfaceCard padding="none">
+          {isLoading && (
+            <div className="p-8 text-center text-xs text-slate-400">Loading questions…</div>
           )}
-          {questions.map((q) => (
-            <div key={q.id} className="p-4 flex gap-4 justify-between">
-              <div>
-                <div className="flex gap-2 items-center mb-1">
-                  <span className="text-xs uppercase tracking-wide bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                    {q.type}
+
+          {!isLoading && questions.length === 0 && (
+            <EmptyState
+              icon={BookOpen}
+              title="No Questions in Repository"
+              description="No questions match the selected subject, unit, or type filter."
+            />
+          )}
+
+          {!isLoading && questions.length > 0 && (
+            <div className="divide-y divide-slate-100">
+              {questions.map((q) => (
+                <div
+                  key={q.id}
+                  className="p-5 flex gap-4 justify-between items-start hover:bg-slate-50/70 transition"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#eaf5ee] text-[#165239] uppercase">
+                        {q.type.replace('_', ' ')}
+                      </span>
+                      <StatusBadge
+                        label={q.difficulty}
+                        variant={
+                          q.difficulty === 'easy'
+                            ? 'success'
+                            : q.difficulty === 'hard'
+                            ? 'danger'
+                            : 'warning'
+                        }
+                        size="sm"
+                      />
+                      <span className="text-[11px] font-mono text-slate-500 font-semibold">
+                        {q.marks} {q.marks === 1 ? 'mark' : 'marks'}
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-medium text-slate-900 leading-relaxed">
+                      {q.stem}
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400 uppercase shrink-0">
+                    {q.status}
                   </span>
-                  <span className="text-xs text-slate-400">{q.difficulty}</span>
-                  <span className="text-xs text-slate-400">{q.marks} marks</span>
                 </div>
-                <p className="text-sm text-slate-900">{q.stem}</p>
-              </div>
-              <span className="text-xs text-slate-400 shrink-0">{q.status}</span>
+              ))}
             </div>
-          ))}
-        </div>
-      </main>
-    </div>
+          )}
+        </SurfaceCard>
+      </PageShell>
+    </AppLayout>
   );
 }
+export default QuestionBankPage;

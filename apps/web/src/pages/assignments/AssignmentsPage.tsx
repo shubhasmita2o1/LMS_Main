@@ -4,6 +4,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type { ApiResponse, AssignmentPublic, CourseListItem } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
+import { AppLayout } from '../../components/layout/AppLayout';
+import {
+  PageShell,
+  SectionHeader,
+  SurfaceCard,
+  PillButton,
+  StatusBadge,
+  EmptyState,
+} from '../../components/ui';
+import { FileCheck2, Plus, Clock, Award, CheckCircle2 } from 'lucide-react';
 
 export function AssignmentsPage() {
   const user = useAuthStore((s) => s.user);
@@ -66,124 +76,188 @@ export function AssignmentsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link to="/dashboard" className="text-sm text-slate-500 hover:text-slate-800">
-            Dashboard
-          </Link>
-          <span className="text-slate-300">/</span>
-          <h1 className="font-semibold text-slate-900">Assignments</h1>
-        </div>
-      </header>
+    <AppLayout>
+      <PageShell>
+        {/* Header */}
+        <SectionHeader
+          title="Assignments &amp; Tasks"
+          subtitle="Course homework, practical assignments, rubric evaluations, and student submissions"
+          actions={
+            canManage && (
+              <PillButton
+                variant={showCreate ? 'secondary' : 'primary'}
+                icon={Plus}
+                onClick={() => setShowCreate((v) => !v)}
+              >
+                {showCreate ? 'Cancel' : 'New Assignment'}
+              </PillButton>
+            )
+          }
+        />
 
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-        <div className="flex flex-wrap gap-3 items-center">
-          <select
-            className="border rounded-lg px-3 py-2 text-sm min-w-[200px]"
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-          >
-            <option value="">All courses</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.code} — {c.name}
-              </option>
-            ))}
-          </select>
-          {canManage && (
-            <button
-              className="ml-auto px-4 py-2 text-sm rounded-lg bg-primary-600 text-white"
-              onClick={() => setShowCreate((v) => !v)}
+        {/* Filter Bar */}
+        <SurfaceCard padding="sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+              Course Filter:
+            </span>
+            <select
+              className="px-4 py-2 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white text-slate-700 min-w-[220px] focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
             >
-              {showCreate ? 'Cancel' : 'New Assignment'}
-            </button>
-          )}
-        </div>
+              <option value="">All active courses</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code} — {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </SurfaceCard>
 
+        {/* Creation Form Modal/Card */}
         {showCreate && canManage && (
-          <div className="bg-white border rounded-xl p-5 space-y-3">
+          <SurfaceCard className="border-[#165239]/30 bg-[#eaf5ee]/20 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900">Create New Course Assignment</h3>
+              <span className="text-xs text-slate-500">Draft Status</span>
+            </div>
+
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-              placeholder="Title"
+              className="w-full px-4 py-2.5 border border-slate-200/80 rounded-2xl text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+              placeholder="Assignment title / problem statement…"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
-            <div className="flex gap-3">
-              <input
-                type="number"
-                className="border rounded-lg px-3 py-2 text-sm w-28"
-                value={maxMarks}
-                onChange={(e) => setMaxMarks(Number(e.target.value))}
-              />
-              <input
-                type="datetime-local"
-                className="border rounded-lg px-3 py-2 text-sm"
-                value={dueAt}
-                onChange={(e) => setDueAt(e.target.value)}
-              />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Maximum Marks
+                </label>
+                <input
+                  type="number"
+                  className="w-full px-4 py-2 border border-slate-200/80 rounded-full text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                  value={maxMarks}
+                  onChange={(e) => setMaxMarks(Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Due Date &amp; Time
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full px-4 py-2 border border-slate-200/80 rounded-full text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+                  value={dueAt}
+                  onChange={(e) => setDueAt(e.target.value)}
+                />
+              </div>
             </div>
-            <button
-              className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm disabled:opacity-50"
-              disabled={!courseId || !title || createMut.isPending}
-              onClick={() => createMut.mutate()}
-            >
-              Create draft
-            </button>
-          </div>
+
+            <div className="pt-2 flex justify-end">
+              <PillButton
+                variant="primary"
+                disabled={!courseId || !title || createMut.isPending}
+                loading={createMut.isPending}
+                onClick={() => createMut.mutate()}
+              >
+                Create Assignment Draft
+              </PillButton>
+            </div>
+          </SurfaceCard>
         )}
 
-        <div className="bg-white rounded-xl border divide-y">
-          {isLoading && <p className="p-4 text-sm text-slate-500">Loading…</p>}
-          {!isLoading && items.length === 0 && (
-            <p className="p-4 text-sm text-slate-500">No assignments.</p>
+        {/* Assignments List */}
+        <SurfaceCard padding="none">
+          {isLoading && (
+            <div className="p-8 text-center text-xs text-slate-400">Loading assignments…</div>
           )}
-          {items.map((a) => (
-            <div key={a.id} className="p-4 flex flex-wrap gap-3 justify-between items-center">
-              <div>
-                <Link
-                  to={`/assignments/${a.id}`}
-                  className="font-medium text-slate-900 hover:text-primary-700"
-                >
-                  {a.title}
-                </Link>
-                <div className="text-xs text-slate-500 mt-1 flex gap-2">
-                  <span className="uppercase">{a.status}</span>
-                  <span>{a.maxMarks} marks</span>
-                  {a.dueAt && <span>Due {new Date(a.dueAt).toLocaleString()}</span>}
-                  {a.mySubmissionStatus && (
-                    <span className="text-primary-600">You: {a.mySubmissionStatus}</span>
+
+          {!isLoading && items.length === 0 && (
+            <EmptyState
+              icon={FileCheck2}
+              title="No Assignments Found"
+              description="No assignments have been assigned for this course filter yet."
+            />
+          )}
+
+          <div className="divide-y divide-slate-100">
+            {items.map((a) => (
+              <div
+                key={a.id}
+                className="p-5 flex flex-wrap gap-4 justify-between items-center hover:bg-slate-50/70 transition"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Link
+                      to={`/assignments/${a.id}`}
+                      className="font-bold text-slate-900 text-sm hover:text-[#165239] transition"
+                    >
+                      {a.title}
+                    </Link>
+                    <StatusBadge
+                      label={a.status}
+                      variant={a.status === 'published' ? 'success' : 'warning'}
+                      size="sm"
+                    />
+                  </div>
+
+                  <div className="text-xs text-slate-500 flex items-center gap-3 flex-wrap mt-1">
+                    <span className="flex items-center gap-1 font-mono text-[11px]">
+                      <Award className="w-3.5 h-3.5 text-slate-400" />
+                      {a.maxMarks} marks
+                    </span>
+                    {a.dueAt && (
+                      <span className="flex items-center gap-1 text-[11px]">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        Due {new Date(a.dueAt).toLocaleDateString()}
+                      </span>
+                    )}
+                    {a.mySubmissionStatus && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#eaf5ee] text-[#165239] font-bold text-[10px]">
+                        <CheckCircle2 className="w-3 h-3" />
+                        You: {a.mySubmissionStatus}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {canManage && a.status === 'draft' && (
+                    <PillButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => publishMut.mutate(a.id)}
+                      loading={publishMut.isPending}
+                    >
+                      Publish
+                    </PillButton>
                   )}
+                  {canManage && (
+                    <PillButton
+                      to={`/assignments/${a.id}/submissions`}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      Submissions ({a.submissionsCount ?? 0})
+                    </PillButton>
+                  )}
+                  <PillButton
+                    to={`/assignments/${a.id}`}
+                    variant="primary"
+                    size="sm"
+                  >
+                    Open
+                  </PillButton>
                 </div>
               </div>
-              <div className="flex gap-2">
-                {canManage && a.status === 'draft' && (
-                  <button
-                    className="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50"
-                    onClick={() => publishMut.mutate(a.id)}
-                  >
-                    Publish
-                  </button>
-                )}
-                {canManage && (
-                  <Link
-                    to={`/assignments/${a.id}/submissions`}
-                    className="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50"
-                  >
-                    Submissions ({a.submissionsCount ?? 0})
-                  </Link>
-                )}
-                <Link
-                  to={`/assignments/${a.id}`}
-                  className="text-sm px-3 py-1.5 rounded-lg bg-primary-50 text-primary-700"
-                >
-                  Open
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
-    </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      </PageShell>
+    </AppLayout>
   );
 }
+export default AssignmentsPage;

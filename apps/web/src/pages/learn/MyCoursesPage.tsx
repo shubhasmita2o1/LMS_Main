@@ -1,14 +1,18 @@
-import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type { ApiResponse, EnrolledCourseWithProgress } from '@university-lms/shared';
-import { useAuthStore } from '../../stores/authStore';
+import { AppLayout } from '../../components/layout/AppLayout';
+import {
+  PageShell,
+  SectionHeader,
+  SurfaceCard,
+  PillButton,
+  StatusBadge,
+  EmptyState,
+} from '../../components/ui';
+import { BookOpen, PlayCircle, CalendarCheck2 } from 'lucide-react';
 
 export function MyCoursesPage() {
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const navigate = useNavigate();
-  const logout = () => { clearAuth(); navigate('/login'); };
-
   const { data, isLoading, error } = useQuery({
     queryKey: ['learn', 'my-courses'],
     queryFn: async () => {
@@ -20,79 +24,99 @@ export function MyCoursesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="text-sm text-slate-500 hover:text-slate-800">
-              Dashboard
-            </Link>
-            <span className="text-slate-300">/</span>
-            <h1 className="font-semibold text-slate-900">My Courses</h1>
-          </div>
-          <button
-            onClick={() => logout()}
-            className="text-sm text-slate-600 hover:text-slate-900"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-6 py-8">
-        <p className="text-slate-500 mb-6">Continue learning from your enrolled courses.</p>
+    <AppLayout>
+      <PageShell>
+        <SectionHeader
+          title="My Enrolled Courses"
+          subtitle="Access your digital learning modules, syllabus readings, and lesson progress."
+        />
 
         {isLoading && (
-          <div className="text-center py-16 text-slate-400">Loading courses…</div>
-        )}
-        {error && (
-          <div className="rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm">
-            Failed to load courses. Ensure you have a linked student profile and enrollments.
-          </div>
-        )}
-        {!isLoading && data && data.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500">
-            No enrolled courses yet.
-          </div>
+          <SurfaceCard className="py-12 text-center text-slate-400 text-xs">
+            Loading your courses…
+          </SurfaceCard>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {error && (
+          <SurfaceCard className="bg-rose-50 border-rose-200 text-rose-800 text-sm">
+            Failed to load courses. Ensure you have a linked student profile and active course enrollments.
+          </SurfaceCard>
+        )}
+
+        {!isLoading && data && data.length === 0 && (
+          <EmptyState
+            icon={BookOpen}
+            title="No Enrolled Courses Found"
+            description="You are not currently enrolled in any semester courses. Contact your department administrator to register."
+            action={
+              <PillButton to="/dashboard" variant="primary">
+                Return to Dashboard
+              </PillButton>
+            }
+          />
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data?.map((item) => (
-            <Link
+            <SurfaceCard
               key={item.enrollment.id}
-              to={`/learn/courses/${item.course.id}`}
-              className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-primary-300 hover:shadow transition"
+              interactive={true}
+              className="flex flex-col justify-between"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium text-primary-600 uppercase tracking-wide">
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#eaf5ee] text-[#165239]">
                     {item.course.code}
-                  </p>
-                  <h2 className="mt-1 font-semibold text-slate-900">{item.course.name}</h2>
-                </div>
-                <span className="text-xs rounded-full bg-slate-100 text-slate-600 px-2 py-0.5">
-                  {item.enrollment.status}
-                </span>
-              </div>
-              <div className="mt-4">
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Progress</span>
-                  <span>
-                    {item.progress.completedLessons}/{item.progress.totalLessons} lessons ·{' '}
-                    {item.progress.progressPercent}%
                   </span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary-600 transition-all"
-                    style={{ width: `${item.progress.progressPercent}%` }}
+                  <StatusBadge
+                    label={item.enrollment.status}
+                    variant="neutral"
+                    size="sm"
                   />
                 </div>
+                <h2 className="font-bold text-slate-900 text-base leading-snug line-clamp-2">
+                  {item.course.name}
+                </h2>
+
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs text-slate-500 mb-1.5 font-medium">
+                    <span>Lessons Progress</span>
+                    <span className="font-bold text-slate-800">
+                      {item.progress.completedLessons}/{item.progress.totalLessons} ({item.progress.progressPercent}%)
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#165239] transition-all duration-300"
+                      style={{ width: `${item.progress.progressPercent}%` }}
+                    />
+                  </div>
+                </div>
               </div>
-            </Link>
+
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                <PillButton
+                  to={`/learn/courses/${item.course.id}`}
+                  variant="primary"
+                  size="sm"
+                  icon={PlayCircle}
+                >
+                  Resume Learning
+                </PillButton>
+                <PillButton
+                  to={`/attendance?courseId=${item.course.id}`}
+                  variant="outline"
+                  size="sm"
+                  icon={CalendarCheck2}
+                >
+                  Attendance
+                </PillButton>
+              </div>
+            </SurfaceCard>
           ))}
         </div>
-      </main>
-    </div>
+      </PageShell>
+    </AppLayout>
   );
 }
+export default MyCoursesPage;

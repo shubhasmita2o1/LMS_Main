@@ -5,6 +5,15 @@ import api from '../../lib/api';
 import type { ApiResponse, GradebookPublic, CourseListItem } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
 import { AppLayout } from '../../components/layout/AppLayout';
+import {
+  PageShell,
+  SectionHeader,
+  SurfaceCard,
+  PillButton,
+  StatusBadge,
+  EmptyState,
+} from '../../components/ui';
+import { Award, Plus, CalendarCheck2, ArrowRight } from 'lucide-react';
 
 const COMPONENT_TYPES = [
   'assignment',
@@ -135,80 +144,79 @@ export function GradebooksPage() {
     },
   });
 
-  const statusBadge = (s: string) => {
-    const colors: Record<string, string> = {
-      open: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      locked: 'bg-amber-50 text-amber-700 border-amber-200',
-      published: 'bg-blue-50 text-blue-700 border-blue-200',
-    };
-    return (
-      <span
-        className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${colors[s] || 'bg-slate-50 text-slate-600'}`}
-      >
-        {s}
-      </span>
-    );
-  };
-
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold text-slate-900">Gradebooks</h1>
-          <select
-            className="border border-slate-200 rounded-lg px-3 py-2 text-sm min-w-[200px] ml-2"
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-          >
-            <option value="">All courses</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {(c as any).code || ''} — {c.name}
-              </option>
-            ))}
-          </select>
-          {canManage && (
-            <button
-              className="ml-auto px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-              onClick={() => setShowCreate((v) => !v)}
-            >
-              {showCreate ? 'Cancel' : 'New Gradebook'}
-            </button>
-          )}
-        </div>
+      <PageShell>
+        {/* Header */}
+        <SectionHeader
+          title="Gradebook &amp; Results"
+          subtitle="Continuous assessment weighting, score sheets, 10-point letter grading, and publishing transcripts"
+          actions={
+            canManage && (
+              <PillButton
+                variant={showCreate ? 'secondary' : 'primary'}
+                icon={Plus}
+                onClick={() => setShowCreate((v) => !v)}
+              >
+                {showCreate ? 'Cancel' : 'New Gradebook'}
+              </PillButton>
+            )
+          }
+        />
 
+        {/* Filter Bar */}
+        <SurfaceCard padding="sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+              Course Filter:
+            </span>
+            <select
+              className="px-4 py-2 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white text-slate-700 min-w-[220px] focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
+            >
+              <option value="">All active courses</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {(c as any).code || ''} — {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </SurfaceCard>
+
+        {/* Creation Form */}
         {showCreate && canManage && (
-          <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-sm">
-            <h2 className="font-medium text-slate-800">Create gradebook</h2>
+          <SurfaceCard className="border-[#165239]/30 bg-[#eaf5ee]/20 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900">Define Course Gradebook Structure</h3>
+              <StatusBadge
+                label={`Weights Total: ${weightSum.toFixed(1)}%`}
+                variant={Math.abs(weightSum - 100) <= 0.5 ? 'success' : 'danger'}
+                size="sm"
+              />
+            </div>
+
             {!courseId && (
-              <p className="text-sm text-amber-600">Select a course above first.</p>
+              <p className="text-xs text-amber-700 font-semibold">Select a course filter first.</p>
             )}
+
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-              placeholder="Title (e.g. CS301 – Fall 2026)"
+              className="w-full px-4 py-2.5 border border-slate-200/80 rounded-2xl text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+              placeholder="Title (e.g., CS301 Continuous Evaluation – Fall 2026)…"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
+
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-slate-700">Components</span>
-                <span
-                  className={
-                    Math.abs(weightSum - 100) <= 0.5
-                      ? 'text-emerald-600'
-                      : 'text-red-600 font-medium'
-                  }
-                >
-                  Weights: {weightSum.toFixed(1)}%
-                </span>
-              </div>
+              <span className="text-xs font-bold text-slate-700 block">Assessment Components</span>
               {components.map((c, idx) => (
                 <div
                   key={idx}
-                  className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 bg-slate-50 rounded-lg border border-slate-100"
+                  className="grid grid-cols-2 md:grid-cols-4 gap-2.5 p-3.5 bg-white rounded-2xl border border-slate-200/80"
                 >
                   <input
-                    className="border rounded px-2 py-1 text-sm"
+                    className="border border-slate-200 rounded-full px-3 py-1.5 text-xs text-slate-800"
                     placeholder="Key"
                     value={c.key}
                     onChange={(e) => {
@@ -218,7 +226,7 @@ export function GradebooksPage() {
                     }}
                   />
                   <input
-                    className="border rounded px-2 py-1 text-sm"
+                    className="border border-slate-200 rounded-full px-3 py-1.5 text-xs text-slate-800"
                     placeholder="Name"
                     value={c.name}
                     onChange={(e) => {
@@ -228,7 +236,7 @@ export function GradebooksPage() {
                     }}
                   />
                   <select
-                    className="border rounded px-2 py-1 text-sm"
+                    className="border border-slate-200 rounded-full px-3 py-1.5 text-xs text-slate-800 bg-white"
                     value={c.type}
                     onChange={(e) => {
                       const next = [...components];
@@ -247,10 +255,10 @@ export function GradebooksPage() {
                       </option>
                     ))}
                   </select>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
                     <input
                       type="number"
-                      className="border rounded px-2 py-1 text-sm w-20"
+                      className="border border-slate-200 rounded-full px-3 py-1.5 text-xs w-20 text-slate-800"
                       placeholder="Weight %"
                       value={c.weightPercent}
                       onChange={(e) => {
@@ -261,7 +269,7 @@ export function GradebooksPage() {
                     />
                     <input
                       type="number"
-                      className="border rounded px-2 py-1 text-sm w-20"
+                      className="border border-slate-200 rounded-full px-3 py-1.5 text-xs w-20 text-slate-800"
                       placeholder="Max"
                       value={c.maxMarks}
                       onChange={(e) => {
@@ -272,29 +280,18 @@ export function GradebooksPage() {
                     />
                     <button
                       type="button"
-                      className="text-xs text-red-500"
+                      className="w-6 h-6 rounded-full text-rose-500 hover:bg-rose-50 flex items-center justify-center text-xs font-bold"
                       onClick={() => setComponents(components.filter((_, i) => i !== idx))}
                     >
                       ✕
                     </button>
                   </div>
-                  {(c.source === 'assignment' || c.source === 'quiz') && (
-                    <input
-                      className="col-span-2 border rounded px-2 py-1 text-sm"
-                      placeholder="Source IDs (comma-separated assignment/quiz ids)"
-                      value={c.sourceIds}
-                      onChange={(e) => {
-                        const next = [...components];
-                        next[idx] = { ...c, sourceIds: e.target.value };
-                        setComponents(next);
-                      }}
-                    />
-                  )}
                 </div>
               ))}
+
               <button
                 type="button"
-                className="text-sm text-indigo-600"
+                className="text-xs text-[#165239] font-bold hover:underline"
                 onClick={() =>
                   setComponents([
                     ...components,
@@ -311,76 +308,110 @@ export function GradebooksPage() {
                   ])
                 }
               >
-                + Add component
+                + Add Component
               </button>
             </div>
-            {createMut.error && (
-              <p className="text-sm text-red-600">{(createMut.error as Error).message}</p>
-            )}
-            <button
-              className="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white disabled:opacity-50"
-              disabled={!courseId || Math.abs(weightSum - 100) > 0.5 || createMut.isPending}
-              onClick={() => createMut.mutate()}
-            >
-              {createMut.isPending ? 'Creating…' : 'Create gradebook'}
-            </button>
-          </div>
+
+            <div className="pt-2 flex justify-end">
+              <PillButton
+                variant="primary"
+                disabled={!courseId || Math.abs(weightSum - 100) > 0.5 || createMut.isPending}
+                loading={createMut.isPending}
+                onClick={() => createMut.mutate()}
+              >
+                Create Gradebook
+              </PillButton>
+            </div>
+          </SurfaceCard>
         )}
 
-        {isLoading ? (
-          <p className="text-slate-500 text-sm">Loading…</p>
-        ) : items.length === 0 ? (
-          <div className="bg-white border border-dashed border-slate-200 rounded-xl p-12 text-center text-slate-500">
-            No gradebooks yet. Create one for a course to start tracking grades.
-          </div>
-        ) : (
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-600 text-left">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Title</th>
-                  <th className="px-4 py-3 font-medium">Course</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Components</th>
-                  <th className="px-4 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {items.map((g) => (
-                  <tr key={g.id} className="hover:bg-slate-50/80">
-                    <td className="px-4 py-3 font-medium text-slate-900">{g.title}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {g.courseCode ? `${g.courseCode} — ` : ''}
-                      {g.courseName || g.courseId}
-                    </td>
-                    <td className="px-4 py-3">{statusBadge(g.status)}</td>
-                    <td className="px-4 py-3 text-slate-500">{g.components?.length ?? 0}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        className="text-indigo-600 hover:underline"
-                        onClick={() => navigate(`/gradebook/${g.id}`)}
-                      >
-                        Open
-                      </button>
-                    </td>
+        {/* Gradebooks List */}
+        <SurfaceCard padding="none">
+          {isLoading && (
+            <div className="p-8 text-center text-xs text-slate-400">Loading gradebooks…</div>
+          )}
+
+          {!isLoading && items.length === 0 && (
+            <EmptyState
+              icon={Award}
+              title="No Gradebooks Configured"
+              description="No gradebooks have been defined for this course yet."
+            />
+          )}
+
+          {!isLoading && items.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th className="px-5 py-3.5">Gradebook Title</th>
+                    <th className="px-5 py-3.5">Course</th>
+                    <th className="px-5 py-3.5">Status</th>
+                    <th className="px-5 py-3.5">Components</th>
+                    <th className="px-5 py-3.5 text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {items.map((g) => (
+                    <tr key={g.id} className="hover:bg-slate-50/70 transition">
+                      <td className="px-5 py-3.5 font-bold text-slate-900">{g.title}</td>
+                      <td className="px-5 py-3.5 text-slate-600">
+                        {g.courseCode ? `${g.courseCode} — ` : ''}
+                        {g.courseName || g.courseId}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <StatusBadge
+                          label={g.status}
+                          variant={
+                            g.status === 'open'
+                              ? 'success'
+                              : g.status === 'locked'
+                              ? 'warning'
+                              : 'primary'
+                          }
+                          size="sm"
+                        />
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-500 font-mono">
+                        {g.components?.length ?? 0} evaluation units
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <PillButton
+                          variant="primary"
+                          size="sm"
+                          onClick={() => navigate(`/gradebook/${g.id}`)}
+                        >
+                          Open Score Sheet
+                        </PillButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </SurfaceCard>
 
-        <div className="flex gap-4 text-sm">
-          <Link to="/gradebook/transcript" className="text-indigo-600 hover:underline">
-            My transcript
+        {/* Footer shortcuts */}
+        <div className="flex items-center justify-between pt-2">
+          <Link
+            to="/gradebook/transcript"
+            className="text-xs font-bold text-[#165239] hover:text-[#1f6b4c] flex items-center gap-1.5 transition"
+          >
+            <Award className="w-4 h-4" />
+            <span>View Student Academic Transcript</span>
           </Link>
-          <Link to="/attendance" className="text-indigo-600 hover:underline">
-            Attendance
+          <Link
+            to="/attendance"
+            className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 transition"
+          >
+            <CalendarCheck2 className="w-4 h-4" />
+            <span>Attendance Registers</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
-      </div>
+      </PageShell>
     </AppLayout>
   );
 }
-
 export default GradebooksPage;

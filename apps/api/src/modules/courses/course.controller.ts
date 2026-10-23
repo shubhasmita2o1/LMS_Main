@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import * as svc from './course.service';
+import { Faculty } from '../faculty/faculty.model';
 import {
   listCoursesQuerySchema,
   courseCreateSchema,
@@ -34,7 +36,17 @@ function created(res: Response, data: unknown, message?: string) {
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
     const q = listCoursesQuerySchema.parse(req.query);
-    const result = await svc.listCourses(tenantIdFrom(req), q);
+    const tenantId = tenantIdFrom(req);
+    let facultyId = q.facultyId;
+    if (q.mine && req.user?.id) {
+      const f = await Faculty.findOne({
+        tenantId: new mongoose.Types.ObjectId(tenantId),
+        userId: new mongoose.Types.ObjectId(req.user.id),
+        isDeleted: false,
+      }).lean();
+      if (f) facultyId = String(f._id);
+    }
+    const result = await svc.listCourses(tenantId, { ...q, facultyId });
     ok(res, result.items, undefined, {
       page: result.page,
       limit: result.limit,

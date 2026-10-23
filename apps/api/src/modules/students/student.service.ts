@@ -2,6 +2,9 @@ import mongoose from 'mongoose';
 import { AppError } from '../../middleware/errorHandler';
 import { checkLimit } from '../../services/featureFlags';
 import { Student, StudentDocument } from './student.model';
+import { CourseEnrollment } from '../courses/course.model';
+import { Assignment, AssignmentSubmission } from '../assignments/assignment.model';
+import { Quiz } from '../quizzes/quiz.model';
 
 function tid(tenantId: string) {
   return new mongoose.Types.ObjectId(tenantId);
@@ -450,3 +453,77 @@ export async function countActiveStudents(tenantId: string): Promise<number> {
     status: { $in: ['active', 'on_leave'] },
   });
 }
+
+export async function getStudentDashboardSummary(tenantId: string, userId: string) {
+  const student = await Student.findOne(baseFilter(tenantId, { userId: tid(userId) })).lean();
+  if (!student) {
+    return {
+      studentId: null,
+      name: '',
+      rollNumber: '',
+      enrolledCoursesCount: 0,
+      completedCoursesCount: 0,
+      pendingAssignmentsCount: 0,
+      availableQuizzesCount: 0,
+    };
+  }
+
+  const studentId = student._id;
+
+  const enrollments = await CourseEnrollment.find({
+    tenantId: tid(tenantId),
+    studentId,
+    status: { $in: ['enrolled', 'completed'] },
+    isDeleted: false,
+  }).lean();
+
+  const enrolledCourseIds = enrollments.map((e) => e.courseId);
+  const enrolledCoursesCount = enrollments.filter((e) => e.status === 'enrolled').length;
+  const completedCoursesCount = enrollments.filter((e) => e.status === 'completed').length;
+
+  let pendingAssignmentsCount = 0;
+  if (enrolledCourseIds.length > 0) {
+    const publishedAssignments = await Assignment.find({
+      tenantId: tid(tenantId),
+      courseId: { $in: enrolledCourseIds },
+      status: 'published',
+      isDeleted: false,
+    })
+      .select('_id')
+      .lean();
+
+    const assignmentIds = publishedAssignments.map((a) => a._id);
+    const submitted = await AssignmentSubmission.find({
+      tenantId: tid(tenantId),
+      assignmentId: { $in: assignmentIds },
+      studentId,
+      isDeleted: false,
+    })
+      .select('assignmentId')
+      .lean();
+
+    const submittedSet = new Set(submitted.map((s) => String(s.assignmentId)));
+    pendingAssignmentsCount = assignmentIds.filter((id) => !submittedSet.has(String(id))).length;
+  }
+
+  let availableQuizzesCount = 0;
+  if (enrolledCourseIds.length > 0) {
+    availableQuizzesCount = await Quiz.countDocuments({
+      tenantId: tid(tenantId),
+      courseId: { $in: enrolledCourseIds },
+      status: 'published',
+      isDeleted: false,
+    });
+  }
+
+  return {
+    studentId: String(student._id),
+    name: `${student.firstName} ${student.lastName}`.trim(),
+    rollNumber: student.rollNumber || student.enrollmentNumber || '',
+    enrolledCoursesCount,
+    completedCoursesCount,
+    pendingAssignmentsCount,
+    availableQuizzesCount,
+  };
+}
+

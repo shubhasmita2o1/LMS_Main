@@ -24,15 +24,15 @@ export function CourseLearnPage() {
     ?.sort((a, b) => a.order - b.order)?.[0]?.id;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+    <div className="min-h-screen bg-[#F3F5F7] flex flex-col antialiased selection:bg-[#dcfce7] selection:text-[#165239]">
+      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/70 sticky top-0 z-10 shadow-2xs">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Link to="/learn" className="text-sm text-slate-500 hover:text-slate-800 shrink-0">
+            <Link to="/learn/my-courses" className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-[#165239] transition shrink-0">
               My Courses
             </Link>
             <span className="text-slate-300">/</span>
-            <h1 className="font-semibold text-slate-900 truncate">
+            <h1 className="font-extrabold text-sm sm:text-base text-slate-900 truncate tracking-tight">
               {data?.course?.code} · {data?.course?.name || 'Course'}
             </h1>
           </div>
@@ -41,27 +41,27 @@ export function CourseLearnPage() {
               onClick={() =>
                 navigate(`/learn/courses/${id}/lessons/${resumeLessonId || firstLessonId}`)
               }
-              className="shrink-0 text-sm font-medium px-3 py-1.5 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+              className="shrink-0 text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full bg-[#165239] text-white hover:bg-[#12422e] transition shadow-pill"
             >
-              {resumeLessonId ? 'Resume' : 'Start'}
+              {resumeLessonId ? 'Resume Learning' : 'Start Course'}
             </button>
           )}
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto w-full px-4 py-6 flex-1">
-        {isLoading && <p className="text-slate-400 text-center py-12">Loading outline…</p>}
+      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 flex-1">
+        {isLoading && <p className="text-slate-400 text-center py-12 text-xs">Loading course syllabus…</p>}
         {error && (
-          <div className="rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm">
+          <div className="rounded-3xl bg-rose-50 border border-rose-200/80 text-rose-700 px-5 py-4 text-xs font-medium">
             Unable to load course. You may not be enrolled.
           </div>
         )}
 
         {data && (
-          <div className="grid lg:grid-cols-[1fr_280px] gap-6">
+          <div className="grid lg:grid-cols-[1fr_300px] gap-6">
             <div className="space-y-4">
               {data.course.description && (
-                <p className="text-sm text-slate-600 bg-white border border-slate-200 rounded-xl p-4">
+                <p className="text-xs sm:text-sm text-slate-600 bg-white border border-slate-200/70 rounded-3xl p-6 shadow-card leading-relaxed">
                   {data.course.description}
                 </p>
               )}
@@ -69,7 +69,7 @@ export function CourseLearnPage() {
               {data.modules.map((mod) => (
                 <section
                   key={mod.id}
-                  className="bg-white border border-slate-200 rounded-xl overflow-hidden"
+                  className="bg-white border border-slate-200/70 rounded-3xl overflow-hidden shadow-card"
                 >
                   <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                     <h2 className="font-medium text-slate-900">{mod.title}</h2>
@@ -120,29 +120,28 @@ export function CourseLearnPage() {
             </div>
 
             <aside className="space-y-4">
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+              <div className="bg-white border border-slate-200/70 rounded-3xl p-6 shadow-card">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                   Your progress
                 </p>
-                <p className="text-3xl font-bold text-slate-900">
+                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
                   {data.progress.progressPercent}%
                 </p>
-                <p className="text-sm text-slate-500 mt-1">
-                  {data.progress.completedLessons} of {data.progress.totalLessons} lessons
-                  completed
+                <p className="text-xs text-slate-500 mt-1 font-medium">
+                  {data.progress.completedLessons} of {data.progress.totalLessons} lessons completed
                 </p>
-                <div className="mt-3 h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div className="mt-3.5 h-2 rounded-full bg-slate-100 overflow-hidden">
                   <div
-                    className="h-full bg-primary-600 rounded-full"
+                    className="h-full bg-[#165239] rounded-full transition-all duration-300"
                     style={{ width: `${data.progress.progressPercent}%` }}
                   />
                 </div>
               </div>
               <Link
                 to={`/learn/courses/${id}/live`}
-                className="block text-center text-sm font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-xl py-3"
+                className="block text-center text-xs sm:text-sm font-bold text-[#165239] bg-[#eaf5ee] hover:bg-[#d8eedf] rounded-full py-3 transition shadow-xs"
               >
-                Live classes
+                Live Classes
               </Link>
             </aside>
           </div>

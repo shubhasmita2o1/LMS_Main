@@ -240,10 +240,10 @@ export function StudentsPage() {
             <button
               type="button"
               onClick={() => setFilterAttendanceAlert(!filterAttendanceAlert)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition shadow-xs ${
                 filterAttendanceAlert
-                  ? 'bg-rose-600 text-white'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                  ? 'bg-rose-600 text-white border border-rose-600'
+                  : 'bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50'
               }`}
             >
               Shortage Alert (&lt;75% Attendance)
@@ -251,10 +251,10 @@ export function StudentsPage() {
             <button
               type="button"
               onClick={() => setFilterFeeDue(!filterFeeDue)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition shadow-xs ${
                 filterFeeDue
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                  ? 'bg-amber-600 text-white border border-amber-600'
+                  : 'bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50'
               }`}
             >
               Fee Due / Partial

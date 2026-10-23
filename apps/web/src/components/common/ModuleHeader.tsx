@@ -95,20 +95,20 @@ export function ModuleHeader({
           )}
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{title}</h1>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">{title}</h1>
               {onRefresh && (
                 <button
                   type="button"
                   onClick={onRefresh}
                   disabled={isRefreshing}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                  className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
                   title="Refresh Data"
                 >
-                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary-600' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#165239]' : ''}`} />
                 </button>
               )}
             </div>
-            {subtitle && <p className="text-xs sm:text-sm text-slate-500 mt-0.5">{subtitle}</p>}
+            {subtitle && <p className="text-xs sm:text-sm text-slate-500 mt-1">{subtitle}</p>}
           </div>
         </div>
 
@@ -119,7 +119,7 @@ export function ModuleHeader({
               {stats.map((st) => (
                 <div
                   key={st.label}
-                  className={`px-3 py-1 rounded-full border text-xs font-medium flex items-center gap-1.5 ${getPillClasses(
+                  className={`px-3.5 py-1 rounded-full border text-xs font-semibold flex items-center gap-1.5 ${getPillClasses(
                     st.variant
                   )}`}
                 >
@@ -134,7 +134,7 @@ export function ModuleHeader({
             <button
               type="button"
               onClick={secondaryAction.onClick}
-              className="px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold flex items-center gap-2 transition"
+              className="px-5 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold flex items-center gap-2 transition shadow-2xs"
             >
               {secondaryAction.icon}
               <span>{secondaryAction.label}</span>
@@ -145,7 +145,7 @@ export function ModuleHeader({
             <button
               type="button"
               onClick={primaryAction.onClick}
-              className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-sm shadow-primary-500/20 transition"
+              className="px-5 py-2.5 rounded-full bg-[#165239] hover:bg-[#11402c] text-white text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-xs transition"
             >
               {primaryAction.icon || <Plus className="w-4 h-4" />}
               <span>{primaryAction.label}</span>

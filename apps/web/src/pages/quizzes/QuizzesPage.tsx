@@ -4,6 +4,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import type { ApiResponse, QuizPublic, CourseListItem } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
+import { AppLayout } from '../../components/layout/AppLayout';
+import {
+  PageShell,
+  SectionHeader,
+  SurfaceCard,
+  PillButton,
+  StatusBadge,
+  EmptyState,
+} from '../../components/ui';
+import { HelpCircle, Plus, Clock, Award, Play } from 'lucide-react';
 
 export function QuizzesPage() {
   const user = useAuthStore((s) => s.user);
@@ -62,127 +72,182 @@ export function QuizzesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link to="/dashboard" className="text-sm text-slate-500 hover:text-slate-800">
-            Dashboard
-          </Link>
-          <span className="text-slate-300">/</span>
-          <h1 className="font-semibold text-slate-900">Quizzes</h1>
-        </div>
-      </header>
+    <AppLayout>
+      <PageShell>
+        {/* Header */}
+        <SectionHeader
+          title="Quizzes &amp; Assessments"
+          subtitle="Online quizzes, automated evaluations, question weights, and student attempts"
+          actions={
+            canManage && (
+              <PillButton
+                variant={showCreate ? 'secondary' : 'primary'}
+                icon={Plus}
+                onClick={() => setShowCreate((v) => !v)}
+              >
+                {showCreate ? 'Cancel' : 'New Quiz'}
+              </PillButton>
+            )
+          }
+        />
 
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-        <div className="flex flex-wrap gap-3 items-center">
-          <select
-            className="border rounded-lg px-3 py-2 text-sm min-w-[200px]"
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-          >
-            <option value="">All courses</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.code} — {c.name}
-              </option>
-            ))}
-          </select>
-          {canManage && (
-            <button
-              className="ml-auto px-4 py-2 text-sm rounded-lg bg-primary-600 text-white"
-              onClick={() => setShowCreate((v) => !v)}
+        {/* Filter Bar */}
+        <SurfaceCard padding="sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+              Course Filter:
+            </span>
+            <select
+              className="px-4 py-2 border border-slate-200/80 rounded-full text-xs bg-slate-50/50 hover:bg-white text-slate-700 min-w-[220px] focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
             >
-              {showCreate ? 'Cancel' : 'New Quiz'}
-            </button>
-          )}
-        </div>
+              <option value="">All courses</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code} — {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </SurfaceCard>
 
+        {/* Creation Form Modal/Card */}
         {showCreate && canManage && (
-          <div className="bg-white border rounded-xl p-5 space-y-3">
+          <SurfaceCard className="border-[#165239]/30 bg-[#eaf5ee]/20 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900">Create New Assessment Quiz</h3>
+              <span className="text-xs text-slate-500">Draft Status</span>
+            </div>
+
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-              placeholder="Quiz title"
+              className="w-full px-4 py-2.5 border border-slate-200/80 rounded-2xl text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
+              placeholder="Quiz title (e.g., Mid-Term Assessment: Modules 1–3)…"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
-            <div className="flex gap-3 items-center text-sm">
-              <label>Duration (min)</label>
+
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-bold text-slate-600">Duration (Minutes):</label>
               <input
                 type="number"
-                className="border rounded-lg px-3 py-2 w-24"
+                className="w-28 px-4 py-2 border border-slate-200/80 rounded-full text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20 transition"
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
               />
             </div>
-            <button
-              className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm disabled:opacity-50"
-              disabled={!courseId || !title || createMut.isPending}
-              onClick={() => createMut.mutate()}
-            >
-              Create draft
-            </button>
-          </div>
+
+            <div className="pt-2 flex justify-end">
+              <PillButton
+                variant="primary"
+                disabled={!courseId || !title || createMut.isPending}
+                loading={createMut.isPending}
+                onClick={() => createMut.mutate()}
+              >
+                Create Quiz Draft
+              </PillButton>
+            </div>
+          </SurfaceCard>
         )}
 
-        <div className="bg-white rounded-xl border divide-y">
-          {isLoading && <p className="p-4 text-sm text-slate-500">Loading…</p>}
-          {!isLoading && items.length === 0 && (
-            <p className="p-4 text-sm text-slate-500">No quizzes.</p>
+        {/* Quizzes List */}
+        <SurfaceCard padding="none">
+          {isLoading && (
+            <div className="p-8 text-center text-xs text-slate-400">Loading quizzes…</div>
           )}
-          {items.map((q) => (
-            <div key={q.id} className="p-4 flex flex-wrap gap-3 justify-between items-center">
-              <div>
-                <Link
-                  to={`/quizzes/${q.id}`}
-                  className="font-medium text-slate-900 hover:text-primary-700"
-                >
-                  {q.title}
-                </Link>
-                <div className="text-xs text-slate-500 mt-1 flex gap-2">
-                  <span className="uppercase">{q.status}</span>
-                  <span>{q.totalMarks} marks</span>
-                  {q.durationMinutes && <span>{q.durationMinutes} min</span>}
-                  <span>{q.questions?.length || 0} questions</span>
+
+          {!isLoading && items.length === 0 && (
+            <EmptyState
+              icon={HelpCircle}
+              title="No Quizzes Found"
+              description="No quizzes have been configured for this course yet."
+            />
+          )}
+
+          <div className="divide-y divide-slate-100">
+            {items.map((q) => (
+              <div
+                key={q.id}
+                className="p-5 flex flex-wrap gap-4 justify-between items-center hover:bg-slate-50/70 transition"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Link
+                      to={`/quizzes/${q.id}`}
+                      className="font-bold text-slate-900 text-sm hover:text-[#165239] transition"
+                    >
+                      {q.title}
+                    </Link>
+                    <StatusBadge
+                      label={q.status}
+                      variant={q.status === 'published' ? 'success' : 'warning'}
+                      size="sm"
+                    />
+                  </div>
+
+                  <div className="text-xs text-slate-500 flex items-center gap-3 flex-wrap mt-1">
+                    <span className="flex items-center gap-1 font-mono text-[11px]">
+                      <Award className="w-3.5 h-3.5 text-slate-400" />
+                      {q.totalMarks} marks
+                    </span>
+                    {q.durationMinutes && (
+                      <span className="flex items-center gap-1 text-[11px]">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        {q.durationMinutes} minutes
+                      </span>
+                    )}
+                    <span className="text-[11px] text-slate-400">
+                      {q.questions?.length || 0} questions
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {canManage && (
+                    <PillButton
+                      to={`/quizzes/${q.id}/builder`}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Builder
+                    </PillButton>
+                  )}
+                  {canManage && q.status === 'draft' && (
+                    <PillButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => publishMut.mutate(q.id)}
+                      loading={publishMut.isPending}
+                    >
+                      Publish
+                    </PillButton>
+                  )}
+                  {canManage && (
+                    <PillButton
+                      to={`/quizzes/${q.id}/attempts`}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      Attempts
+                    </PillButton>
+                  )}
+                  {q.status === 'published' && (
+                    <PillButton
+                      to={`/quizzes/${q.id}/take`}
+                      variant="primary"
+                      size="sm"
+                      icon={Play}
+                    >
+                      Take Quiz
+                    </PillButton>
+                  )}
                 </div>
               </div>
-              <div className="flex gap-2">
-                {canManage && (
-                  <Link
-                    to={`/quizzes/${q.id}/builder`}
-                    className="text-sm px-3 py-1.5 rounded-lg border"
-                  >
-                    Builder
-                  </Link>
-                )}
-                {canManage && q.status === 'draft' && (
-                  <button
-                    className="text-sm px-3 py-1.5 rounded-lg border"
-                    onClick={() => publishMut.mutate(q.id)}
-                  >
-                    Publish
-                  </button>
-                )}
-                {canManage && (
-                  <Link
-                    to={`/quizzes/${q.id}/attempts`}
-                    className="text-sm px-3 py-1.5 rounded-lg border"
-                  >
-                    Attempts
-                  </Link>
-                )}
-                {q.status === 'published' && (
-                  <Link
-                    to={`/quizzes/${q.id}/take`}
-                    className="text-sm px-3 py-1.5 rounded-lg bg-primary-600 text-white"
-                  >
-                    Take quiz
-                  </Link>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
-    </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      </PageShell>
+    </AppLayout>
   );
 }
+export default QuizzesPage;

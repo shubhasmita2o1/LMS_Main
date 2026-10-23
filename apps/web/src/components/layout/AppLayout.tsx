@@ -105,73 +105,180 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
     navigate('/login');
   };
 
-  const currentRole = user?.roles[0] || 'university_admin';
-  const rolePersona = DEMO_PERSONAS.find((p) => p.role === currentRole) || DEMO_PERSONAS[1];
+  const isStudent = user?.roles?.includes('student') && !user?.roles?.some(r => ['faculty', 'tenant_admin', 'university_admin', 'super_admin'].includes(r));
+  const isFaculty = user?.roles?.includes('faculty');
+
+  const DEMO_MODE = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true';
+  const SHOW_FUTURE_NAV = import.meta.env.VITE_SHOW_FUTURE_NAV === 'true';
 
   const tenantCampuses = getCampusesForTenant(currentTenant.id);
 
-  // Dynamic ERP Sidebar Navigation Groups
-  const navigationGroups: NavGroup[] = [
-    {
-      groupName: 'Core Operations',
-      items: [
-        { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { to: '/reports', label: 'Accreditation & Analytics', icon: BarChart3, badge: 'NAAC' },
-        { to: '/communication', label: 'Communication Hub', icon: Megaphone, badge: 3 },
-      ],
-    },
-    {
-      groupName: 'Organization',
-      items: [
-        { to: '/tenants', label: 'Tenants / Universities', icon: Building },
-        { to: '/academic', label: 'Campuses & Hierarchy', icon: Layers },
-      ],
-    },
-    {
-      groupName: 'Academic Community',
-      items: [
-        { to: '/students', label: 'Student SIS', icon: Users, badge: 14820 },
-        { to: '/faculty', label: 'Faculty Management', icon: UserCheck, badge: 840 },
-        { to: '/admissions', label: 'Admissions & Intake', icon: UserPlus, badge: 12, badgeVariant: 'warning' },
-      ],
-    },
-    {
-      groupName: 'Curriculum & Learning',
-      items: [
-        { to: '/courses', label: 'Curriculum & Syllabus', icon: BookOpen },
-        { to: '/learn', label: 'Core LMS (Theory)', icon: PlayCircle },
-        { to: '/labs', label: 'Practical & Virtual Labs', icon: FlaskConical },
-      ],
-    },
-    {
-      groupName: 'Evaluation & Exam',
-      items: [
-        { to: '/assessments', label: 'Assessments & Quizzes', icon: FileCheck2, badge: 4 },
-        { to: '/examinations', label: 'Examinations & Seating', icon: CalendarDays },
-        { to: '/attendance', label: 'Attendance Register', icon: CalendarCheck2 },
-        { to: '/results', label: 'Results & Gradebook', icon: Award },
-      ],
-    },
-    {
-      groupName: 'Campus Services',
-      items: [
-        { to: '/finance', label: 'Finance & Fees', icon: CreditCard, badge: 'Overdue', badgeVariant: 'danger' },
-        { to: '/library', label: 'Library Management', icon: Library },
-        { to: '/placement', label: 'Placement & Careers', icon: Briefcase, badge: 'Active' },
-        { to: '/documents', label: 'Documents & Certificates', icon: FileText },
-      ],
-    },
-    {
-      groupName: 'Governance & Admin',
-      items: [
-        { to: '/users', label: 'User Directory', icon: Users },
-        { to: '/roles', label: 'Roles & RBAC Matrix', icon: ShieldCheck },
-        { to: '/audit', label: 'Audit Trail & Compliance', icon: ShieldAlert },
-        { to: '/settings', label: 'System Settings', icon: Settings },
-        { to: '/support', label: 'Helpdesk & Support', icon: LifeBuoy, badge: 3 },
-      ],
-    },
-  ];
+  // Role-Aware Navigation
+  const navigationGroups: NavGroup[] = (() => {
+    const roles = user?.roles || [];
+    const groups: NavGroup[] = [];
+
+    if (roles.includes('super_admin')) {
+      groups.push({
+        groupName: 'Platform Governance',
+        items: [
+          { to: '/dashboard', label: 'Platform Dashboard', icon: LayoutDashboard },
+          { to: '/tenants', label: 'Tenants / Universities', icon: Building },
+          { to: '/users', label: 'Users & Approvals', icon: Users },
+          { to: '/roles', label: 'Roles & RBAC Matrix', icon: ShieldCheck },
+          { to: '/audit', label: 'Audit Trail', icon: ShieldAlert },
+          { to: '/settings', label: 'Platform Settings', icon: Settings },
+          { to: '/support', label: 'Support & Helpdesk', icon: LifeBuoy },
+        ],
+      });
+    } else if (roles.includes('tenant_admin') || roles.includes('university_admin')) {
+      groups.push(
+        {
+          groupName: 'Overview',
+          items: [{ to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }],
+        },
+        {
+          groupName: 'Academic Community',
+          items: [
+            { to: '/academic', label: 'Campuses & Hierarchy', icon: Layers },
+            { to: '/students', label: 'Student SIS', icon: Users },
+            { to: '/faculty', label: 'Faculty Management', icon: UserCheck },
+            { to: '/courses', label: 'Curriculum & Courses', icon: BookOpen },
+          ],
+        },
+        {
+          groupName: 'Teaching & Evaluation',
+          items: [
+            { to: '/learn', label: 'Core LMS (Theory)', icon: PlayCircle },
+            { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
+            { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
+            { to: '/quizzes', label: 'Quizzes & Tests', icon: Award },
+            { to: '/attendance', label: 'Attendance Register', icon: CalendarCheck2 },
+            { to: '/gradebook', label: 'Gradebook & Results', icon: Award },
+          ],
+        },
+        {
+          groupName: 'Governance',
+          items: [
+            { to: '/users', label: 'User Directory & Approvals', icon: Users },
+            { to: '/roles', label: 'Roles & Permissions', icon: ShieldCheck },
+            { to: '/settings', label: 'Tenant Settings', icon: Settings },
+          ],
+        }
+      );
+    } else if (roles.includes('department_head')) {
+      groups.push(
+        {
+          groupName: 'Overview',
+          items: [{ to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }],
+        },
+        {
+          groupName: 'Department Academic',
+          items: [
+            { to: '/courses', label: 'Department Courses', icon: BookOpen },
+            { to: '/students', label: 'Students (SIS)', icon: Users },
+            { to: '/faculty', label: 'Faculty', icon: UserCheck },
+          ],
+        },
+        {
+          groupName: 'Learning & Evaluation',
+          items: [
+            { to: '/learn', label: 'Core LMS', icon: PlayCircle },
+            { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
+            { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
+            { to: '/quizzes', label: 'Quizzes', icon: Award },
+            { to: '/attendance', label: 'Attendance Register', icon: CalendarCheck2 },
+            { to: '/gradebook', label: 'Gradebook & Results', icon: Award },
+          ],
+        },
+        {
+          groupName: 'Account',
+          items: [{ to: '/faculty/me', label: 'My Faculty Profile', icon: UserCheck }],
+        }
+      );
+    } else if (roles.includes('faculty')) {
+      groups.push(
+        {
+          groupName: 'Overview',
+          items: [{ to: '/dashboard', label: 'Faculty Dashboard', icon: LayoutDashboard }],
+        },
+        {
+          groupName: 'My Teaching',
+          items: [
+            { to: '/courses', label: 'My Courses', icon: BookOpen },
+            { to: '/learn', label: 'Core LMS (Teach)', icon: PlayCircle },
+            { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
+            { to: '/assignments', label: 'Assignments & Grading', icon: FileCheck2 },
+            { to: '/quizzes', label: 'Quizzes & Attempts', icon: Award },
+            { to: '/attendance', label: 'Mark Attendance', icon: CalendarCheck2 },
+            { to: '/gradebook', label: 'Gradebook', icon: Award },
+          ],
+        },
+        {
+          groupName: 'Account',
+          items: [{ to: '/faculty/me', label: 'My Faculty Profile', icon: UserCheck }],
+        }
+      );
+    } else if (isStudent) {
+      groups.push(
+        {
+          groupName: 'Overview',
+          items: [{ to: '/dashboard', label: 'Student Dashboard', icon: LayoutDashboard }],
+        },
+        {
+          groupName: 'My Academics',
+          items: [
+            { to: '/learn/my-courses', label: 'My Courses', icon: BookOpen },
+            { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
+            { to: '/quizzes', label: 'Quizzes & Tests', icon: Award },
+            { to: '/attendance', label: 'My Attendance', icon: CalendarCheck2 },
+            { to: '/gradebook/transcript', label: 'Results & Transcript', icon: Award },
+          ],
+        },
+        {
+          groupName: 'Account',
+          items: [{ to: '/students/me', label: 'My Student Profile', icon: Users }],
+        }
+      );
+    } else {
+      groups.push({
+        groupName: 'Overview',
+        items: [
+          { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { to: '/learn/my-courses', label: 'My Courses', icon: BookOpen },
+        ],
+      });
+    }
+
+    if (SHOW_FUTURE_NAV) {
+      groups.push({
+        groupName: 'Future Modules (Phase 11+)',
+        items: [
+          { to: '/labs', label: 'Practical Labs', icon: FlaskConical, badge: 'Soon' },
+          { to: '/examinations', label: 'Examinations', icon: CalendarDays, badge: 'Soon' },
+          { to: '/admissions', label: 'Admissions', icon: UserPlus, badge: 'Soon' },
+          { to: '/finance', label: 'Finance & Fees', icon: CreditCard, badge: 'Soon' },
+          { to: '/library', label: 'Library', icon: Library, badge: 'Soon' },
+          { to: '/placement', label: 'Placement', icon: Briefcase, badge: 'Soon' },
+          { to: '/documents', label: 'Certificates', icon: FileText, badge: 'Soon' },
+          { to: '/reports', label: 'Accreditation', icon: BarChart3, badge: 'Soon' },
+          { to: '/communication', label: 'Communication Hub', icon: Megaphone, badge: 'Soon' },
+        ],
+      });
+    }
+
+    return groups;
+  })();
+
+  const userName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+    : 'User';
+  const userEmail = user?.email || '';
+  const currentRole = user?.roles[0] || 'university_admin';
+  const roleLabel = currentRole.replace(/_/g, ' ').toUpperCase();
+  const userInitials = (
+    (user?.firstName?.[0] || user?.email?.[0] || 'U') + (user?.lastName?.[0] || '')
+  ).toUpperCase();
 
   const isCurrentActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
@@ -179,14 +286,14 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased selection:bg-primary-500 selection:text-white">
+    <div className="min-h-screen bg-[#F3F5F7] text-slate-900 p-2 sm:p-3 lg:p-4 flex flex-col antialiased selection:bg-[#dcfce7] selection:text-[#165239]">
       {/* Modals & Drawers */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <NotificationDrawer isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
       <QuickActionModal isOpen={isQuickActionOpen} onClose={() => setIsQuickActionOpen(false)} />
 
-      {/* Role Switcher Modal (Interactive Live Demo) */}
-      {isRoleSwitcherOpen && (
+      {/* Role Switcher Modal (Interactive Live Demo - DEV only) */}
+      {isRoleSwitcherOpen && DEMO_MODE && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-scaleUp">
             <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -250,69 +357,68 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
         </div>
       )}
 
-      {/* Top Application Header */}
-      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-2xs">
+      {/* Floating Application Shell Container */}
+      <div className="flex-1 flex flex-col bg-white rounded-[24px] sm:rounded-[32px] border border-slate-200/70 shadow-shell overflow-hidden">
+        {/* Top Application Header */}
+        <header className="sticky top-0 z-30 bg-white border-b border-slate-200/70">
         <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Left Brand & Toggle */}
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100"
+              className="lg:hidden w-9 h-9 rounded-full border border-slate-200/80 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 transition shadow-2xs"
               aria-label="Open sidebar"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-4 h-4" />
             </button>
 
             <Link to="/dashboard" className="flex items-center gap-2.5 group shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center text-white shadow-sm shadow-primary-500/20 group-hover:bg-primary-700 transition">
+              <div className="w-9 h-9 rounded-2xl bg-[#165239] flex items-center justify-center text-white shadow-sm shadow-[#165239]/25 group-hover:bg-[#1f6b4c] transition">
                 <GraduationCap className="w-5 h-5" />
               </div>
               <div className="hidden sm:block">
                 <span className="font-extrabold text-base text-slate-900 leading-tight block tracking-tight">
                   University LMS
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#165239]">
                   Enterprise ERP SaaS
                 </span>
               </div>
             </Link>
 
             {/* Tenant & Campus Context Selector Dropdown */}
-            <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-slate-200 relative">
+            <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-slate-200/70 relative">
               <button
                 type="button"
                 onClick={() => setIsTenantPickerOpen(!isTenantPickerOpen)}
-                className="flex items-center gap-2 py-1 px-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition text-left"
+                className="flex items-center gap-2 py-1.5 px-3 rounded-full border border-slate-200/80 bg-slate-50/70 hover:bg-white hover:border-slate-300 transition text-left shadow-2xs"
               >
                 <img
                   src={currentTenant.logo}
                   alt={currentTenant.name}
-                  className="w-5 h-5 rounded object-cover border border-slate-200"
+                  className="w-5 h-5 rounded-full object-cover border border-slate-200"
                 />
                 <div className="text-xs">
                   <div className="font-bold text-slate-900 flex items-center gap-1.5">
                     <span>{currentTenant.name}</span>
-                    <span className="text-[10px] font-mono px-1 rounded bg-slate-100 text-slate-600">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
                       {currentTenant.code}
                     </span>
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium truncate max-w-[150px]">
-                    {currentCampus.name}
-                  </div>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
               </button>
 
               {/* Tenant Switcher Flyout */}
               {isTenantPickerOpen && (
-                <div className="absolute top-12 left-4 w-72 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-40 animate-scaleUp">
+                <div className="absolute top-12 left-4 w-72 bg-white rounded-3xl shadow-xl border border-slate-200/80 p-2.5 z-40 animate-scaleUp">
                   <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-800">Switch University / Tenant</span>
                     <Link
                       to="/select-tenant"
                       onClick={() => setIsTenantPickerOpen(false)}
-                      className="text-[11px] font-semibold text-primary-600 hover:underline"
+                      className="text-[11px] font-semibold text-[#165239] hover:underline"
                     >
                       Browse All
                     </Link>
@@ -326,16 +432,16 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
                           setTenant(t);
                           setIsTenantPickerOpen(false);
                         }}
-                        className={`w-full p-2 rounded-xl text-left flex items-center gap-2.5 transition ${
+                        className={`w-full p-2 rounded-2xl text-left flex items-center gap-2.5 transition ${
                           t.id === currentTenant.id
-                            ? 'bg-primary-50 text-primary-800 font-bold'
+                            ? 'bg-[#eaf5ee] text-[#165239] font-bold'
                             : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
                         <img
                           src={t.logo}
                           alt={t.name}
-                          className="w-7 h-7 rounded object-cover border border-slate-200"
+                          className="w-7 h-7 rounded-full object-cover border border-slate-200"
                         />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs truncate">{t.name}</p>
@@ -356,7 +462,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
                         const target = campuses.find((c) => c.id === e.target.value);
                         if (target) setCampus(target);
                       }}
-                      className="w-full text-xs py-1.5 px-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800"
+                      className="w-full text-xs py-1.5 px-3 rounded-full border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165239]/20"
                     >
                       {tenantCampuses.map((c) => (
                         <option key={c.id} value={c.id}>
@@ -369,7 +475,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
               )}
 
               {/* Term badge */}
-              <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold">
+              <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                 <span>{academicYear} • {currentTerm}</span>
               </div>
@@ -381,69 +487,67 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             <button
               type="button"
               onClick={() => setIsSearchOpen(true)}
-              className="w-full pl-3.5 pr-2 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-left text-xs text-slate-400 flex items-center justify-between transition group"
+              className="w-full pl-4 pr-3 py-2 rounded-full border border-slate-200/80 bg-slate-50/70 hover:bg-white hover:border-slate-300 text-left text-xs text-slate-400 flex items-center justify-between transition group shadow-2xs"
             >
-              <div className="flex items-center gap-2">
-                <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-600 transition" />
-                <span>Search students, faculty, courses, modules...</span>
+              <div className="flex items-center gap-2.5">
+                <Search className="w-4 h-4 text-slate-400 group-hover:text-[#165239] transition" />
+                <span className="text-slate-500 font-medium">Search tasks, metrics, or departments...</span>
               </div>
-              <kbd className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-mono text-slate-500 shadow-2xs">
+              <kbd className="px-2.5 py-0.5 rounded-full bg-white border border-slate-200 text-[10px] font-mono font-semibold text-slate-500 shadow-2xs">
                 ⌘K
               </kbd>
             </button>
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
             {/* Quick Action Button */}
             <button
               type="button"
               onClick={() => setIsQuickActionOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm shadow-primary-500/20 transition"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-[#165239] hover:bg-[#1f6b4c] text-white text-xs font-bold shadow-xs hover:shadow-cardHover transition"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Quick Create</span>
-            </button>
-
-            {/* Theme Toggle */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
 
             {/* Notification Center */}
             <button
               type="button"
               onClick={() => setIsNotificationsOpen(true)}
-              className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
+              className="relative w-9 h-9 rounded-full border border-slate-200/80 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-slate-900 transition shadow-2xs"
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#165239] ring-2 ring-white" />
             </button>
 
-            {/* User Profile & Role Switcher */}
-            <div className="relative pl-2 border-l border-slate-200">
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-full border border-slate-200/80 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 transition shadow-2xs"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-600" />}
+            </button>
+
+            {/* User Profile */}
+            <div className="relative pl-1 sm:pl-2 border-l border-slate-200/70">
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 py-1 px-1.5 rounded-xl hover:bg-slate-100 transition text-left"
+                className="flex items-center gap-2.5 py-1 px-1.5 sm:px-2 rounded-full hover:bg-slate-100 transition text-left"
               >
-                <img
-                  src={rolePersona.avatar}
-                  alt={rolePersona.name}
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-primary-500/30"
-                />
+                <div className="w-9 h-9 rounded-full bg-[#165239] text-white font-bold flex items-center justify-center text-xs shadow-xs ring-2 ring-[#165239]/20 shrink-0">
+                  {userInitials}
+                </div>
                 <div className="hidden lg:block text-left">
                   <div className="text-xs font-bold text-slate-900 leading-tight">
-                    {rolePersona.name}
+                    {userName}
                   </div>
-                  <div className="text-[10px] font-semibold text-primary-600 uppercase tracking-wider">
-                    {rolePersona.label}
+                  <div className="text-[10px] font-medium text-slate-400">
+                    {userEmail || `${currentRole}@university.edu`}
                   </div>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden lg:block" />
@@ -451,52 +555,69 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
 
               {/* User Menu Dropdown */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-40 animate-scaleUp">
-                  <div className="p-3 border-b border-slate-100 bg-slate-50/70 rounded-xl mb-1">
-                    <p className="text-xs font-bold text-slate-900">{rolePersona.name}</p>
-                    <p className="text-[11px] text-slate-500">{rolePersona.email}</p>
-                    <span className="mt-1.5 inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary-100 text-primary-800">
-                      {rolePersona.label}
+                <div className="absolute right-0 top-12 w-64 bg-white rounded-3xl shadow-xl border border-slate-200/80 p-2.5 z-40 animate-scaleUp">
+                  <div className="p-3 border-b border-slate-100 bg-slate-50/70 rounded-2xl mb-1">
+                    <p className="text-xs font-bold text-slate-900">{userName}</p>
+                    <p className="text-[11px] text-slate-500">{userEmail}</p>
+                    <span className="mt-1.5 inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#eaf5ee] text-[#165239]">
+                      {roleLabel}
                     </span>
                   </div>
 
                   <div className="py-1 text-xs text-slate-700 space-y-0.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsRoleSwitcherOpen(true);
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full px-3 py-2 rounded-lg text-left hover:bg-primary-50 hover:text-primary-700 font-semibold flex items-center justify-between"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-primary-600" />
-                        Switch Role Persona (9 Roles)
-                      </span>
-                    </button>
                     <Link
-                      to="/select-tenant"
+                      to="/profile"
                       onClick={() => setIsUserMenuOpen(false)}
-                      className="w-full px-3 py-2 rounded-lg text-left hover:bg-slate-100 flex items-center gap-2"
+                      className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-100 flex items-center gap-2 font-medium"
                     >
-                      <Building className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Switch University / Tenant</span>
+                      <UserCheck className="w-3.5 h-3.5 text-slate-500" />
+                      <span>My Profile</span>
                     </Link>
-                    <Link
-                      to="/settings"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="w-full px-3 py-2 rounded-lg text-left hover:bg-slate-100 flex items-center gap-2"
-                    >
-                      <Settings className="w-3.5 h-3.5 text-slate-500" />
-                      <span>System Settings</span>
-                    </Link>
+
+                    {DEMO_MODE && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsRoleSwitcherOpen(true);
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#eaf5ee] hover:text-[#165239] font-semibold flex items-center justify-between"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Sparkles className="w-3.5 h-3.5 text-[#165239]" />
+                          Switch Role (Dev Demo)
+                        </span>
+                      </button>
+                    )}
+
+                    {!isStudent && (
+                      <Link
+                        to="/select-tenant"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-100 flex items-center gap-2"
+                      >
+                        <Building className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Switch University / Tenant</span>
+                      </Link>
+                    )}
+
+                    {!isStudent && !isFaculty && (
+                      <Link
+                        to="/settings"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-100 flex items-center gap-2"
+                      >
+                        <Settings className="w-3.5 h-3.5 text-slate-500" />
+                        <span>System Settings</span>
+                      </Link>
+                    )}
                   </div>
 
                   <div className="pt-1 border-t border-slate-100 mt-1">
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full px-3 py-2 rounded-lg text-left hover:bg-rose-50 text-rose-600 font-semibold flex items-center gap-2 text-xs"
+                      className="w-full px-3 py-2 rounded-xl text-left hover:bg-rose-50 text-rose-600 font-semibold flex items-center gap-2 text-xs"
                     >
                       <LogOut className="w-3.5 h-3.5" />
                       <span>Sign Out</span>
@@ -513,8 +634,8 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop Collapsible Sidebar */}
         <aside
-          className={`hidden lg:flex flex-col bg-white border-r border-slate-200 transition-all duration-200 shrink-0 select-none ${
-            sidebarCollapsed ? 'w-18' : 'w-64'
+          className={`hidden lg:flex flex-col bg-white border-r border-slate-200/70 transition-all duration-200 shrink-0 select-none ${
+            sidebarCollapsed ? 'w-20' : 'w-64'
           }`}
         >
           {/* Scrollable Navigation */}
@@ -522,7 +643,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             {navigationGroups.map((group) => (
               <div key={group.groupName}>
                 {!sidebarCollapsed && (
-                  <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
                     {group.groupName}
                   </h3>
                 )}
@@ -535,24 +656,28 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
                         key={item.to}
                         to={item.to}
                         title={sidebarCollapsed ? item.label : undefined}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                        className={`relative flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs transition-all duration-150 ${
                           active
-                            ? 'bg-primary-50 text-primary-700 shadow-2xs font-bold'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                            ? 'bg-[#eaf5ee] text-[#165239] font-bold shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
                         } ${sidebarCollapsed ? 'justify-center px-0 py-2.5' : ''}`}
                       >
-                        <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-primary-600' : 'text-slate-500'}`} />
+                        {/* Subtle vertical indicator for active item */}
+                        {active && !sidebarCollapsed && (
+                          <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#165239] rounded-full" />
+                        )}
+                        <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[#165239]' : 'text-slate-400'}`} />
                         {!sidebarCollapsed && (
                           <div className="flex-1 flex items-center justify-between min-w-0">
                             <span className="truncate">{item.label}</span>
                             {item.badge && (
                               <span
-                                className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1.5 shrink-0 ${
+                                className={`text-[10px] px-2 py-0.5 rounded-full font-bold ml-1.5 shrink-0 ${
                                   item.badgeVariant === 'danger'
                                     ? 'bg-rose-100 text-rose-700'
                                     : item.badgeVariant === 'warning'
                                     ? 'bg-amber-100 text-amber-700'
-                                    : 'bg-primary-100 text-primary-700'
+                                    : 'bg-[#eaf5ee] text-[#165239]'
                                 }`}
                               >
                                 {item.badge}
@@ -568,8 +693,32 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             ))}
           </div>
 
+          {/* Donezo-style Mobile App Mini Card */}
+          {!sidebarCollapsed && (
+            <div className="px-3 pb-3">
+              <div className="rounded-3xl bg-gradient-to-br from-[#165239] via-[#11402c] to-[#0a271b] text-white p-4 relative overflow-hidden shadow-card">
+                <div className="relative z-10">
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center mb-2.5">
+                    <GraduationCap className="w-4 h-4 text-emerald-300" />
+                  </div>
+                  <h4 className="text-xs font-bold leading-tight">Institutional Portal</h4>
+                  <p className="text-[10px] text-emerald-200/80 mt-1 leading-relaxed">
+                    Mobile app, offline sync &amp; campus notifications
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickActionOpen(true)}
+                    className="mt-3 w-full py-1.5 px-3 rounded-full bg-[#247c59] hover:bg-[#2e9c70] text-[11px] font-bold text-white transition text-center shadow-xs"
+                  >
+                    Quick Portal
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Sidebar Collapse Toggle */}
-          <div className="p-3 border-t border-slate-200 flex items-center justify-between bg-slate-50/50">
+          <div className="p-3 border-t border-slate-200/70 flex items-center justify-between bg-slate-50/50">
             {!sidebarCollapsed && (
               <div className="text-[11px] text-slate-400 font-medium">
                 v1.0 • Enterprise Edition
@@ -578,7 +727,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             <button
               type="button"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-500 transition mx-auto lg:mx-0"
+              className="p-1.5 rounded-full border border-slate-200/80 hover:bg-slate-100 text-slate-500 transition mx-auto lg:mx-0 shadow-2xs"
               title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
               {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -625,18 +774,18 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
                             key={item.to}
                             to={item.to}
                             onClick={() => setMobileMenuOpen(false)}
-                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                            className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs transition-all ${
                               active
-                                ? 'bg-primary-50 text-primary-700 font-bold'
-                                : 'text-slate-600 hover:bg-slate-100'
+                                ? 'bg-[#eaf5ee] text-[#165239] font-bold shadow-2xs'
+                                : 'text-slate-600 hover:bg-slate-100/70 font-medium'
                             }`}
                           >
                             <div className="flex items-center gap-3">
-                              <Icon className="w-4 h-4" />
+                              <Icon className={`w-4 h-4 ${active ? 'text-[#165239]' : 'text-slate-400'}`} />
                               <span>{item.label}</span>
                             </div>
                             {item.badge && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700 font-bold">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#eaf5ee] text-[#165239] font-bold">
                                 {item.badge}
                               </span>
                             )}
@@ -648,11 +797,11 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
                 ))}
               </div>
 
-              <div className="p-4 border-t border-slate-200">
+              <div className="p-4 border-t border-slate-200/70">
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full py-2 px-3 rounded-xl border border-rose-200 text-rose-600 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-rose-50"
+                  className="w-full py-2.5 px-4 rounded-full border border-rose-200 text-rose-600 text-xs font-bold flex items-center justify-center gap-2 hover:bg-rose-50 transition"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>
@@ -663,11 +812,12 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
         )}
 
         {/* Content Body */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-[#F4F6F8]">
           <div className={fullWidth ? 'p-4 sm:p-6 lg:p-8' : 'max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'}>
             {children}
           </div>
         </main>
+      </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppLayout } from '../../components/layout/AppLayout';
+import { PageShell } from '../../components/ui';
 import { ModuleHeader } from '../../components/common/ModuleHeader';
 import api from '../../lib/api';
 import { isAxiosError } from 'axios';
@@ -117,7 +118,7 @@ export function UserManagementPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-6xl mx-auto space-y-4">
+      <PageShell>
         <ModuleHeader
           title="User management"
           subtitle="Review registrations, assign roles and tenants, activate accounts"
@@ -127,127 +128,152 @@ export function UserManagementPage() {
           <button
             type="button"
             onClick={() => setFilter('pending')}
-            className={`px-3 py-1.5 text-sm rounded-lg border ${
+            className={`px-4 py-2 text-xs font-bold rounded-full transition shadow-xs ${
               filter === 'pending'
-                ? 'bg-primary-600 text-white border-primary-600'
-                : 'bg-white text-slate-700 border-slate-200'
+                ? 'bg-[#165239] text-white border border-[#165239]'
+                : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
             }`}
           >
-            Pending
+            Pending Approvals
           </button>
           <button
             type="button"
             onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 text-sm rounded-lg border ${
+            className={`px-4 py-2 text-xs font-bold rounded-full transition shadow-xs ${
               filter === 'all'
-                ? 'bg-primary-600 text-white border-primary-600'
-                : 'bg-white text-slate-700 border-slate-200'
+                ? 'bg-[#165239] text-white border border-[#165239]'
+                : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
             }`}
           >
-            All users
+            All Registered Users
           </button>
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-50 border border-red-100 text-red-700 text-sm px-4 py-3">
+          <div className="rounded-2xl bg-red-50 border border-red-200/70 text-red-700 text-xs font-medium px-4 py-3">
             {error}
           </div>
         )}
         {actionMsg && (
-          <div className="rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-sm px-4 py-3">
+          <div className="rounded-2xl bg-[#f0f7f4] border border-[#c2decf]/80 text-[#165239] text-xs font-semibold px-4 py-3">
             {actionMsg}
           </div>
         )}
 
         {loading ? (
-          <p className="text-slate-500 text-sm">Loading…</p>
+          <div className="p-8 text-center text-slate-400 text-xs font-medium bg-white rounded-3xl border border-slate-200/70 shadow-card">
+            Loading university user directory…
+          </div>
         ) : (
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Org</th>
-                  <th className="px-4 py-3 font-medium">Verified</th>
-                  <th className="px-4 py-3 font-medium">Approval</th>
-                  <th className="px-4 py-3 font-medium">Active</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 && (
+          <div className="bg-white rounded-3xl border border-slate-200/70 shadow-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/80 border-b border-slate-200/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                      No users found
-                    </td>
+                    <th className="px-5 py-3.5">User</th>
+                    <th className="px-5 py-3.5">Email</th>
+                    <th className="px-5 py-3.5">Organization</th>
+                    <th className="px-5 py-3.5">Verified</th>
+                    <th className="px-5 py-3.5">Approval</th>
+                    <th className="px-5 py-3.5">Active</th>
+                    <th className="px-5 py-3.5 text-right">Actions</th>
                   </tr>
-                )}
-                {users.map((u) => (
-                  <tr key={u.id} className="border-t border-slate-100">
-                    <td className="px-4 py-3 font-medium text-slate-900">
-                      {u.firstName} {u.lastName}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{u.email}</td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">{u.organizationName || '—'}</td>
-                    <td className="px-4 py-3">
-                      {u.isEmailVerified ? (
-                        <span className="text-emerald-700 text-xs font-semibold">Yes</span>
-                      ) : (
-                        <span className="text-amber-700 text-xs font-semibold">No</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs font-semibold uppercase">{u.approvalStatus}</span>
-                    </td>
-                    <td className="px-4 py-3">{u.isActive ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-3 space-x-2 whitespace-nowrap">
-                      {u.approvalStatus === 'pending' && (
-                        <>
-                          <button
-                            type="button"
-                            className="text-xs font-semibold text-primary-600"
-                            onClick={() => setApproveId(u.id)}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            className="text-xs font-semibold text-red-600"
-                            onClick={() => void reject(u.id)}
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {u.approvalStatus === 'approved' && (
-                        <button
-                          type="button"
-                          className="text-xs font-semibold text-slate-600"
-                          onClick={() => void toggleActive(u)}
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-xs">
+                        No users found in this directory view
+                      </td>
+                    </tr>
+                  )}
+                  {users.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/60 transition">
+                      <td className="px-5 py-3.5 font-bold text-slate-900">
+                        {u.firstName} {u.lastName}
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-600 font-mono text-[11px]">{u.email}</td>
+                      <td className="px-5 py-3.5 text-slate-500">{u.organizationName || '—'}</td>
+                      <td className="px-5 py-3.5">
+                        {u.isEmailVerified ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-[#165239] border border-emerald-200/60">
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
+                            Unverified
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${
+                            u.approvalStatus === 'approved'
+                              ? 'bg-emerald-50 text-[#165239] border-emerald-200/60'
+                              : u.approvalStatus === 'pending'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200/60'
+                              : 'bg-rose-50 text-rose-700 border-rose-200/60'
+                          }`}
                         >
-                          {u.isActive ? 'Deactivate' : 'Activate'}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          {u.approvalStatus}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`inline-block w-2 h-2 rounded-full mr-1.5 ${
+                            u.isActive ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}
+                        />
+                        <span className="text-slate-700 font-medium">{u.isActive ? 'Active' : 'Inactive'}</span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right space-x-2 whitespace-nowrap">
+                        {u.approvalStatus === 'pending' && (
+                          <>
+                            <button
+                              type="button"
+                              className="px-3 py-1 rounded-full bg-[#165239] hover:bg-[#11402c] text-white text-[11px] font-bold shadow-xs transition"
+                              onClick={() => setApproveId(u.id)}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              className="px-3 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition"
+                              onClick={() => void reject(u.id)}
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {u.approvalStatus === 'approved' && (
+                          <button
+                            type="button"
+                            className="px-3 py-1 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 text-[11px] font-semibold transition"
+                            onClick={() => void toggleActive(u)}
+                          >
+                            {u.isActive ? 'Deactivate' : 'Activate'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {approveId && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl p-6 w-full max-w-md space-y-4 shadow-xl">
-              <h3 className="font-bold text-slate-900">Approve registration</h3>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-[26px] p-6 w-full max-w-md space-y-4 shadow-xl border border-slate-200/80">
+              <h3 className="font-bold text-slate-900 text-base">Approve Registration</h3>
               <p className="text-xs text-slate-500">
-                Server assigns role and tenant. Super Admin must provide tenantId.
+                Assign institutional role and tenant boundary. Super Admin must specify tenant ID.
               </p>
               <div>
-                <label className="block text-sm font-medium mb-1">Role</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Assigned Role</label>
                 <select
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#165239]/20"
                   value={role}
                   onChange={(e) => setRole(e.target.value as typeof role)}
                 >
@@ -259,34 +285,34 @@ export function UserManagementPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Tenant ID (Super Admin)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Tenant ID (Mongo ObjectId)</label>
                 <input
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#165239]/20"
                   value={tenantId}
                   onChange={(e) => setTenantId(e.target.value)}
-                  placeholder="Mongo ObjectId of tenant"
+                  placeholder="e.g. 507f1f77bcf86cd799439011"
                 />
               </div>
-              <div className="flex gap-2 justify-end">
+              <div className="flex gap-2 justify-end pt-2">
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-sm rounded-lg border"
+                  className="px-4 py-2 text-xs font-bold rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
                   onClick={() => setApproveId(null)}
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-sm rounded-lg bg-primary-600 text-white"
+                  className="px-4 py-2 text-xs font-bold rounded-full bg-[#165239] hover:bg-[#11402c] text-white shadow-xs transition"
                   onClick={() => void approve(approveId)}
                 >
-                  Confirm approve
+                  Confirm Approve
                 </button>
               </div>
             </div>
           </div>
         )}
-      </div>
+      </PageShell>
     </AppLayout>
   );
 }

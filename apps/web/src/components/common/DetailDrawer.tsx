@@ -123,9 +123,9 @@ export function DetailDrawer({
             <button
               type="button"
               onClick={() => setActiveTab('overview')}
-              className={`pb-2 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition ${
+              className={`pb-2 px-3 text-xs font-bold flex items-center gap-1.5 border-b-2 transition ${
                 activeTab === 'overview'
-                  ? 'border-primary-600 text-primary-600'
+                  ? 'border-[#165239] text-[#165239]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -135,9 +135,9 @@ export function DetailDrawer({
             <button
               type="button"
               onClick={() => setActiveTab('timeline')}
-              className={`pb-2 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition ${
+              className={`pb-2 px-3 text-xs font-bold flex items-center gap-1.5 border-b-2 transition ${
                 activeTab === 'timeline'
-                  ? 'border-primary-600 text-primary-600'
+                  ? 'border-[#165239] text-[#165239]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -147,9 +147,9 @@ export function DetailDrawer({
             <button
               type="button"
               onClick={() => setActiveTab('attachments')}
-              className={`pb-2 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition ${
+              className={`pb-2 px-3 text-xs font-bold flex items-center gap-1.5 border-b-2 transition ${
                 activeTab === 'attachments'
-                  ? 'border-primary-600 text-primary-600'
+                  ? 'border-[#165239] text-[#165239]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -159,9 +159,9 @@ export function DetailDrawer({
             <button
               type="button"
               onClick={() => setActiveTab('comments')}
-              className={`pb-2 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition ${
+              className={`pb-2 px-3 text-xs font-bold flex items-center gap-1.5 border-b-2 transition ${
                 activeTab === 'comments'
-                  ? 'border-primary-600 text-primary-600'
+                  ? 'border-[#165239] text-[#165239]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -263,11 +263,11 @@ export function DetailDrawer({
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add an internal note or review comment..."
-                  className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="flex-1 px-4 py-2 rounded-full border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#165239]/20"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-full bg-[#165239] hover:bg-[#11402c] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Post</span>
@@ -283,7 +283,7 @@ export function DetailDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-white text-slate-700 font-semibold transition"
+            className="px-4 py-2 rounded-full border border-slate-200 hover:bg-white text-slate-700 font-bold transition shadow-xs"
           >
             Close Panel
           </button>

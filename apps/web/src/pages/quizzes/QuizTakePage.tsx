@@ -101,11 +101,16 @@ export function QuizTakePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 p-8">
-        <p className="text-red-600 text-sm">{error}</p>
-        <Link to="/quizzes" className="text-sm text-primary-700 mt-4 inline-block">
-          Back to quizzes
-        </Link>
+      <div className="min-h-screen bg-[#F3F5F7] p-8 flex items-center justify-center">
+        <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-card text-center border border-slate-100">
+          <p className="text-rose-600 text-sm font-semibold mb-4">{error}</p>
+          <Link
+            to="/quizzes"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-xs font-bold text-white bg-[#165239] hover:bg-[#12422e] transition shadow-2xs"
+          >
+            Back to quizzes
+          </Link>
+        </div>
       </div>
     );
   }
@@ -115,22 +120,30 @@ export function QuizTakePage() {
       quiz?.showResults === 'after_submit' ||
       (quiz?.showResults === 'after_close' && quiz?.status === 'closed');
     return (
-      <div className="min-h-screen bg-slate-50">
-        <main className="max-w-xl mx-auto px-6 py-12 text-center space-y-4">
-          <h1 className="text-xl font-semibold text-slate-900">Quiz submitted</h1>
+      <div className="min-h-screen bg-[#F3F5F7] flex items-center justify-center p-6">
+        <main className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-card text-center space-y-4 border border-slate-100">
+          <div className="w-12 h-12 rounded-full bg-[#eaf5ee] text-[#165239] flex items-center justify-center mx-auto mb-2 text-xl font-bold">
+            ✓
+          </div>
+          <h1 className="text-xl font-bold text-slate-900">Quiz submitted</h1>
           {show && result.totalMarksAwarded != null && (
-            <p className="text-lg text-primary-700">
+            <p className="text-base font-bold text-[#165239] bg-[#f0f7f4] py-2 px-4 rounded-full inline-block">
               Score: {result.totalMarksAwarded}
               {quiz?.totalMarks != null ? ` / ${quiz.totalMarks}` : ''}
               {result.percent != null ? ` (${result.percent}%)` : ''}
             </p>
           )}
           {!show && (
-            <p className="text-sm text-slate-500">Results will be available later.</p>
+            <p className="text-xs text-slate-500 font-medium">Results will be available once evaluated.</p>
           )}
-          <Link to="/quizzes" className="text-sm text-primary-700">
-            Back to quizzes
-          </Link>
+          <div>
+            <Link
+              to="/quizzes"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-xs font-bold text-white bg-[#165239] hover:bg-[#12422e] transition shadow-2xs"
+            >
+              Back to quizzes
+            </Link>
+          </div>
         </main>
       </div>
     );
@@ -138,65 +151,93 @@ export function QuizTakePage() {
 
   if (!attempt) {
     return (
-      <div className="min-h-screen bg-slate-50 p-8 text-sm text-slate-500">Starting attempt…</div>
+      <div className="min-h-screen bg-[#F3F5F7] flex items-center justify-center text-sm font-medium text-slate-400">
+        Starting attempt…
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
-          <h1 className="font-semibold text-slate-900">Quiz attempt #{attempt.attemptNumber}</h1>
-          {remaining != null && (
+    <div className="min-h-screen bg-[#F3F5F7] py-6 px-4 sm:px-6">
+      <header className="max-w-3xl mx-auto bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-card px-6 h-16 flex items-center justify-between sticky top-4 z-20">
+        <div>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Live Assessment</span>
+          <h1 className="text-sm sm:text-base font-bold text-slate-900">Attempt #{attempt.attemptNumber}</h1>
+        </div>
+        {remaining != null && (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold text-slate-400">Time Left:</span>
             <span
-              className={`text-sm font-mono tabular-nums ${
-                remaining < 60 ? 'text-red-600' : 'text-slate-700'
+              className={`px-3 py-1 rounded-full text-xs font-mono font-bold tabular-nums ${
+                remaining < 60
+                  ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                  : 'bg-[#eaf5ee] text-[#165239] border border-[#c2decf]/60'
               }`}
             >
               {formatTime(remaining)}
             </span>
-          )}
-        </div>
+          </div>
+        )}
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-3xl mx-auto py-6 space-y-5">
         {questions.map((q, idx) => (
-          <div key={q.id} className="bg-white rounded-xl border p-5 space-y-3">
-            <div className="flex justify-between text-xs text-slate-500">
-              <span>
-                Q{idx + 1} · {q.type}
+          <div key={q.id} className="bg-white rounded-3xl border border-slate-100 shadow-card p-6 space-y-4">
+            <div className="flex justify-between items-center text-xs">
+              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold text-[10px] uppercase">
+                Q{idx + 1} · {q.type.replace('_', ' ')}
               </span>
-              <span>{q.marks} marks</span>
+              <span className="font-semibold text-slate-500 text-xs">{q.marks} marks</span>
             </div>
-            <p className="text-sm text-slate-900 font-medium">{q.stem}</p>
+            <p className="text-sm text-slate-900 font-semibold leading-relaxed">{q.stem}</p>
 
             {['mcq', 'true_false'].includes(q.type) && (
-              <div className="space-y-2">
-                {(q.options || []).map((o) => (
-                  <label key={o.key} className="flex gap-2 items-center text-sm cursor-pointer">
-                    <input
-                      type="radio"
-                      name={q.id}
-                      checked={answers[q.id] === o.key}
-                      onChange={() => saveAnswer(q.id, o.key)}
-                    />
-                    <span>
-                      {o.key}. {o.text}
-                    </span>
-                  </label>
-                ))}
+              <div className="space-y-2.5 pt-1">
+                {(q.options || []).map((o) => {
+                  const isSelected = answers[q.id] === o.key;
+                  return (
+                    <label
+                      key={o.key}
+                      className={`flex items-center gap-3 p-3 rounded-2xl border text-xs font-medium cursor-pointer transition ${
+                        isSelected
+                          ? 'border-[#165239] bg-[#eaf5ee]/50 text-[#165239] font-bold'
+                          : 'border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={q.id}
+                        className="text-[#165239] focus:ring-[#165239]"
+                        checked={isSelected}
+                        onChange={() => saveAnswer(q.id, o.key)}
+                      />
+                      <span>
+                        <span className="font-bold mr-1">{o.key}.</span> {o.text}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             )}
 
             {q.type === 'multi_select' && (
-              <div className="space-y-2">
+              <div className="space-y-2.5 pt-1">
                 {(q.options || []).map((o) => {
                   const arr = Array.isArray(answers[q.id]) ? (answers[q.id] as string[]) : [];
+                  const isChecked = arr.includes(o.key);
                   return (
-                    <label key={o.key} className="flex gap-2 items-center text-sm cursor-pointer">
+                    <label
+                      key={o.key}
+                      className={`flex items-center gap-3 p-3 rounded-2xl border text-xs font-medium cursor-pointer transition ${
+                        isChecked
+                          ? 'border-[#165239] bg-[#eaf5ee]/50 text-[#165239] font-bold'
+                          : 'border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
                       <input
                         type="checkbox"
-                        checked={arr.includes(o.key)}
+                        className="rounded text-[#165239] focus:ring-[#165239]"
+                        checked={isChecked}
                         onChange={(e) => {
                           const next = e.target.checked
                             ? [...arr, o.key]
@@ -205,7 +246,7 @@ export function QuizTakePage() {
                         }}
                       />
                       <span>
-                        {o.key}. {o.text}
+                        <span className="font-bold mr-1">{o.key}.</span> {o.text}
                       </span>
                     </label>
                   );
@@ -215,8 +256,9 @@ export function QuizTakePage() {
 
             {['fill_blank', 'numerical', 'short', 'long'].includes(q.type) && (
               <textarea
-                className="w-full border rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#165239] focus:border-[#165239] bg-slate-50/40"
                 rows={q.type === 'long' ? 5 : 2}
+                placeholder="Type your response here..."
                 value={(answers[q.id] as string) || ''}
                 onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                 onBlur={(e) => saveAnswer(q.id, e.target.value)}
@@ -225,9 +267,9 @@ export function QuizTakePage() {
           </div>
         ))}
 
-        <div className="flex justify-end gap-3 pb-12">
+        <div className="flex justify-end gap-3 pb-12 pt-2">
           <button
-            className="px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium disabled:opacity-50"
+            className="px-6 py-3 rounded-full bg-[#165239] hover:bg-[#12422e] text-white text-xs font-bold transition shadow-card disabled:opacity-50"
             disabled={submitMut.isPending}
             onClick={() => {
               if (confirm('Submit quiz? You cannot change answers after submit.')) {
@@ -235,7 +277,7 @@ export function QuizTakePage() {
               }
             }}
           >
-            Submit quiz
+            {submitMut.isPending ? 'Submitting…' : 'Submit Quiz'}
           </button>
         </div>
       </main>

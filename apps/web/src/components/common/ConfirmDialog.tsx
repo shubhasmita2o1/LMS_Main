@@ -25,7 +25,7 @@ export function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-scaleUp">
+      <div className="bg-white rounded-[26px] max-w-md w-full shadow-2xl border border-slate-200/80 overflow-hidden animate-scaleUp">
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
@@ -34,9 +34,9 @@ export function ConfirmDialog({
             <button
               type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600"
+              className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
@@ -44,18 +44,18 @@ export function ConfirmDialog({
             <h3 className="text-lg font-bold text-slate-900">{title}</h3>
             <p className="text-xs text-slate-500 mt-1 leading-relaxed">{description}</p>
             {itemName && (
-              <div className="mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-semibold text-slate-800 truncate">
+              <div className="mt-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-semibold text-slate-800 truncate">
                 {itemName}
               </div>
             )}
           </div>
 
-          <div className="mt-6 flex items-center justify-end gap-3">
+          <div className="mt-6 flex items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              className="px-4 py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
             >
               Cancel
             </button>
@@ -63,7 +63,7 @@ export function ConfirmDialog({
               type="button"
               onClick={onConfirm}
               disabled={isLoading}
-              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold shadow-sm shadow-rose-600/20 transition flex items-center gap-2"
+              className="px-4 py-2 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-2"
             >
               {isLoading ? 'Processing...' : confirmLabel}
             </button>
