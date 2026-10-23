@@ -3,7 +3,7 @@
 **Multi-tenant Learning Management & Academic Platform**  
 MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 
-**Document version:** 0.10.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
+**Document version:** 0.11.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
 **Repository:** [shubhasmita2o1/LMS_Main](https://github.com/shubhasmita2o1/LMS_Main)
 
 ---
@@ -23,9 +23,16 @@ MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 | **8** | Core LMS (lessons, progress, live classes) | ✅ Complete |
 | **9** | Assignments, quiz & question bank | ✅ Complete |
 | **10** | Gradebook, results & basic attendance | ✅ Complete |
-| **11+** | Analytics, exams, labs, sellable MVP polish | Planned |
+| **11** | Practical & Lab Platform (isolated execution) | ✅ Complete |
+| **12+** | Examinations, analytics, sellable MVP polish | Planned |
 
-**Sellable MVP target:** after Phase 10–11 (per roadmap). Lab execution stays isolated from the main API.
+**Sellable MVP target:** after Phase 10–11 (per roadmap). **Lab execution stays isolated from the main API** (`ExecutionAdapter` + mock/Docker worker).
+
+### Phase 11 — Lab execution
+
+- Default: `LAB_EXECUTOR=mock` (deterministic fake results; **no student code runs**).
+- Production: separate `apps/lab-worker` + Docker isolation (`network=none`, cgroup limits, non-root). See `docs/phase-11/README.md` and `apps/lab-worker/README.md`.
+- API: `/api/v1/labs` — practicals → labs → experiments → submissions / executions.
 
 ---
 

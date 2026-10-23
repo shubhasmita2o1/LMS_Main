@@ -30,8 +30,13 @@ import { GradebookDetailPage } from './pages/gradebook/GradebookDetailPage';
 import { TranscriptPage } from './pages/gradebook/TranscriptPage';
 import { AttendancePage } from './pages/attendance/AttendancePage';
 import { AttendanceMarkPage } from './pages/attendance/AttendanceMarkPage';
+// Phase 11 Practical & Lab Platform
+import { LabsPage } from './pages/labs/LabsPage';
+import { PracticalDetailPage } from './pages/labs/PracticalDetailPage';
+import { LabExperimentsPage } from './pages/labs/LabExperimentsPage';
+import { ExperimentWorkspacePage } from './pages/labs/ExperimentWorkspacePage';
+import { SubmissionDetailPage } from './pages/labs/SubmissionDetailPage';
 // Extended module shell pages
-import { PracticalLabsPage } from './pages/labs/PracticalLabsPage';
 import { AssessmentsPage } from './pages/assessments/AssessmentsPage';
 import { ExaminationsPage } from './pages/examinations/ExaminationsPage';
 import { ResultsPage } from './pages/results/ResultsPage';
@@ -156,8 +161,12 @@ export default function App() {
       <Route path="/learn/courses/:id/live" element={<ProtectedRoute><LiveClassesPage /></ProtectedRoute>} />
       <Route path="/learn/my-courses" element={<ProtectedRoute><MyCoursesPage /></ProtectedRoute>} />
 
-      {/* Module 8: Practical & Virtual Labs */}
-      <Route path="/labs" element={<ProtectedRoute><PracticalLabsPage /></ProtectedRoute>} />
+      {/* Phase 11: Practical & Lab Platform */}
+      <Route path="/labs" element={<ProtectedRoute><LabsPage /></ProtectedRoute>} />
+      <Route path="/labs/:practicalId" element={<ProtectedRoute><PracticalDetailPage /></ProtectedRoute>} />
+      <Route path="/labs/:practicalId/labs/:labId" element={<ProtectedRoute><LabExperimentsPage /></ProtectedRoute>} />
+      <Route path="/labs/experiments/:experimentId" element={<ProtectedRoute><ExperimentWorkspacePage /></ProtectedRoute>} />
+      <Route path="/labs/submissions/:id" element={<ProtectedRoute><SubmissionDetailPage /></ProtectedRoute>} />
 
       {/* Phase 9 — Assignments, Quiz & Question Bank */}
       <Route path="/question-bank" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'faculty', 'super_admin']}><QuestionBankPage /></ProtectedRoute>} />

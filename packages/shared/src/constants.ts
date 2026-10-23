@@ -5,7 +5,7 @@
 import type { PlanTier, TenantFeatureFlags, TenantLimits } from './types';
 
 export const APP_NAME = 'University LMS';
-export const APP_VERSION = '0.8.0';
+export const APP_VERSION = '0.11.0';
 
 /** Default pagination */
 export const DEFAULT_PAGE = 1;
@@ -227,6 +227,8 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'attendance', action: 'manage' },
     { resource: 'gradebook', action: 'manage' },
     { resource: 'result', action: 'manage' },
+    { resource: 'lab', action: 'manage' },
+    { resource: 'practical', action: 'manage' },
     { resource: 'tenant', action: 'read' },
     { resource: 'tenant', action: 'update' },
     { resource: 'billing', action: 'read' },
@@ -252,6 +254,8 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'attendance', action: 'manage' },
     { resource: 'gradebook', action: 'manage' },
     { resource: 'result', action: 'manage' },
+    { resource: 'lab', action: 'manage' },
+    { resource: 'practical', action: 'manage' },
   ],
   faculty: [
     { resource: 'faculty', action: 'read' },
@@ -264,6 +268,9 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'gradebook', action: 'manage' },
     { resource: 'result', action: 'manage' },
     { resource: 'student', action: 'read' },
+    { resource: 'lab', action: 'manage' },
+    { resource: 'practical', action: 'manage' },
+    { resource: 'lab', action: 'evaluate' },
   ],
   student: [
     { resource: 'student', action: 'read' },
@@ -274,6 +281,9 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'attendance', action: 'read' },
     { resource: 'gradebook', action: 'read' },
     { resource: 'result', action: 'read' },
+    { resource: 'lab', action: 'read' },
+    { resource: 'lab', action: 'submit' },
+    { resource: 'practical', action: 'read' },
   ],
   staff: [{ resource: 'user', action: 'read' }],
   parent: [{ resource: 'student', action: 'read' }],
@@ -474,3 +484,52 @@ export const ATTENDANCE_SESSION_TYPES = ['lecture', 'lab', 'tutorial', 'other'] 
 export const ATTENDANCE_METHODS = ['manual', 'qr', 'biometric', 'import'] as const;
 
 export const ATTENDANCE_SESSION_STATUSES = ['open', 'closed'] as const;
+
+// ─── Phase 11: Practical & Lab Platform ─────────────────────────────────────
+
+export const PRACTICAL_STATUSES = ['draft', 'published', 'closed', 'archived'] as const;
+export const LAB_STATUSES = ['draft', 'published', 'archived'] as const;
+export const EXPERIMENT_STATUSES = ['draft', 'published', 'closed', 'archived'] as const;
+
+export const SUBMISSION_KINDS = [
+  'code',
+  'report',
+  'screenshot',
+  'output',
+  'github',
+  'mixed',
+] as const;
+
+export const EXECUTION_STATUSES = [
+  'queued',
+  'running',
+  'succeeded',
+  'failed',
+  'timeout',
+  'cancelled',
+] as const;
+
+export const LAB_LANGUAGES = ['python', 'javascript', 'java', 'c', 'cpp', 'sql'] as const;
+
+export const TEST_CASE_VISIBILITIES = ['public', 'hidden'] as const;
+
+export const EVALUATION_MODES = ['auto', 'manual', 'hybrid'] as const;
+
+export const LAB_SUBMISSION_STATUSES = [
+  'draft',
+  'submitted',
+  'running',
+  'scored',
+  'evaluated',
+  'returned',
+] as const;
+
+export const EVALUATION_STATUSES = ['pending', 'auto_scored', 'manual', 'completed'] as const;
+
+/** Default execution limits (enforced by worker / mock) */
+export const LAB_DEFAULT_TIMEOUT_SEC = 10;
+export const LAB_DEFAULT_MEMORY_MB = 128;
+export const LAB_MAX_TIMEOUT_SEC = 60;
+export const LAB_MAX_MEMORY_MB = 512;
+export const LAB_MAX_CODE_LENGTH = 100_000;
+export const LAB_MAX_ATTEMPTS_DEFAULT = 10;

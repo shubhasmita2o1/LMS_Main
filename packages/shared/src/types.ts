@@ -43,7 +43,9 @@ export type PermissionAction =
   | 'manage'
   | 'export'
   | 'import'
-  | 'approve';
+  | 'approve'
+  | 'submit'
+  | 'evaluate';
 
 /** Resource types for fine-grained RBAC */
 export type ResourceType =
@@ -73,6 +75,7 @@ export type ResourceType =
   | 'notification'
   | 'analytics'
   | 'lab'
+  | 'practical'
   | 'library'
   | 'placement'
   | 'communication'
@@ -1435,4 +1438,246 @@ export interface AttendanceSummaryPublic {
   minimumPercent: number;
   studentName?: string;
   studentCode?: string;
+}
+
+// ─── Phase 11: Practical & Lab Platform ─────────────────────────────────────
+
+export type PracticalStatus = 'draft' | 'published' | 'closed' | 'archived';
+export type LabStatus = 'draft' | 'published' | 'archived';
+export type ExperimentStatus = 'draft' | 'published' | 'closed' | 'archived';
+
+export type SubmissionKind =
+  | 'code'
+  | 'report'
+  | 'screenshot'
+  | 'output'
+  | 'github'
+  | 'mixed';
+
+export type ExecutionStatus =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'timeout'
+  | 'cancelled';
+
+export type LabLanguage = 'python' | 'javascript' | 'java' | 'c' | 'cpp' | 'sql';
+
+export type TestCaseVisibility = 'public' | 'hidden';
+
+export type EvaluationMode = 'auto' | 'manual' | 'hybrid';
+
+export type LabSubmissionStatus =
+  | 'draft'
+  | 'submitted'
+  | 'running'
+  | 'scored'
+  | 'evaluated'
+  | 'returned';
+
+export type EvaluationStatus = 'pending' | 'auto_scored' | 'manual' | 'completed';
+
+export interface LabTestCase {
+  id: string;
+  input: string;
+  expectedOutput: string;
+  visibility: TestCaseVisibility;
+  weight: number;
+  /** Optional display name for faculty */
+  name?: string;
+}
+
+/** Student-safe view: hidden expectedOutput stripped */
+export interface LabTestCasePublic {
+  id: string;
+  input: string;
+  expectedOutput?: string; // only for public
+  visibility: TestCaseVisibility;
+  weight: number;
+  name?: string;
+}
+
+export interface LabTestResult {
+  testCaseId: string;
+  passed: boolean;
+  actualOutput?: string | null;
+  durationMs?: number | null;
+  /** weight contribution when scored */
+  score?: number | null;
+}
+
+export interface PracticalPublic {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  offeringId?: string | null;
+  title: string;
+  description?: string | null;
+  status: PracticalStatus;
+  facultyOwnerIds: string[];
+  availableFrom?: Date | string | null;
+  availableTo?: Date | string | null;
+  maxScore: number;
+  weightPercent?: number | null;
+  labCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  courseName?: string;
+  courseCode?: string;
+}
+
+export interface LabPublic {
+  id: string;
+  tenantId: string;
+  practicalId: string;
+  courseId: string;
+  title: string;
+  order: number;
+  instructions?: string | null;
+  defaultLanguage: LabLanguage;
+  timeoutSec: number;
+  memoryMb: number;
+  status: LabStatus;
+  experimentCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface ExperimentPublic {
+  id: string;
+  tenantId: string;
+  labId: string;
+  practicalId?: string;
+  courseId?: string;
+  title: string;
+  statement: string;
+  allowedLanguages: LabLanguage[];
+  starterCode: Partial<Record<LabLanguage, string>>;
+  timeLimitSec: number;
+  memoryLimitMb: number;
+  maxScore: number;
+  testCases: LabTestCasePublic[];
+  evaluationMode: EvaluationMode;
+  attachments: FileAttachmentRef[];
+  status: ExperimentStatus;
+  order: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface LabSubmissionPublic {
+  id: string;
+  tenantId: string;
+  experimentId: string;
+  labId: string;
+  studentId: string;
+  courseId: string;
+  kind: SubmissionKind;
+  language?: LabLanguage | null;
+  code?: string | null;
+  reportFileKey?: string | null;
+  screenshotFileKey?: string | null;
+  outputText?: string | null;
+  githubUrl?: string | null;
+  executionJobId?: string | null;
+  autoScore?: number | null;
+  manualScore?: number | null;
+  totalScore?: number | null;
+  status: LabSubmissionStatus;
+  attemptNumber: number;
+  submittedAt?: Date | string | null;
+  /** Public test results only for students; faculty may see all */
+  testResults?: LabTestResult[];
+  publicPassed?: number;
+  publicTotal?: number;
+  hiddenPassed?: number;
+  hiddenTotal?: number;
+  evaluationStatus?: EvaluationStatus;
+  feedback?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  studentName?: string;
+  studentCode?: string;
+  experimentTitle?: string;
+}
+
+export interface ExecutionJobPublic {
+  id: string;
+  tenantId: string;
+  submissionId: string;
+  studentId: string;
+  experimentId: string;
+  language: LabLanguage;
+  status: ExecutionStatus;
+  queuedAt: Date | string;
+  startedAt?: Date | string | null;
+  finishedAt?: Date | string | null;
+  stdout?: string | null;
+  stderr?: string | null;
+  exitCode?: number | null;
+  testResults: LabTestResult[];
+  errorMessage?: string | null;
+  workerId?: string | null;
+  durationMs?: number | null;
+}
+
+export interface LabEvaluationPublic {
+  id: string;
+  tenantId: string;
+  submissionId: string;
+  autoScore?: number | null;
+  manualScore?: number | null;
+  totalScore?: number | null;
+  vivaScore?: number | null;
+  rubricNotes?: string | null;
+  feedback?: string | null;
+  status: EvaluationStatus;
+  evaluatedBy?: string | null;
+  evaluatedAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface DigitalLabRecordPublic {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  practicalId: string;
+  labId?: string | null;
+  entries: Array<{
+    experimentId: string;
+    experimentTitle?: string;
+    bestScore?: number | null;
+    attempts: number;
+    lastSubmittedAt?: Date | string | null;
+  }>;
+  cumulativeScore: number;
+  maxPossibleScore: number;
+  vivaMarks?: number | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+/** Adapter contracts (shared for API + worker docs) */
+export interface ExecutionJobInput {
+  jobId: string;
+  tenantId: string;
+  submissionId: string;
+  language: LabLanguage;
+  code: string;
+  timeLimitSec: number;
+  memoryLimitMb: number;
+  testCases: Array<{ id: string; input: string; expectedOutput: string; weight: number }>;
+}
+
+export interface ExecutionStatusResult {
+  jobId: string;
+  status: ExecutionStatus;
+  stdout?: string | null;
+  stderr?: string | null;
+  exitCode?: number | null;
+  testResults?: LabTestResult[];
+  errorMessage?: string | null;
+  durationMs?: number | null;
 }

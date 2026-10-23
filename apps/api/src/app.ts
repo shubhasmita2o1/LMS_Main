@@ -21,6 +21,7 @@ import { assignmentRouter } from './modules/assignments/assignment.routes';
 import { quizRouter } from './modules/quizzes/quiz.routes';
 import { gradebookRouter } from './modules/gradebook/gradebook.routes';
 import { attendanceRouter } from './modules/attendance/attendance.routes';
+import { labRouter } from './modules/labs/lab.routes';
 import { env } from './config/env';
 import path from 'path';
 
@@ -76,8 +77,8 @@ export function createApp() {
     res.json({
       success: true,
       message: 'University LMS API v1',
-      version: '0.9.0',
-      phase: 9,
+      version: '0.11.0',
+      phase: 11,
       docs: '/api/v1 (OpenAPI coming in later phases)',
     });
   });
@@ -116,6 +117,9 @@ export function createApp() {
   app.use('/api/v1/quizzes', quizRouter);
   app.use('/api/v1/gradebook', gradebookRouter);
   app.use('/api/v1/attendance', attendanceRouter);
+
+  // Phase 11 — Practical & Lab Platform (execution isolated via ExecutionAdapter)
+  app.use('/api/v1/labs', labRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);
