@@ -255,6 +255,12 @@ export function CourseDetailPage() {
               >
                 LMS Player
               </PillButton>
+              <PillButton
+                variant="outline"
+                href={`/courses/${id}/discussions`}
+              >
+                Discussions
+              </PillButton>
               <Can resource="course" action="update">
                 <PillButton
                   variant="primary"

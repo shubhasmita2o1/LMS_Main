@@ -47,7 +47,8 @@ export type PermissionAction =
   | 'submit'
   | 'evaluate'
   | 'invigilate'
-  | 'attempt';
+  | 'attempt'
+  | 'moderate';
 
 /** Resource types for fine-grained RBAC */
 export type ResourceType =
@@ -75,6 +76,8 @@ export type ResourceType =
   | 'fee'
   | 'billing'
   | 'notification'
+  | 'announcement'
+  | 'discussion'
   | 'analytics'
   | 'lab'
   | 'practical'
@@ -1903,4 +1906,176 @@ export interface ExamResultPublic {
     marksAwarded: number;
     isCorrect?: boolean | null;
   }>;
+}
+
+// ─── Phase 13: Communication, Notifications & Discussion ───────────────────
+
+export type NotificationChannel = 'in_app' | 'email' | 'push' | 'sms';
+
+export type NotificationStatus =
+  | 'pending'
+  | 'queued'
+  | 'sent'
+  | 'delivered'
+  | 'failed'
+  | 'read';
+
+export type NotificationType =
+  | 'announcement'
+  | 'assignment_due'
+  | 'quiz_available'
+  | 'exam_reminder'
+  | 'grade_published'
+  | 'attendance_alert'
+  | 'discussion_reply'
+  | 'system'
+  | 'custom';
+
+export type NotificationPriority = 'low' | 'normal' | 'high';
+
+export type AnnouncementAudience = 'tenant' | 'course' | 'program' | 'section' | 'role';
+
+export type AnnouncementStatus = 'draft' | 'published' | 'archived';
+
+export type DiscussionThreadStatus = 'open' | 'locked' | 'hidden';
+
+export type DiscussionReplyStatus = 'visible' | 'hidden';
+
+export type ModerationAction = 'hide' | 'unhide' | 'lock' | 'unlock' | 'delete';
+
+export type DiscussionReportStatus = 'open' | 'resolved' | 'dismissed';
+
+export interface NotificationPayload {
+  entityType?: string;
+  entityId?: string;
+  courseId?: string;
+  link?: string;
+  [key: string]: unknown;
+}
+
+export interface NotificationPublic {
+  id: string;
+  tenantId: string;
+  userId: string;
+  type: NotificationType;
+  channel: NotificationChannel;
+  title: string;
+  body: string;
+  data?: NotificationPayload | null;
+  status: NotificationStatus;
+  readAt?: Date | string | null;
+  priority: NotificationPriority;
+  scheduledFor?: Date | string | null;
+  sentAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface NotificationDeliveryLogPublic {
+  id: string;
+  tenantId: string;
+  notificationId: string;
+  userId: string;
+  channel: NotificationChannel;
+  status: NotificationStatus;
+  providerResponse?: string | null;
+  error?: string | null;
+  attempt: number;
+  createdAt: Date | string;
+}
+
+export type NotificationPreferenceMap = Partial<
+  Record<NotificationType, Partial<Record<NotificationChannel, boolean>>>
+>;
+
+export interface NotificationPreferencePublic {
+  id: string;
+  tenantId: string;
+  userId: string;
+  preferences: NotificationPreferenceMap;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface NotificationTemplatePublic {
+  id: string;
+  tenantId?: string | null;
+  key: string;
+  name: string;
+  channel: NotificationChannel;
+  subjectTemplate?: string | null;
+  bodyTemplate: string;
+  isActive: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface AnnouncementAudienceFilter {
+  courseId?: string | null;
+  programId?: string | null;
+  sectionId?: string | null;
+  roles?: string[] | null;
+}
+
+export interface AnnouncementPublic {
+  id: string;
+  tenantId: string;
+  title: string;
+  body: string;
+  audienceType: AnnouncementAudience;
+  audienceFilter?: AnnouncementAudienceFilter | null;
+  channels: NotificationChannel[];
+  status: AnnouncementStatus;
+  publishedAt?: Date | string | null;
+  expiresAt?: Date | string | null;
+  createdBy?: string | null;
+  createdByName?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface DiscussionThreadPublic {
+  id: string;
+  tenantId: string;
+  courseId: string;
+  title: string;
+  body: string;
+  createdBy: string;
+  createdByName?: string | null;
+  status: DiscussionThreadStatus;
+  isAnnouncementPin: boolean;
+  lastActivityAt: Date | string;
+  replyCount: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface DiscussionReplyPublic {
+  id: string;
+  tenantId: string;
+  threadId: string;
+  courseId: string;
+  body: string;
+  createdBy: string;
+  createdByName?: string | null;
+  parentReplyId?: string | null;
+  status: DiscussionReplyStatus;
+  isAnswer: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface DiscussionReportPublic {
+  id: string;
+  tenantId: string;
+  threadId?: string | null;
+  replyId?: string | null;
+  reportedBy: string;
+  reportedByName?: string | null;
+  reason: string;
+  status: DiscussionReportStatus;
+  resolvedBy?: string | null;
+  resolvedAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }

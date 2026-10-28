@@ -1,231 +1,196 @@
-import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import {
   X,
   Bell,
   CheckCheck,
   AlertCircle,
-  Calendar,
-  CreditCard,
-  FileCheck,
+  MessageSquare,
+  Megaphone,
+  BookOpen,
 } from 'lucide-react';
-
-interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  timestamp: string;
-  category: 'Academic' | 'Exam' | 'Fee' | 'System';
-  isRead: boolean;
-  priority: 'urgent' | 'high' | 'normal';
-}
-
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'n-1',
-    title: 'Mid-Semester Timetable Published',
-    message: 'The examination wing has published the official Mid-Term schedule for engineering batches.',
-    timestamp: '15 mins ago',
-    category: 'Exam',
-    isRead: false,
-    priority: 'urgent',
-  },
-  {
-    id: 'n-2',
-    title: 'Attendance Shortage Alert (< 75%)',
-    message: '42 undergraduate students currently fall below the mandatory 75% threshold for final eligibility.',
-    timestamp: '1 hour ago',
-    category: 'Academic',
-    isRead: false,
-    priority: 'high',
-  },
-  {
-    id: 'n-3',
-    title: 'Fee Payment Installment #2 Due',
-    message: 'Fall Semester tuition fee due date reminder sent to 134 enrolled candidates.',
-    timestamp: '3 hours ago',
-    category: 'Fee',
-    isRead: false,
-    priority: 'high',
-  },
-  {
-    id: 'n-4',
-    title: 'Syllabus OBE Revision Approved',
-    message: 'Dr. Elizabeth Vance approved outcome mapping matrix for CS301 Operating Systems.',
-    timestamp: 'Yesterday',
-    category: 'Academic',
-    isRead: true,
-    priority: 'normal',
-  },
-  {
-    id: 'n-5',
-    title: 'System Security Audit Completed',
-    message: 'Automated weekly penetration testing and role verification completed with 0 high-risk findings.',
-    timestamp: '2 days ago',
-    category: 'System',
-    isRead: true,
-    priority: 'normal',
-  },
-];
+import {
+  getUnreadCount,
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from '../../lib/communicationApi';
+import type { NotificationPublic } from '@university-lms/shared';
 
 export interface NotificationDrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+function relativeTime(iso: string | Date): string {
+  const d = typeof iso === 'string' ? new Date(iso) : iso;
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString();
+}
+
+function iconFor(type: string) {
+  switch (type) {
+    case 'announcement':
+      return <Megaphone className="w-4 h-4 text-indigo-600" />;
+    case 'discussion_reply':
+      return <MessageSquare className="w-4 h-4 text-sky-600" />;
+    case 'assignment_due':
+    case 'quiz_available':
+    case 'grade_published':
+      return <BookOpen className="w-4 h-4 text-emerald-600" />;
+    default:
+      return <AlertCircle className="w-4 h-4 text-slate-500" />;
+  }
+}
+
 export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps) {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
-  const [filter, setFilter] = useState<'All' | 'Unread' | 'Exam' | 'Fee'>('All');
+  const qc = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['notifications', 'drawer'],
+    queryFn: () => listNotifications({ limit: 15 }),
+    enabled: isOpen,
+    refetchInterval: isOpen ? 30000 : false,
+  });
+
+  const { data: unread = 0 } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: getUnreadCount,
+    enabled: isOpen,
+    refetchInterval: 30000,
+  });
+
+  const markReadMut = useMutation({
+    mutationFn: markNotificationRead,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const markAllMut = useMutation({
+    mutationFn: markAllNotificationsRead,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
 
   if (!isOpen) return null;
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-  };
-
-  const handleMarkItemRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
-  };
-
-  const filtered = notifications.filter((item) => {
-    if (filter === 'Unread') return !item.isRead;
-    if (filter === 'Exam') return item.category === 'Exam';
-    if (filter === 'Fee') return item.category === 'Fee';
-    return true;
-  });
-
-  const getCategoryIcon = (category: NotificationItem['category']) => {
-    switch (category) {
-      case 'Exam':
-        return <Calendar className="w-4 h-4 text-purple-600" />;
-      case 'Fee':
-        return <CreditCard className="w-4 h-4 text-emerald-600" />;
-      case 'Academic':
-        return <FileCheck className="w-4 h-4 text-primary-600" />;
-      default:
-        return <AlertCircle className="w-4 h-4 text-amber-600" />;
-    }
-  };
+  const items: NotificationPublic[] = data?.items ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/50 backdrop-blur-xs flex justify-end">
-      <div className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col border-l border-slate-200 animate-slideLeft">
-        {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/80">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-primary-100 text-primary-700 flex items-center justify-center">
-                <Bell className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Notifications</h3>
-                <p className="text-xs text-slate-500">
-                  {unreadCount > 0 ? `${unreadCount} unread notices` : 'All caught up'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <button
-                  type="button"
-                  onClick={handleMarkAllRead}
-                  className="p-1.5 rounded-lg text-xs font-semibold text-primary-600 hover:bg-primary-50 transition flex items-center gap-1"
-                  title="Mark all as read"
-                >
-                  <CheckCheck className="w-4 h-4" />
-                  <span className="hidden sm:inline">Mark read</span>
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} aria-hidden />
+      <div className="relative w-full max-w-md bg-white shadow-2xl flex flex-col h-full border-l border-slate-200">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-indigo-600" />
+            <h2 className="font-bold text-slate-900">Notifications</h2>
+            {unread > 0 && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                {unread}
+              </span>
+            )}
           </div>
-
-          {/* Categories Tab */}
-          <div className="flex items-center gap-1.5 mt-4">
-            {(['All', 'Unread', 'Exam', 'Fee'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setFilter(tab)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
-                  filter === tab
-                    ? 'bg-primary-600 text-white shadow-sm'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => markAllMut.mutate()}
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+              disabled={markAllMut.isPending || unread === 0}
+            >
+              <CheckCheck className="w-3.5 h-3.5" />
+              Mark all read
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        {/* List Content */}
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100 p-2">
-          {filtered.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-xs">
-              No notifications found in this category
-            </div>
-          ) : (
-            filtered.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => handleMarkItemRead(item.id)}
-                className={`p-3.5 rounded-xl transition cursor-pointer flex items-start gap-3 ${
-                  !item.isRead ? 'bg-primary-50/50 hover:bg-primary-50' : 'hover:bg-slate-50'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0 mt-0.5">
-                  {getCategoryIcon(item.category)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-0.5">
-                    <span className="text-xs font-bold text-slate-900 truncate">{item.title}</span>
-                    <span className="text-[10px] text-slate-400 shrink-0">{item.timestamp}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
-                    {item.message}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                      {item.category}
-                    </span>
-                    {item.priority === 'urgent' && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                        Urgent
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {!item.isRead && (
-                  <div className="w-2 h-2 rounded-full bg-primary-600 mt-2 shrink-0" />
-                )}
-              </div>
-            ))
+        <div className="flex-1 overflow-y-auto">
+          {isLoading && (
+            <div className="p-8 text-center text-sm text-slate-500">Loading…</div>
           )}
+          {!isLoading && items.length === 0 && (
+            <div className="p-10 text-center">
+              <Bell className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-slate-600">You&apos;re all caught up</p>
+              <p className="text-xs text-slate-400 mt-1">No notifications yet</p>
+            </div>
+          )}
+          <ul className="divide-y divide-slate-100">
+            {items.map((n) => {
+              const unreadItem = n.status !== 'read' && !n.readAt;
+              const link = (n.data?.link as string) || '/notifications';
+              return (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    className={`w-full text-left px-5 py-3.5 hover:bg-slate-50 transition ${
+                      unreadItem ? 'bg-indigo-50/40' : ''
+                    }`}
+                    onClick={() => {
+                      if (unreadItem) markReadMut.mutate(n.id);
+                      onClose();
+                    }}
+                  >
+                    <div className="flex gap-3">
+                      <div className="mt-0.5 shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                        {iconFor(n.type)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p
+                            className={`text-sm leading-snug ${
+                              unreadItem ? 'font-bold text-slate-900' : 'font-medium text-slate-800'
+                            }`}
+                          >
+                            {n.title}
+                          </p>
+                          <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                            {relativeTime(n.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.body}</p>
+                        <Link
+                          to={link}
+                          className="text-[11px] font-semibold text-indigo-600 mt-1 inline-block"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Open
+                        </Link>
+                      </div>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
 
-        {/* Footer */}
-        <div className="p-3 border-t border-slate-200 bg-slate-50 text-center">
-          <button
-            type="button"
+        <div className="border-t border-slate-100 px-5 py-3">
+          <Link
+            to="/notifications"
             onClick={onClose}
-            className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+            className="block text-center text-sm font-semibold text-indigo-600 hover:text-indigo-800"
           >
-            View Notification Center Archive →
-          </button>
+            View all notifications &amp; preferences
+          </Link>
         </div>
       </div>
     </div>
   );
 }
-export default NotificationDrawer;

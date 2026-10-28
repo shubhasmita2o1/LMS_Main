@@ -57,6 +57,7 @@ import { FinanceFeesPage } from './pages/finance/FinanceFeesPage';
 import { LibraryPage } from './pages/library/LibraryPage';
 import { PlacementPage } from './pages/placement/PlacementPage';
 import { CommunicationPage } from './pages/communication/CommunicationPage';
+import { CourseDiscussionsPage } from './pages/courses/CourseDiscussionsPage';
 import { ReportsAnalyticsPage } from './pages/reports/ReportsAnalyticsPage';
 import { DocumentsCertificatesPage } from './pages/documents/DocumentsCertificatesPage';
 import { UserManagementPage } from './pages/users/UserManagementPage';
@@ -178,6 +179,8 @@ export default function App() {
       <Route path="/curriculum" element={<ProtectedRoute><CoursesListPage /></ProtectedRoute>} />
       <Route path="/courses/new" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><CourseFormPage /></ProtectedRoute>} />
       <Route path="/courses/:id" element={<ProtectedRoute><CourseDetailPage /></ProtectedRoute>} />
+      <Route path="/courses/:courseId/discussions" element={<ProtectedRoute><CourseDiscussionsPage /></ProtectedRoute>} />
+      <Route path="/courses/:courseId/discussions/:threadId" element={<ProtectedRoute><CourseDiscussionsPage /></ProtectedRoute>} />
       <Route path="/courses/:id/edit" element={<ProtectedRoute roles={['tenant_admin', 'university_admin', 'super_admin']}><CourseFormPage /></ProtectedRoute>} />
 
       {/* Module 7: Core LMS Theory & Lesson Viewer */}

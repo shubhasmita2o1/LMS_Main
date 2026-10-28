@@ -23,6 +23,12 @@ import { gradebookRouter } from './modules/gradebook/gradebook.routes';
 import { attendanceRouter } from './modules/attendance/attendance.routes';
 import { labRouter } from './modules/labs/lab.routes';
 import { examRouter } from './modules/examinations/exam.routes';
+import { notificationRouter } from './modules/notifications/notification.routes';
+import { announcementRouter } from './modules/announcements/announcement.routes';
+import {
+  discussionRouter,
+  courseDiscussionRouter,
+} from './modules/discussions/discussion.routes';
 import { env } from './config/env';
 import path from 'path';
 
@@ -124,6 +130,12 @@ export function createApp() {
 
   // Phase 12 — Examination System
   app.use('/api/v1/exams', examRouter);
+
+  // Phase 13 — Communication, Notifications & Discussion
+  app.use('/api/v1/notifications', notificationRouter);
+  app.use('/api/v1/announcements', announcementRouter);
+  app.use('/api/v1/discussions', discussionRouter);
+  app.use('/api/v1/courses/:courseId/discussions', courseDiscussionRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

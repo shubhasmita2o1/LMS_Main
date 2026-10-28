@@ -160,6 +160,13 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           ],
         },
         {
+          groupName: 'Communication',
+          items: [
+            { to: '/communication', label: 'Announcements', icon: Megaphone },
+            { to: '/notifications', label: 'Notifications', icon: Bell },
+          ],
+        },
+        {
           groupName: 'Governance',
           items: [
             { to: '/users', label: 'User Directory & Approvals', icon: Users },
@@ -220,6 +227,13 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           ],
         },
         {
+          groupName: 'Communication',
+          items: [
+            { to: '/communication', label: 'Announcements', icon: Megaphone },
+            { to: '/notifications', label: 'Notifications', icon: Bell },
+          ],
+        },
+        {
           groupName: 'Account',
           items: [{ to: '/faculty/me', label: 'My Faculty Profile', icon: UserCheck }],
         }
@@ -240,6 +254,13 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             { to: '/examinations', label: 'Examinations', icon: CalendarDays },
             { to: '/attendance', label: 'My Attendance', icon: CalendarCheck2 },
             { to: '/gradebook/transcript', label: 'Results & Transcript', icon: Award },
+          ],
+        },
+        {
+          groupName: 'Communication',
+          items: [
+            { to: '/communication', label: 'Announcements', icon: Megaphone },
+            { to: '/notifications', label: 'Notifications', icon: Bell },
           ],
         },
         {
@@ -267,7 +288,6 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           { to: '/placement', label: 'Placement', icon: Briefcase, badge: 'Soon' },
           { to: '/documents', label: 'Certificates', icon: FileText, badge: 'Soon' },
           { to: '/reports', label: 'Accreditation', icon: BarChart3, badge: 'Soon' },
-          { to: '/communication', label: 'Communication Hub', icon: Megaphone, badge: 'Soon' },
         ],
       });
     }
