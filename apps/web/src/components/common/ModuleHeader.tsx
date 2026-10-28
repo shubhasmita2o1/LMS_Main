@@ -23,6 +23,7 @@ export interface ModuleHeaderProps {
     onClick: () => void;
     icon?: React.ReactNode;
   };
+  actions?: React.ReactNode;
   backUrl?: string;
   onRefresh?: () => void;
   isRefreshing?: boolean;
@@ -35,6 +36,7 @@ export function ModuleHeader({
   stats,
   primaryAction,
   secondaryAction,
+  actions,
   backUrl,
   onRefresh,
   isRefreshing = false,
@@ -114,6 +116,7 @@ export function ModuleHeader({
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2.5 flex-wrap">
+          {actions}
           {stats && stats.length > 0 && (
             <div className="hidden lg:flex items-center gap-2 mr-2">
               {stats.map((st) => (
