@@ -595,7 +595,7 @@ export async function allocateStudents(tenantId: string, examId: string, body: a
           tenantId: tid(tenantId),
           examId: tid(examId),
           studentId: tid(sid),
-          status: 'allocated',
+          status: 'allocated' as const,
           createdBy: userId ? tid(userId) : null,
         },
         $set: {
