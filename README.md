@@ -3,7 +3,7 @@
 **Multi-tenant Learning Management & Academic Platform**  
 MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 
-**Document version:** 0.12.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
+**Document version:** 0.13.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
 **Repository:** [shubhasmita2o1/LMS_Main](https://github.com/shubhasmita2o1/LMS_Main)
 
 ---
@@ -24,22 +24,31 @@ MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 | **9** | Assignments, quiz & question bank | ✅ Complete |
 | **10** | Gradebook, results & basic attendance | ✅ Complete |
 | **11** | Practical & Lab Platform (isolated execution) | ✅ Complete |
-| **12** | Examination System | ✅ Complete |
-| **13+** | Communication, analytics, sellable MVP polish | Planned |
+| **12** | Examination System (online player & allocation) | ✅ Complete |
+| **13** | Communication, Notifications & Discussion | ✅ Complete |
+| **14+** | Analytics, Accreditation, Library & Sellable MVP Polish | Planned |
 
-**Sellable MVP target:** after Phase 10–11 (per roadmap). **Lab execution stays isolated from the main API** (`ExecutionAdapter` + mock/Docker worker).
+**Sellable MVP target:** after Phase 10–13. **Lab execution stays isolated from the main API** (`ExecutionAdapter` + mock/Docker worker).
+
+### Phase 13 — Communication, Notifications & Discussion
+
+- Multi-channel notification engine (in-app, email via Resend, push & SMS adapter hooks)
+- In-app notification drawer with polling, unread badges, mark-read, user channel preferences, admin template manager, and delivery logs
+- Campus & Course Announcements with multi-tier audience targeting (tenant, course, program, section, role)
+- Course Discussion Forums with threaded replies, pin/lock, verified answer marking, moderation hiding, and content reporting. See `docs/phase-13/README.md`.
+- APIs: `/api/v1/notifications`, `/api/v1/announcements`, `/api/v1/courses/:courseId/discussions`
 
 ### Phase 12 — Examination System
 
-- Online exams with server timer, autosave, flagging, auto-submit, negative marking
-- Allocation, centers, invigilators; question snapshots from bank on publish
-- Suspicion event hooks (no vendor proctoring). See `docs/phase-12/README.md`.
+- Online exams with server timer, autosave, question flagging, auto-submit, negative marking
+- Center allocation, invigilators, question snapshots from bank on publish
+- Suspicion event hooks (browser focus loss, fullscreen exit — no vendor proctoring). See `docs/phase-12/README.md`.
 - API: `/api/v1/exams`
 
-### Phase 11 — Lab execution
+### Phase 11 — Practical & Lab Platform
 
-- Default: `LAB_EXECUTOR=mock` (deterministic fake results; **no student code runs**).
-- Production: separate `workers/lab-worker` + Docker isolation (`network=none`, cgroup limits, non-root). See `docs/phase-11/README.md` and `workers/lab-worker/README.md`.
+- Default: `LAB_EXECUTOR=mock` (deterministic fake results; **no student code runs in main API**).
+- Production path: separate `workers/lab-worker` + Docker isolation (`network=none`, cgroup limits, non-root). See `docs/phase-11/README.md`.
 - API: `/api/v1/labs` — practicals → labs → experiments → submissions / executions.
 
 ---
@@ -49,7 +58,7 @@ MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 | Layer | Choice |
 |-------|--------|
 | API | Express + TypeScript, Zod validation |
-| Web | React + Vite + Tailwind, React Query, Zustand |
+| Web | React + Vite + Tailwind, React Query, Zustand, Lucide Icons |
 | Shared | `@university-lms/shared` types, constants, utils |
 | DB | MongoDB (Atlas-ready), multi-tenant via `tenantId` on every document |
 | Cache / queues | Redis (optional in early phases) |
@@ -71,7 +80,7 @@ university-lms/
 │   │       ├── config/
 │   │       ├── middleware/  # auth, tenant, rbac, rateLimit, errors
 │   │       ├── modules/     # feature modules (see below)
-│   │       ├── services/    # storage, feature flags, …
+│   │       ├── services/    # storage, feature flags, mailer, …
 │   │       └── scripts/     # seed helpers
 │   └── web/                 # React SPA (@university-lms/web)
 │       └── src/
@@ -79,11 +88,13 @@ university-lms/
 │           ├── components/
 │           ├── hooks/
 │           ├── lib/         # API client
-│           └── stores/      # auth store
+│           └── stores/      # auth store, tenant store
 ├── packages/
 │   └── shared/              # shared types, constants, utils
+├── workers/
+│   └── lab-worker/          # isolated code execution worker (Docker)
 ├── docs/
-│   ├── phase-0/ … phase-9/
+│   ├── phase-0/ … phase-13/
 │   ├── architecture/
 │   └── conventions/
 ├── docker/
@@ -95,61 +106,76 @@ university-lms/
 
 | Module | Base path | Notes |
 |--------|-----------|--------|
-| `auth` | `/api/v1/auth` | Login, register, refresh, logout, me |
-| `users` | `/api/v1/users` | User admin |
-| `tenants` / `admin` / `billing` / `plans` | `/api/v1/…` | Tenant, super-admin, billing |
-| `academic` | `/api/v1/academic` | University → section hierarchy |
-| `students` | `/api/v1/students` | SIS |
-| `faculty` | `/api/v1/faculty` | Faculty profiles & assignments |
-| `courses` | `/api/v1/courses` | Catalog, structure, offerings, enrollments |
-| `learn` | `/api/v1/learn` | Outline, progress, notes, live classes, content upload |
-| `question-bank` | `/api/v1/question-bank` | Subjects / units / topics / questions |
-| `assignments` | `/api/v1/assignments` | Assignments & submissions |
-| `quizzes` | `/api/v1/quizzes` | Quizzes & attempts (auto-grade objective) |
+| `auth` | `/api/v1/auth` | Login, register, email verify, refresh, logout, me |
+| `users` | `/api/v1/users` | User directory, approval lifecycle, status toggle |
+| `tenants` / `admin` / `billing` / `plans` | `/api/v1/…` | Multi-tenant control plane, plans, subscriptions |
+| `academic` | `/api/v1/academic` | University → campus → school → dept → program → batch → section |
+| `students` | `/api/v1/students` | Student SIS, documents, enrollment status |
+| `faculty` | `/api/v1/faculty` | Faculty profiles, workload, teaching assignments |
+| `courses` | `/api/v1/courses` | Catalog, offerings, syllabus, OBE CO-PO mapping, enrollments |
+| `learn` | `/api/v1/learn` | Lessons, progress tracking, notes, live classes, file uploads |
+| `question-bank` | `/api/v1/question-bank` | Subjects, units, topics, multi-type questions |
+| `assignments` | `/api/v1/assignments` | Rubrics, late policies, submissions & grading |
+| `quizzes` | `/api/v1/quizzes` | Timed attempts, auto-grading for objective questions |
+| `gradebook` | `/api/v1/gradebook` | Weighted components, formula compute, publish snapshots, transcript |
+| `attendance` | `/api/v1/attendance` | Sessions, bulk marking, student percentage summaries, shortage alerts |
+| `labs` | `/api/v1/labs` | Practicals, labs, experiment workspaces, test-case evaluations |
+| `exams` | `/api/v1/exams` | Examination papers, question snapshots, candidate allocation, attempt player |
+| `notifications` | `/api/v1/notifications` | In-app alerts, read tracking, preferences, templates, delivery logs |
+| `announcements` | `/api/v1/announcements` | Targeted notices with broadcast fan-out |
+| `discussions` | `/api/v1/courses/:courseId/discussions` | Course Q&A forums, threaded replies, moderation & reports |
 
 ---
 
 ## Phase highlights (summary)
 
 ### Phases 0–3 — Foundation & platform
-- Product/architecture docs, monorepo, Docker, CI skeleton
+- Product/architecture docs, monorepo, Docker, CI pipeline
 - JWT auth, RBAC, tenant resolution, rate limits
 - Tenant CRUD, plans, feature flags, Stripe/Razorpay webhook + checkout/portal skeletons
 
 ### Phases 4–6 — Academic & people
 - University → campus → school → department → program → batch → section
-- Academic year / semester / config
-- Student SIS (CRUD, documents, bulk, enrollment status)
-- Faculty profiles, department assign, teaching assignments
+- Academic year / semester / system configuration
+- Student SIS (CRUD, documents, bulk CSV import, enrollment status)
+- Faculty directory, department assign, teaching assignments
 
 ### Phases 7–8 — Courses & learning
 - Course catalog, modules/lessons, offerings, curriculum mapping, enrollments
-- Learning progress, notes, bookmarks, live classes
+- Learning progress, student notes, bookmarks, live classes
 - Storage abstraction for content files
 
-### Phase 9 — Assessments (current)
+### Phase 9 — Assessments
 - **Question bank:** subject → unit → topic → question (MCQ, multi-select, T/F, fill, short/long, numerical, matching)
 - **Assignments:** due/late policy, resubmit, rubric, attachments; student submit; faculty grade
 - **Quizzes:** bank attach, duration, shuffle, max attempts; timed attempt; **server-side** auto-grade for objective items; manual grade for subjective
-- Frontend: Q-Bank, Assignments, Quizzes (builder / take / attempts)
-- Marks fields ready for **Phase 10 Gradebook**
 
-See `docs/phase-9/README.md` for API surface details.
+### Phase 10 — Gradebook, Results & Attendance
+- **Gradebook** with weighted components (assignment / quiz / attendance / manual)
+- Server-side **recompute** pulling marks from Phase 9 submissions & quiz attempts
+- Lock / unlock / **publish results** with immutable snapshots
+- Student **my-grades** + official **transcript** view
+- **Attendance sessions** (manual, QR-ready), bulk mark, summary, shortage report
+
+### Phase 11 — Practical & Lab Platform
+- Practical suites, lab stations, and experiment workspaces with instructions & starter code
+- Test case evaluation with public and hidden test verification
+- Asynchronous queue execution model with pluggable adapters (`MockExecutionAdapter` and `DockerExecutionAdapter`)
+
+### Phase 12 — Examination System
+- Term examinations, examination center & seating allocation
+- Authoritative exam player with server timers, autosave, flagging, and auto-submit on expiry
+- Snapshot-isolated questions on publish, negative marking, and proctoring suspicion event logging
+
+### Phase 13 — Communication, Notifications & Discussion
+- In-app notification bell with live drawer, badge counts, and user-configurable channel preferences
+- Targeted announcements for tenant/campus/program/course/section/role
+- Course discussion boards with threaded discussions, replies, moderation, pinning, and verified answers
+- Extensible multi-channel notification dispatcher with Resend email integration and push/SMS adapter hooks
 
 ---
 
 ## Getting started
-
-### Phase 10 — Gradebook, Results & Attendance
-
-- **Gradebook** with weighted components (assignment / quiz / attendance / manual)
-- Server-side **recompute** pulling marks from Phase 9 submissions & quiz attempts
-- Lock / unlock / **publish results** with immutable snapshots
-- Student **my-grades** + basic **transcript**
-- **Attendance sessions** (manual, QR-ready), bulk mark, summary, shortage report
-- APIs: `/api/v1/gradebook`, `/api/v1/attendance`
-- Frontend: gradebook setup + roster, attendance mark UI, student views
-
 
 ### Prerequisites
 
@@ -248,11 +274,12 @@ curl -s -X POST http://localhost:4000/api/v1/auth/login \
 - [x] Tenant isolation on queries (`tenantId` + soft delete)
 - [x] RBAC on routes (`requirePermission` / `requireRoles`)
 - [x] Zod validation on inputs
-- [x] Rate limits (global + auth)
+- [x] Rate limits (global + auth + discussion/report thresholds)
 - [x] Helmet + CORS
-- [x] Enrollment checks for student assessment access
-- [x] Grades computed on the server (never trust client scores)
-- [x] Plagiarism field architecture-ready (no external API yet)
+- [x] Enrollment checks for student assessment, lab, and discussion access
+- [x] Server-authoritative timer, auto-grading, and gradebook computations
+- [x] Isolated lab code execution architecture (`MockExecutionAdapter` / Docker worker)
+- [x] Content safety: lengths enforced, sanitized display (no raw HTML injection)
 
 ---
 
@@ -263,10 +290,15 @@ curl -s -X POST http://localhost:4000/api/v1/auth/login \
 | `/login`, `/register` | Public |
 | `/dashboard` | Authenticated |
 | `/academic/*`, `/students`, `/faculty`, `/courses` | Staff / admin |
-| `/learn` | Enrolled learning |
+| `/learn`, `/learn/my-courses` | Enrolled learning |
 | `/assignments`, `/assignments/:id` | Faculty + students |
 | `/quizzes`, `/quizzes/:id/take`, `/quizzes/:id/builder` | Faculty + students |
 | `/question-bank` | Faculty / admin |
+| `/gradebook`, `/gradebook/transcript` | Faculty / admin / students |
+| `/attendance`, `/attendance/mark` | Faculty / admin / students |
+| `/labs`, `/labs/:practicalId` | Faculty + students |
+| `/examinations`, `/examinations/:id`, `/examinations/:id/attempt` | Faculty + students |
+| `/communication`, `/notifications` | Faculty + admin + students |
 | `/admin/tenants`, `/billing`, `/settings` | Super admin / tenant admin |
 
 ---
@@ -275,10 +307,13 @@ curl -s -X POST http://localhost:4000/api/v1/auth/login \
 
 | Path | Content |
 |------|---------|
-| `docs/phase-0/` … `docs/phase-9/` | Phase notes & summaries |
-| `docs/architecture/` | Architecture decisions |
-| `docs/conventions/` | Coding conventions |
-| `.env.example` | Environment variables |
+| `docs/phase-0/` … `docs/phase-13/` | Phase specifications & architecture guides |
+| `docs/phase-11/README.md` | Practical & Lab isolated execution spec |
+| `docs/phase-12/README.md` | Examination engine & candidate allocation spec |
+| `docs/phase-13/README.md` | Communication, notifications & discussion spec |
+| `docs/architecture/` | Architecture decision records (ADRs) |
+| `docs/conventions/` | Coding & API conventions |
+| `.env.example` | Environment variable reference |
 
 ---
 
@@ -295,9 +330,9 @@ Workflow: `.github/workflows/ci.yml`
 
 ---
 
-## Next: Phase 10 — Gradebook
+## Next: Phase 14 — Analytics, Accreditation, Library & MVP Polish
 
-Consume assignment submission and quiz attempt marks into a unified gradebook, reporting, and export. Do not expand into full exam system (Phase 12) until Gradebook is stable.
+Full platform analytics, NAAC/NIRF accreditation reports, library management, and multi-tenant billing & onboarding polish towards a market-ready production SaaS release.
 
 ---
 

@@ -24,7 +24,7 @@ function idStr(v: unknown): string | null {
   return String(v);
 }
 
-function baseFilter(tenantId: string, extra: Record<string, unknown> = {}) {
+function baseFilter(tenantId: string, extra: Record<string, unknown> = {}): Record<string, any> {
   return { tenantId: tid(tenantId), isDeleted: false, ...extra };
 }
 
@@ -126,7 +126,7 @@ export async function listThreads(
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(50, Math.max(1, opts.limit ?? 20));
 
-  const filter = baseFilter(tenantId, { courseId: tid(courseId) });
+  const filter: Record<string, any> = baseFilter(tenantId, { courseId: tid(courseId) });
   if (!isModerator(user.roles)) {
     filter.status = { $ne: 'hidden' };
   }
