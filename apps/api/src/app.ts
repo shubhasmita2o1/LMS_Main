@@ -29,6 +29,12 @@ import {
   discussionRouter,
   courseDiscussionRouter,
 } from './modules/discussions/discussion.routes';
+import { timetableRouter } from './modules/timetable/timetable.routes';
+import {
+  transcriptRouter,
+  certificateRouter,
+  publicVerifyRouter,
+} from './modules/transcripts/transcript.routes';
 import { env } from './config/env';
 import path from 'path';
 
@@ -136,6 +142,12 @@ export function createApp() {
   app.use('/api/v1/announcements', announcementRouter);
   app.use('/api/v1/discussions', discussionRouter);
   app.use('/api/v1/courses/:courseId/discussions', courseDiscussionRouter);
+
+  // Phase 14 — Timetable & Transcripts
+  app.use('/api/v1/timetable', timetableRouter);
+  app.use('/api/v1/transcripts', transcriptRouter);
+  app.use('/api/v1/certificates', certificateRouter);
+  app.use('/api/v1/public/verify', publicVerifyRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

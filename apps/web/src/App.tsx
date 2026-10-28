@@ -58,6 +58,9 @@ import { LibraryPage } from './pages/library/LibraryPage';
 import { PlacementPage } from './pages/placement/PlacementPage';
 import { CommunicationPage } from './pages/communication/CommunicationPage';
 import { CourseDiscussionsPage } from './pages/courses/CourseDiscussionsPage';
+import { TimetablePage } from './pages/timetable/TimetablePage';
+import { MyCalendarPage } from './pages/timetable/MyCalendarPage';
+import { VerifyPage } from './pages/verify/VerifyPage';
 import { ReportsAnalyticsPage } from './pages/reports/ReportsAnalyticsPage';
 import { DocumentsCertificatesPage } from './pages/documents/DocumentsCertificatesPage';
 import { UserManagementPage } from './pages/users/UserManagementPage';
@@ -142,6 +145,7 @@ export default function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify/:code" element={<VerifyPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -228,6 +232,10 @@ export default function App() {
       <Route path="/library" element={<ProtectedRoute><LibraryPage /></ProtectedRoute>} />
       <Route path="/placement" element={<ProtectedRoute><PlacementPage /></ProtectedRoute>} />
       <Route path="/communication" element={<ProtectedRoute><CommunicationPage /></ProtectedRoute>} />
+      <Route path="/timetable" element={<ProtectedRoute><TimetablePage /></ProtectedRoute>} />
+      <Route path="/timetable/my" element={<ProtectedRoute><MyCalendarPage /></ProtectedRoute>} />
+      <Route path="/calendar" element={<ProtectedRoute><MyCalendarPage /></ProtectedRoute>} />
+      <Route path="/transcripts" element={<ProtectedRoute><DocumentsCertificatesPage /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute><ReportsAnalyticsPage /></ProtectedRoute>} />
       <Route path="/documents" element={<ProtectedRoute><DocumentsCertificatesPage /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><UserManagementPage /></ProtectedRoute>} />

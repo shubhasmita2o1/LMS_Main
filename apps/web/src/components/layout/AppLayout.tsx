@@ -157,6 +157,8 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             { to: '/examinations', label: 'Examinations', icon: CalendarDays },
             { to: '/attendance', label: 'Attendance Register', icon: CalendarCheck2 },
             { to: '/gradebook', label: 'Gradebook & Results', icon: Award },
+            { to: '/timetable', label: 'Timetable', icon: CalendarDays },
+            { to: '/documents', label: 'Transcripts & Certificates', icon: FileText },
           ],
         },
         {
@@ -224,6 +226,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             { to: '/examinations', label: 'Examinations', icon: CalendarDays },
             { to: '/attendance', label: 'Mark Attendance', icon: CalendarCheck2 },
             { to: '/gradebook', label: 'Gradebook', icon: Award },
+            { to: '/timetable/my', label: 'My Calendar', icon: CalendarDays },
           ],
         },
         {
@@ -254,6 +257,8 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             { to: '/examinations', label: 'Examinations', icon: CalendarDays },
             { to: '/attendance', label: 'My Attendance', icon: CalendarCheck2 },
             { to: '/gradebook/transcript', label: 'Results & Transcript', icon: Award },
+            { to: '/timetable/my', label: 'My Calendar', icon: CalendarDays },
+            { to: '/documents', label: 'My Documents', icon: FileText },
           ],
         },
         {
@@ -286,7 +291,6 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           { to: '/finance', label: 'Finance & Fees', icon: CreditCard, badge: 'Soon' },
           { to: '/library', label: 'Library', icon: Library, badge: 'Soon' },
           { to: '/placement', label: 'Placement', icon: Briefcase, badge: 'Soon' },
-          { to: '/documents', label: 'Certificates', icon: FileText, badge: 'Soon' },
           { to: '/reports', label: 'Accreditation', icon: BarChart3, badge: 'Soon' },
         ],
       });

@@ -34,6 +34,8 @@ const envSchema = z.object({
   EMAIL_PROVIDER_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
   APP_URL: z.string().default('http://localhost:5173'),
+  // Phase 14 — transcript/certificate HMAC (dev default; override in production)
+  TRANSCRIPT_SIGNING_SECRET: z.string().min(16).default('dev-transcript-signing-secret-change-me'),
 });
 
 const parsed = envSchema.safeParse(process.env);

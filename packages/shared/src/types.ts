@@ -48,7 +48,9 @@ export type PermissionAction =
   | 'evaluate'
   | 'invigilate'
   | 'attempt'
-  | 'moderate';
+  | 'moderate'
+  | 'issue'
+  | 'verify';
 
 /** Resource types for fine-grained RBAC */
 export type ResourceType =
@@ -94,7 +96,11 @@ export type ResourceType =
   | 'live_class'
   | 'learning'
   | 'result'
-  | 'gradebook';
+  | 'gradebook'
+  | 'timetable'
+  | 'room'
+  | 'transcript'
+  | 'certificate';
 
 export interface Permission {
   resource: ResourceType;
@@ -2078,4 +2084,182 @@ export interface DiscussionReportPublic {
   resolvedAt?: Date | string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+}
+
+// ─── Phase 14: Timetable & Transcripts ───────────────────────────────────────
+
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Sunday … 6=Saturday
+
+export type TimeTableSlotStatus = 'scheduled' | 'cancelled' | 'substituted';
+
+export type RoomType = 'classroom' | 'lab' | 'seminar' | 'other';
+
+export type ConflictType = 'faculty' | 'room' | 'section' | 'student_load';
+
+export type TranscriptStatus = 'draft' | 'issued' | 'revoked';
+
+export type CertificateType = 'provisional' | 'degree' | 'transcript' | 'bonafide';
+
+export type CertificateStatus = 'draft' | 'issued' | 'revoked';
+
+export type CalendarEventType = 'class' | 'exam' | 'lab' | 'other';
+
+export interface RoomPublic {
+  id: string;
+  tenantId: string;
+  campusId?: string | null;
+  building?: string | null;
+  name: string;
+  code: string;
+  capacity: number;
+  roomType: RoomType;
+  facilities?: string[] | null;
+  isActive: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface TimetableEntryPublic {
+  id: string;
+  tenantId: string;
+  academicYearId?: string | null;
+  termId?: string | null;
+  courseId: string;
+  courseName?: string | null;
+  courseCode?: string | null;
+  sectionId?: string | null;
+  batchId?: string | null;
+  facultyId: string;
+  facultyName?: string | null;
+  roomId?: string | null;
+  roomName?: string | null;
+  dayOfWeek: DayOfWeek;
+  startTime: string; // HH:mm
+  endTime: string;
+  validFrom?: Date | string | null;
+  validTo?: Date | string | null;
+  status: TimeTableSlotStatus;
+  substitutionOfEntryId?: string | null;
+  notes?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface TimetableSubstitutionPublic {
+  id: string;
+  tenantId: string;
+  originalEntryId: string;
+  newFacultyId?: string | null;
+  newRoomId?: string | null;
+  newStartTime?: string | null;
+  newEndTime?: string | null;
+  date: Date | string;
+  reason?: string | null;
+  createdBy?: string | null;
+  createdAt: Date | string;
+}
+
+export interface TimetableConflict {
+  type: ConflictType;
+  message: string;
+  entryId?: string | null;
+  facultyId?: string | null;
+  roomId?: string | null;
+  sectionId?: string | null;
+}
+
+export interface CalendarEventPublic {
+  id: string;
+  type: CalendarEventType;
+  title: string;
+  dayOfWeek?: DayOfWeek | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  date?: Date | string | null;
+  courseId?: string | null;
+  roomName?: string | null;
+  facultyName?: string | null;
+  status?: string | null;
+}
+
+export interface TranscriptLineSnapshot {
+  courseId?: string | null;
+  courseCode: string;
+  courseTitle: string;
+  credits: number;
+  grade?: string | null;
+  gradePoints?: number | null;
+  marks?: number | null;
+  termLabel?: string | null;
+  resultStatus?: string | null;
+}
+
+export interface DigitalSignaturePublic {
+  algo: 'hmac-sha256' | 'none';
+  signature: string;
+  signedAt: Date | string;
+}
+
+export interface TranscriptPublic {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  studentName?: string | null;
+  programId?: string | null;
+  programName?: string | null;
+  batchId?: string | null;
+  status: TranscriptStatus;
+  issuedAt?: Date | string | null;
+  issuedBy?: string | null;
+  snapshot: TranscriptLineSnapshot[];
+  gpa?: number | null;
+  cgpa?: number | null;
+  totalCredits?: number | null;
+  serialNumber?: string | null;
+  verificationCode?: string | null;
+  pdfFileKey?: string | null;
+  digitalSignature?: DigitalSignaturePublic | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface CertificatePublic {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  studentName?: string | null;
+  type: CertificateType;
+  title: string;
+  body?: string | null;
+  programName?: string | null;
+  yearLabel?: string | null;
+  classDivision?: string | null;
+  status: CertificateStatus;
+  issuedAt?: Date | string | null;
+  issuedBy?: string | null;
+  serialNumber?: string | null;
+  verificationCode?: string | null;
+  pdfFileKey?: string | null;
+  digitalSignature?: DigitalSignaturePublic | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+/** Limited public verify payload — no internal-only secrets */
+export interface VerificationPublicResult {
+  valid: boolean;
+  type: 'transcript' | CertificateType | string;
+  studentName?: string | null;
+  programName?: string | null;
+  title?: string | null;
+  serialNumber?: string | null;
+  issuedAt?: Date | string | null;
+  status?: string | null;
+  revoked?: boolean;
+  summary?: {
+    gpa?: number | null;
+    cgpa?: number | null;
+    totalCredits?: number | null;
+    lineCount?: number;
+  } | null;
 }
