@@ -12,7 +12,7 @@ export const listNotificationsQuerySchema = z.object({
 export const updatePreferencesSchema = z.object({
   preferences: z.record(
     z.string(),
-    z.record(z.enum(['in_app', 'email', 'push', 'sms']), z.boolean()).partial()
+    z.record(z.enum(['in_app', 'email', 'push', 'sms']), z.boolean())
   ),
 });
 
