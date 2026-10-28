@@ -3,7 +3,7 @@
 **Multi-tenant Learning Management & Academic Platform**  
 MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 
-**Document version:** 0.13.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
+**Document version:** 0.14.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
 **Repository:** [shubhasmita2o1/LMS_Main](https://github.com/shubhasmita2o1/LMS_Main)
 
 ---
@@ -26,9 +26,20 @@ MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 | **11** | Practical & Lab Platform (isolated execution) | ✅ Complete |
 | **12** | Examination System (online player & allocation) | ✅ Complete |
 | **13** | Communication, Notifications & Discussion | ✅ Complete |
-| **14+** | Analytics, Accreditation, Library & Sellable MVP Polish | Planned |
+| **14** | Timetable, Transcripts & Certificate Verification | ✅ Complete |
+| **15+** | Admissions, Finance & Fees, Library, Placement & Sellable MVP Polish | Planned |
 
-**Sellable MVP target:** after Phase 10–13. **Lab execution stays isolated from the main API** (`ExecutionAdapter` + mock/Docker worker).
+**Sellable MVP target:** after Phase 10–14. **Lab execution stays isolated from the main API** (`ExecutionAdapter` + mock/Docker worker).
+
+### Phase 14 — Timetable & Transcripts (Verification)
+
+- **Rooms and timetable scheduling** with faculty, room, and section conflict detection
+- Cancellation, substitution, and dry-run conflict check engine
+- Role-aware personal calendar (`/calendar` & `/timetable/my`) for students and faculty
+- **Official transcripts** generated exclusively from published gradebook records with GPA calculations
+- **Certificates** (provisional, degree, bonafide) with HMAC-SHA256 digital signature and high-entropy verification codes
+- **Public verification portal** endpoint (`GET /api/v1/public/verify/:code`) and unauthenticated web viewer (`/verify/:code`). See `docs/phase-14/README.md`.
+- APIs: `/api/v1/timetable`, `/api/v1/transcripts`, `/api/v1/certificates`, `/api/v1/public/verify/:code`
 
 ### Phase 13 — Communication, Notifications & Discussion
 
@@ -94,7 +105,7 @@ university-lms/
 ├── workers/
 │   └── lab-worker/          # isolated code execution worker (Docker)
 ├── docs/
-│   ├── phase-0/ … phase-13/
+│   ├── phase-0/ … phase-14/
 │   ├── architecture/
 │   └── conventions/
 ├── docker/
@@ -124,6 +135,10 @@ university-lms/
 | `notifications` | `/api/v1/notifications` | In-app alerts, read tracking, preferences, templates, delivery logs |
 | `announcements` | `/api/v1/announcements` | Targeted notices with broadcast fan-out |
 | `discussions` | `/api/v1/courses/:courseId/discussions` | Course Q&A forums, threaded replies, moderation & reports |
+| `timetable` | `/api/v1/timetable` | Rooms, weekly entries, conflict detection, calendar/me |
+| `transcripts` | `/api/v1/transcripts` | Academic transcripts compiled from published results, HMAC issue & revoke |
+| `certificates` | `/api/v1/certificates` | Degree, provisional, bonafide certificates with verification codes |
+| `public-verify` | `/api/v1/public/verify/:code` | Unauthenticated authenticity check for employers and credential verifiers |
 
 ---
 
@@ -172,6 +187,13 @@ university-lms/
 - Targeted announcements for tenant/campus/program/course/section/role
 - Course discussion boards with threaded discussions, replies, moderation, pinning, and verified answers
 - Extensible multi-channel notification dispatcher with Resend email integration and push/SMS adapter hooks
+
+### Phase 14 — Timetable & Transcripts (Verification)
+- Institutional room management (capacity, room type, campus building, facilities)
+- Multi-dimensional conflict engine detecting room, faculty, and section double-bookings with override auditing
+- Substitution and cancellation lifecycles with personal timetable calendar views
+- Official transcript compilation strictly from published semester/term results with cumulative GPA calculations
+- Cryptographic certificate issuance with HMAC-SHA256 signature and unauthenticated public verification portal (`/verify/:code`)
 
 ---
 
@@ -280,6 +302,8 @@ curl -s -X POST http://localhost:4000/api/v1/auth/login \
 - [x] Server-authoritative timer, auto-grading, and gradebook computations
 - [x] Isolated lab code execution architecture (`MockExecutionAdapter` / Docker worker)
 - [x] Content safety: lengths enforced, sanitized display (no raw HTML injection)
+- [x] Cryptographic verification: HMAC-SHA256 signed transcripts & certificates with public verification portal
+- [x] Conflict engine: automated detection of room, faculty, and section collision with force-override auditing
 
 ---
 
@@ -299,6 +323,9 @@ curl -s -X POST http://localhost:4000/api/v1/auth/login \
 | `/labs`, `/labs/:practicalId` | Faculty + students |
 | `/examinations`, `/examinations/:id`, `/examinations/:id/attempt` | Faculty + students |
 | `/communication`, `/notifications` | Faculty + admin + students |
+| `/timetable`, `/timetable/my`, `/calendar` | Faculty + students + staff |
+| `/documents`, `/transcripts` | Faculty + students + staff |
+| `/verify/:code` | Public (unauthenticated) |
 | `/admin/tenants`, `/billing`, `/settings` | Super admin / tenant admin |
 
 ---
@@ -307,10 +334,11 @@ curl -s -X POST http://localhost:4000/api/v1/auth/login \
 
 | Path | Content |
 |------|---------|
-| `docs/phase-0/` … `docs/phase-13/` | Phase specifications & architecture guides |
+| `docs/phase-0/` … `docs/phase-14/` | Phase specifications & architecture guides |
 | `docs/phase-11/README.md` | Practical & Lab isolated execution spec |
 | `docs/phase-12/README.md` | Examination engine & candidate allocation spec |
 | `docs/phase-13/README.md` | Communication, notifications & discussion spec |
+| `docs/phase-14/README.md` | Timetable engine, conflict detection & transcript verification spec |
 | `docs/architecture/` | Architecture decision records (ADRs) |
 | `docs/conventions/` | Coding & API conventions |
 | `.env.example` | Environment variable reference |
@@ -330,9 +358,9 @@ Workflow: `.github/workflows/ci.yml`
 
 ---
 
-## Next: Phase 14 — Analytics, Accreditation, Library & MVP Polish
+## Next: Phase 15 — Admissions, Finance & Fees, Library, Placement & MVP Polish
 
-Full platform analytics, NAAC/NIRF accreditation reports, library management, and multi-tenant billing & onboarding polish towards a market-ready production SaaS release.
+Student admissions, fee payment structures & receipts, library catalogue and circulation, placement portal, and multi-tenant billing & onboarding polish towards a market-ready production SaaS release.
 
 ---
 
