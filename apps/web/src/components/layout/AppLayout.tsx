@@ -100,6 +100,16 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [theme]);
+
   const handleLogout = () => {
     clearAuth();
     navigate('/login');
@@ -315,7 +325,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F5F7] text-slate-900 p-2 sm:p-3 lg:p-4 flex flex-col antialiased selection:bg-[#dcfce7] selection:text-[#165239]">
+    <div className="min-h-screen bg-[#F3F5F7] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 p-2 sm:p-3 lg:p-4 flex flex-col antialiased selection:bg-[#dcfce7] selection:text-[#165239]">
       {/* Modals & Drawers */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <NotificationDrawer isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
@@ -663,7 +673,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop Collapsible Sidebar */}
         <aside
-          className={`hidden lg:flex flex-col bg-white border-r border-slate-200/70 transition-all duration-200 shrink-0 select-none ${
+          className={`hidden lg:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200/70 dark:border-slate-800 transition-all duration-200 shrink-0 select-none ${
             sidebarCollapsed ? 'w-20' : 'w-64'
           }`}
         >

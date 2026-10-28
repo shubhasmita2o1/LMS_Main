@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useTenantStore } from './stores/tenantStore';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -139,6 +141,18 @@ function HomePage() {
 }
 
 export default function App() {
+  const theme = useTenantStore((st) => st.theme);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [theme]);
+
   return (
     <Routes>
       {/* Public & Authentication Routes */}
