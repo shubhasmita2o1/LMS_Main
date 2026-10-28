@@ -1,3 +1,8 @@
+/**
+ * @deprecated UNUSED MOCK / UNROUTED:
+ * This component is an early static prototype mock and is not currently routed in the application.
+ * Phase 11 Practical & Lab Platform is served by LabsPage at '/labs'.
+ */
 import { useState } from 'react';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { ModuleHeader } from '../../components/common/ModuleHeader';

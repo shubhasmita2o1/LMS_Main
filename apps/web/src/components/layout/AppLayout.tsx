@@ -150,6 +150,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           groupName: 'Teaching & Evaluation',
           items: [
             { to: '/learn', label: 'Core LMS (Theory)', icon: PlayCircle },
+            { to: '/labs', label: 'Practical Labs', icon: FlaskConical },
             { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
             { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
             { to: '/quizzes', label: 'Quizzes & Tests', icon: Award },
@@ -184,6 +185,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           groupName: 'Learning & Evaluation',
           items: [
             { to: '/learn', label: 'Core LMS', icon: PlayCircle },
+            { to: '/labs', label: 'Practical Labs', icon: FlaskConical },
             { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
             { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
             { to: '/quizzes', label: 'Quizzes', icon: Award },
@@ -207,6 +209,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           items: [
             { to: '/courses', label: 'My Courses', icon: BookOpen },
             { to: '/learn', label: 'Core LMS (Teach)', icon: PlayCircle },
+            { to: '/labs', label: 'Practical Labs', icon: FlaskConical },
             { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
             { to: '/assignments', label: 'Assignments & Grading', icon: FileCheck2 },
             { to: '/quizzes', label: 'Quizzes & Attempts', icon: Award },
@@ -229,6 +232,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           groupName: 'My Academics',
           items: [
             { to: '/learn/my-courses', label: 'My Courses', icon: BookOpen },
+            { to: '/labs', label: 'Practical Labs', icon: FlaskConical },
             { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
             { to: '/quizzes', label: 'Quizzes & Tests', icon: Award },
             { to: '/attendance', label: 'My Attendance', icon: CalendarCheck2 },
@@ -252,9 +256,8 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
 
     if (SHOW_FUTURE_NAV) {
       groups.push({
-        groupName: 'Future Modules (Phase 11+)',
+        groupName: 'Future Modules',
         items: [
-          { to: '/labs', label: 'Practical Labs', icon: FlaskConical, badge: 'Soon' },
           { to: '/examinations', label: 'Examinations', icon: CalendarDays, badge: 'Soon' },
           { to: '/admissions', label: 'Admissions', icon: UserPlus, badge: 'Soon' },
           { to: '/finance', label: 'Finance & Fees', icon: CreditCard, badge: 'Soon' },
