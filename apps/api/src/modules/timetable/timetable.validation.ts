@@ -2,6 +2,16 @@ import { z } from 'zod';
 
 const timeHm = z.string().regex(/^\d{2}:\d{2}$/, 'Expected HH:mm');
 
+export const dayOfWeekSchema = z.union([
+  z.literal(0),
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+]);
+
 export const createRoomSchema = z.object({
   name: z.string().trim().min(1).max(120),
   code: z.string().trim().min(1).max(40),
@@ -23,7 +33,7 @@ export const createEntrySchema = z.object({
   batchId: z.string().optional().nullable(),
   academicYearId: z.string().optional().nullable(),
   termId: z.string().optional().nullable(),
-  dayOfWeek: z.number().int().min(0).max(6),
+  dayOfWeek: dayOfWeekSchema,
   startTime: timeHm,
   endTime: timeHm,
   validFrom: z.string().optional().nullable(),
@@ -50,7 +60,7 @@ export const conflictCheckSchema = z.object({
   facultyId: z.string().min(1),
   roomId: z.string().optional().nullable(),
   sectionId: z.string().optional().nullable(),
-  dayOfWeek: z.number().int().min(0).max(6),
+  dayOfWeek: dayOfWeekSchema,
   startTime: timeHm,
   endTime: timeHm,
   excludeEntryId: z.string().optional().nullable(),
