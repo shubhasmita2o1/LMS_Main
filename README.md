@@ -3,7 +3,7 @@
 **Multi-tenant Learning Management & Academic Platform**  
 MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 
-**Document version:** 0.11.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
+**Document version:** 0.12.0 · **Roadmap:** University LMS SaaS Master Roadmap v2.0  
 **Repository:** [shubhasmita2o1/LMS_Main](https://github.com/shubhasmita2o1/LMS_Main)
 
 ---
@@ -24,9 +24,17 @@ MERN + TypeScript • Modular monolith • MongoDB Atlas • Redis-ready
 | **9** | Assignments, quiz & question bank | ✅ Complete |
 | **10** | Gradebook, results & basic attendance | ✅ Complete |
 | **11** | Practical & Lab Platform (isolated execution) | ✅ Complete |
-| **12+** | Examinations, analytics, sellable MVP polish | Planned |
+| **12** | Examination System | ✅ Complete |
+| **13+** | Communication, analytics, sellable MVP polish | Planned |
 
 **Sellable MVP target:** after Phase 10–11 (per roadmap). **Lab execution stays isolated from the main API** (`ExecutionAdapter` + mock/Docker worker).
+
+### Phase 12 — Examination System
+
+- Online exams with server timer, autosave, flagging, auto-submit, negative marking
+- Allocation, centers, invigilators; question snapshots from bank on publish
+- Suspicion event hooks (no vendor proctoring). See `docs/phase-12/README.md`.
+- API: `/api/v1/exams`
 
 ### Phase 11 — Lab execution
 

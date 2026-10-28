@@ -45,7 +45,9 @@ export type PermissionAction =
   | 'import'
   | 'approve'
   | 'submit'
-  | 'evaluate';
+  | 'evaluate'
+  | 'invigilate'
+  | 'attempt';
 
 /** Resource types for fine-grained RBAC */
 export type ResourceType =
@@ -1680,4 +1682,225 @@ export interface ExecutionStatusResult {
   testResults?: LabTestResult[];
   errorMessage?: string | null;
   durationMs?: number | null;
+}
+
+// ─── Phase 12: Examination System ────────────────────────────────────────────
+
+export type ExamStatus = 'draft' | 'scheduled' | 'live' | 'closed' | 'graded' | 'cancelled';
+export type ExamMode = 'online' | 'offline' | 'hybrid';
+export type ExamAttemptStatus =
+  | 'not_started'
+  | 'in_progress'
+  | 'submitted'
+  | 'auto_submitted'
+  | 'void';
+export type AllocationStatus = 'allocated' | 'present' | 'absent' | 'malpractice';
+export type SuspicionEventType =
+  | 'tab_blur'
+  | 'fullscreen_exit'
+  | 'copy_paste'
+  | 'multiple_login'
+  | 'heartbeat_miss'
+  | 'other';
+export type ExamShowResultAfter = 'submit' | 'close' | 'manual' | 'never';
+
+export interface ExamSettings {
+  maxAttempts: number;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  negativeMarkingEnabled: boolean;
+  negativeMarkPerQuestion?: number | null;
+  allowNavigation: boolean;
+  allowFlagging: boolean;
+  autosaveIntervalSec: number;
+  autoSubmitOnTimeout: boolean;
+  showResultAfter: ExamShowResultAfter;
+}
+
+export interface ExamQuestionSnapshot {
+  /** Original question bank id (if any) */
+  questionBankId?: string | null;
+  /** Stable id used inside this exam paper */
+  questionId: string;
+  type: QuestionType;
+  stem: string;
+  richText?: string | null;
+  options?: QuestionOption[];
+  /** Correct keys / answer kept server-side only after publish */
+  correctAnswer?: string | null;
+  matchingPairs?: MatchingPair[];
+  marks: number;
+  order: number;
+  difficulty?: Difficulty;
+  explanation?: string | null;
+}
+
+export interface ExamQuestionRefInput {
+  questionBankId: string;
+  marks?: number | null;
+  order?: number;
+}
+
+export interface ExamCenterPublic {
+  id: string;
+  tenantId: string;
+  name: string;
+  code: string;
+  building?: string | null;
+  room?: string | null;
+  capacity: number;
+  address?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface ExamInvigilatorPublic {
+  id: string;
+  tenantId: string;
+  examId: string;
+  userId: string;
+  centerId?: string | null;
+  roleNote?: 'chief' | 'assistant' | null;
+  userName?: string | null;
+  userEmail?: string | null;
+}
+
+export interface ExamAllocationPublic {
+  id: string;
+  tenantId: string;
+  examId: string;
+  studentId: string;
+  centerId?: string | null;
+  seatNumber?: string | null;
+  invigilatorId?: string | null;
+  status: AllocationStatus;
+  studentName?: string | null;
+  studentCode?: string | null;
+  centerName?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface ExamPublic {
+  id: string;
+  tenantId: string;
+  courseId?: string | null;
+  programId?: string | null;
+  departmentId?: string | null;
+  title: string;
+  code: string;
+  description?: string | null;
+  mode: ExamMode;
+  status: ExamStatus;
+  startAt: Date | string;
+  endAt: Date | string;
+  durationMinutes: number;
+  settings: ExamSettings;
+  /** Question refs without correct answers for students */
+  questionCount: number;
+  totalMarks: number;
+  centerIds: string[];
+  publishedAt?: Date | string | null;
+  createdBy?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  /** Admin-only: question snapshots may include keys after close/grade */
+  questions?: ExamQuestionSnapshot[];
+  myAllocation?: ExamAllocationPublic | null;
+  myAttemptsCount?: number;
+  attemptsCount?: number;
+}
+
+/** Student-facing paper — never includes correctAnswer */
+export interface ExamPaperQuestion {
+  questionId: string;
+  type: QuestionType;
+  stem: string;
+  richText?: string | null;
+  options?: Array<{ key: string; text: string }>;
+  matchingPairs?: Array<{ left: string; right?: string }>;
+  marks: number;
+  order: number;
+}
+
+export interface ExamPaperPublic {
+  examId: string;
+  title: string;
+  code: string;
+  durationMinutes: number;
+  settings: Pick<
+    ExamSettings,
+    | 'allowNavigation'
+    | 'allowFlagging'
+    | 'autosaveIntervalSec'
+    | 'autoSubmitOnTimeout'
+    | 'shuffleQuestions'
+    | 'shuffleOptions'
+  >;
+  endsAt: Date | string;
+  questions: ExamPaperQuestion[];
+  attemptId: string;
+  attemptNumber: number;
+  status: ExamAttemptStatus;
+}
+
+export interface ExamAnswerItem {
+  questionId: string;
+  response?: string | string[] | null;
+  flagged?: boolean;
+  answeredAt?: Date | string | null;
+}
+
+export interface ExamAttemptPublic {
+  id: string;
+  tenantId: string;
+  examId: string;
+  studentId: string;
+  allocationId?: string | null;
+  status: ExamAttemptStatus;
+  attemptNumber: number;
+  startedAt: Date | string;
+  submittedAt?: Date | string | null;
+  endsAt: Date | string;
+  answers: ExamAnswerItem[];
+  marksObtained?: number | null;
+  autoScore?: number | null;
+  manualScore?: number | null;
+  totalMarks?: number | null;
+  suspicionScore: number;
+  lastAutosaveAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface ExamSuspicionEventPublic {
+  id: string;
+  tenantId: string;
+  examId: string;
+  attemptId: string;
+  studentId: string;
+  type: SuspicionEventType;
+  detail?: string | null;
+  clientTimestamp?: Date | string | null;
+  serverTimestamp: Date | string;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface ExamResultPublic {
+  attemptId: string;
+  examId: string;
+  status: ExamAttemptStatus;
+  marksObtained: number;
+  totalMarks: number;
+  autoScore?: number | null;
+  manualScore?: number | null;
+  submittedAt?: Date | string | null;
+  showBreakdown: boolean;
+  /** Only when policy allows and graded */
+  breakdown?: Array<{
+    questionId: string;
+    marks: number;
+    marksAwarded: number;
+    isCorrect?: boolean | null;
+  }>;
 }

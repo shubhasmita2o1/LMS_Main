@@ -22,6 +22,7 @@ import { quizRouter } from './modules/quizzes/quiz.routes';
 import { gradebookRouter } from './modules/gradebook/gradebook.routes';
 import { attendanceRouter } from './modules/attendance/attendance.routes';
 import { labRouter } from './modules/labs/lab.routes';
+import { examRouter } from './modules/examinations/exam.routes';
 import { env } from './config/env';
 import path from 'path';
 
@@ -120,6 +121,9 @@ export function createApp() {
 
   // Phase 11 — Practical & Lab Platform (execution isolated via ExecutionAdapter)
   app.use('/api/v1/labs', labRouter);
+
+  // Phase 12 — Examination System
+  app.use('/api/v1/exams', examRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

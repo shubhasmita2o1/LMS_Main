@@ -48,6 +48,9 @@ import { SubmissionDetailPage } from './pages/labs/SubmissionDetailPage';
 // Extended module shell pages
 import { AssessmentsPage } from './pages/assessments/AssessmentsPage';
 import { ExaminationsPage } from './pages/examinations/ExaminationsPage';
+import { ExamDetailPage } from './pages/examinations/ExamDetailPage';
+import { ExamAllocatePage } from './pages/examinations/ExamAllocatePage';
+import { ExamAttemptPage } from './pages/examinations/ExamAttemptPage';
 import { ResultsPage } from './pages/results/ResultsPage';
 import { AdmissionsPage } from './pages/admissions/AdmissionsPage';
 import { FinanceFeesPage } from './pages/finance/FinanceFeesPage';
@@ -204,6 +207,9 @@ export default function App() {
 
       {/* Module 10: Examinations */}
       <Route path="/examinations" element={<ProtectedRoute><ExaminationsPage /></ProtectedRoute>} />
+      <Route path="/examinations/:id" element={<ProtectedRoute><ExamDetailPage /></ProtectedRoute>} />
+      <Route path="/examinations/:id/allocate" element={<ProtectedRoute><ExamAllocatePage /></ProtectedRoute>} />
+      <Route path="/examinations/:id/attempt" element={<ProtectedRoute><ExamAttemptPage /></ProtectedRoute>} />
 
       {/* Phase 10 — Gradebook, Results & Attendance */}
       <Route path="/gradebook" element={<ProtectedRoute><GradebooksPage /></ProtectedRoute>} />

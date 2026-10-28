@@ -154,6 +154,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
             { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
             { to: '/quizzes', label: 'Quizzes & Tests', icon: Award },
+            { to: '/examinations', label: 'Examinations', icon: CalendarDays },
             { to: '/attendance', label: 'Attendance Register', icon: CalendarCheck2 },
             { to: '/gradebook', label: 'Gradebook & Results', icon: Award },
           ],
@@ -213,6 +214,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             { to: '/question-bank', label: 'Question Bank', icon: BookOpen },
             { to: '/assignments', label: 'Assignments & Grading', icon: FileCheck2 },
             { to: '/quizzes', label: 'Quizzes & Attempts', icon: Award },
+            { to: '/examinations', label: 'Examinations', icon: CalendarDays },
             { to: '/attendance', label: 'Mark Attendance', icon: CalendarCheck2 },
             { to: '/gradebook', label: 'Gradebook', icon: Award },
           ],
@@ -235,6 +237,7 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
             { to: '/labs', label: 'Practical Labs', icon: FlaskConical },
             { to: '/assignments', label: 'Assignments', icon: FileCheck2 },
             { to: '/quizzes', label: 'Quizzes & Tests', icon: Award },
+            { to: '/examinations', label: 'Examinations', icon: CalendarDays },
             { to: '/attendance', label: 'My Attendance', icon: CalendarCheck2 },
             { to: '/gradebook/transcript', label: 'Results & Transcript', icon: Award },
           ],
@@ -258,7 +261,6 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
       groups.push({
         groupName: 'Future Modules',
         items: [
-          { to: '/examinations', label: 'Examinations', icon: CalendarDays, badge: 'Soon' },
           { to: '/admissions', label: 'Admissions', icon: UserPlus, badge: 'Soon' },
           { to: '/finance', label: 'Finance & Fees', icon: CreditCard, badge: 'Soon' },
           { to: '/library', label: 'Library', icon: Library, badge: 'Soon' },
