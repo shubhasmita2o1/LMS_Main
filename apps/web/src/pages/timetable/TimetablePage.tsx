@@ -100,7 +100,7 @@ export function TimetablePage() {
   });
 
   const byDay = useMemo(() => {
-    const map: Record<number, typeof entriesQ.data extends infer T ? any[] : any[]> = {
+    const map: Record<number, any[]> = {
       0: [],
       1: [],
       2: [],

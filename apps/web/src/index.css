@@ -10,6 +10,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #F3F5F7;
   color: #0f172a;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 ::selection {
@@ -33,6 +34,132 @@ body {
   background: #94a3b8;
 }
 
+/* ──────────────────────────────────────────────────────────────
+   Dark Theme System
+   ────────────────────────────────────────────────────────────── */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #090d16;
+  color: #f1f5f9;
+}
+
+html.dark ::selection {
+  background-color: #165239;
+  color: #86efac;
+}
+
+/* Scrollbar dark */
+html.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Global Dark Mode Surface Overrides */
+html.dark .min-h-screen.bg-\[\#F3F5F7\],
+html.dark [class*="bg-[#F3F5F7]"] {
+  background-color: #090d16 !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark .bg-white {
+  background-color: #0f172a !important;
+  color: #f1f5f9;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/70,
+html.dark .bg-slate-50\/80 {
+  background-color: #162032 !important;
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-slate-100\/70,
+html.dark .bg-slate-100\/50 {
+  background-color: #1e293b !important;
+}
+
+/* Borders */
+html.dark .border-slate-200,
+html.dark .border-slate-200\/70,
+html.dark .border-slate-200\/80,
+html.dark .border-slate-100,
+html.dark .border-slate-300,
+html.dark .border {
+  border-color: #1e293b !important;
+}
+
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b !important;
+}
+
+/* Hover States */
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-100:hover,
+html.dark .hover\:bg-slate-100\/70:hover {
+  background-color: #1e293b !important;
+}
+
+html.dark .hover\:bg-white:hover {
+  background-color: #1e293b !important;
+}
+
+/* Typography */
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+html.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* Form Inputs, Selects, and Textareas */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Active navigation badge */
+html.dark .bg-\[\#eaf5ee\] {
+  background-color: rgba(22, 82, 57, 0.4) !important;
+  color: #86efac !important;
+}
+
+html.dark .text-\[\#165239\] {
+  color: #86efac !important;
+}
+
+/* Floating shell in dark mode */
+html.dark .shadow-shell,
+html.dark .shadow-2xs,
+html.dark .shadow-xs,
+html.dark .shadow-xl {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
 @layer utilities {
   .card-interactive {
     @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-cardHover;
@@ -41,6 +168,6 @@ body {
     @apply transition-all duration-150 ease-out active:scale-95;
   }
   .floating-shell {
-    @apply bg-white rounded-[28px] sm:rounded-[32px] border border-slate-200/70 shadow-shell overflow-hidden;
+    @apply bg-white dark:bg-slate-900 rounded-[28px] sm:rounded-[32px] border border-slate-200/70 dark:border-slate-800 shadow-shell overflow-hidden;
   }
 }

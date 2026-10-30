@@ -43,10 +43,12 @@ export const useTenantStore = create<TenantState>()(
 
       toggleTheme: () => {
         const next = get().theme === 'light' ? 'dark' : 'light';
-        if (next === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
+        if (typeof document !== 'undefined') {
+          if (next === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
         }
         set({ theme: next });
       },
@@ -57,6 +59,15 @@ export const useTenantStore = create<TenantState>()(
     }),
     {
       name: 'ulms-tenant-context',
+      onRehydrateStorage: () => (state) => {
+        if (typeof document !== 'undefined') {
+          if (state?.theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      },
     }
   )
 );
