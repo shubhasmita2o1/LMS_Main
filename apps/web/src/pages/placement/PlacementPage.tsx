@@ -10,7 +10,7 @@ import type {
   PlacementDrivePublic, CompanyPublic, PlacementApplicationPublic, OfferPublic,
 } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
-import { Briefcase, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 type Tab = 'drives' | 'companies' | 'applications' | 'offers';
 
@@ -109,10 +109,27 @@ export function PlacementPage() {
     ) : null },
   ];
 
+  const companyColumns: Column<CompanyPublic>[] = [
+    {
+      key: 'name',
+      header: 'Company',
+      render: (c: CompanyPublic) => (
+        <div>
+          <span className="font-bold block">{c.name}</span>
+          <span className="text-xs text-slate-500">{c.industry || '—'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (c: CompanyPublic) => <span className="text-xs capitalize">{c.status}</span>,
+    },
+  ];
   return (
     <AppLayout>
       <div className="space-y-6">
-        <ModuleHeader title="Placement & Internship" subtitle="Companies, drives, applications and offers" icon={Briefcase} />
+        <ModuleHeader title="Placement & Internship" subtitle="Companies, drives, applications and offers" />
         <div className="flex flex-wrap gap-2 items-center">
           {(['drives', 'companies', 'applications', 'offers'] as Tab[]).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)}
@@ -128,13 +145,10 @@ export function PlacementPage() {
         </div>
         {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm px-4 py-3">{error}</div>}
         {loading ? <div className="text-sm text-slate-500">Loading…</div>
-          : tab === 'drives' ? <DataTable columns={driveColumns} data={drives} keyField="id" />
-          : tab === 'companies' ? <DataTable columns={[
-              { key: 'name', header: 'Company', render: (c: CompanyPublic) => <div><span className="font-bold block">{c.name}</span><span className="text-xs text-slate-500">{c.industry || '—'}</span></div> },
-              { key: 'status', header: 'Status', render: (c: CompanyPublic) => <span className="text-xs capitalize">{c.status}</span> },
-            ]} data={companies} keyField="id" />
-          : tab === 'applications' ? <DataTable columns={appColumns} data={applications} keyField="id" />
-          : <DataTable columns={offerColumns} data={offers} keyField="id" />}
+          : tab === 'drives' ? <DataTable columns={driveColumns} data={drives} keyExtractor={(d) => d.id} />
+          : tab === 'companies' ? <DataTable columns={companyColumns} data={companies} keyExtractor={(c) => c.id} />
+          : tab === 'applications' ? <DataTable columns={appColumns} data={applications} keyExtractor={(a) => a.id} />
+          : <DataTable columns={offerColumns} data={offers} keyExtractor={(o) => o.id} />}
       </div>
 
       {showCompany && (

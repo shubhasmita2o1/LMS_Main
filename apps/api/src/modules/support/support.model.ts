@@ -109,9 +109,9 @@ const SupportMessageSchema = new Schema<ISupportMessage>(
 
 SupportMessageSchema.index({ tenantId: 1, ticketId: 1, createdAt: 1 });
 
-export const SupportTicket =
-  mongoose.models.SupportTicket ||
+export const SupportTicket: mongoose.Model<ISupportTicket> =
+  (mongoose.models.SupportTicket as mongoose.Model<ISupportTicket>) ||
   mongoose.model<ISupportTicket>('SupportTicket', SupportTicketSchema);
-export const SupportMessage =
-  mongoose.models.SupportMessage ||
+export const SupportMessage: mongoose.Model<ISupportMessage> =
+  (mongoose.models.SupportMessage as mongoose.Model<ISupportMessage>) ||
   mongoose.model<ISupportMessage>('SupportMessage', SupportMessageSchema);

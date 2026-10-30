@@ -268,14 +268,18 @@ const OfferSchema = new Schema<IOffer>(
 
 OfferSchema.index({ tenantId: 1, studentId: 1, status: 1 });
 
-export const Company =
-  mongoose.models.Company || mongoose.model<ICompany>('Company', CompanySchema);
-export const PlacementDrive =
-  mongoose.models.PlacementDrive ||
+export const Company: mongoose.Model<ICompany> =
+  (mongoose.models.Company as mongoose.Model<ICompany>) ||
+  mongoose.model<ICompany>('Company', CompanySchema);
+export const PlacementDrive: mongoose.Model<IPlacementDrive> =
+  (mongoose.models.PlacementDrive as mongoose.Model<IPlacementDrive>) ||
   mongoose.model<IPlacementDrive>('PlacementDrive', PlacementDriveSchema);
-export const PlacementApplication =
-  mongoose.models.PlacementApplication ||
+export const PlacementApplication: mongoose.Model<IPlacementApplication> =
+  (mongoose.models.PlacementApplication as mongoose.Model<IPlacementApplication>) ||
   mongoose.model<IPlacementApplication>('PlacementApplication', PlacementApplicationSchema);
-export const Interview =
-  mongoose.models.Interview || mongoose.model<IInterview>('Interview', InterviewSchema);
-export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);
+export const Interview: mongoose.Model<IInterview> =
+  (mongoose.models.Interview as mongoose.Model<IInterview>) ||
+  mongoose.model<IInterview>('Interview', InterviewSchema);
+export const Offer: mongoose.Model<IOffer> =
+  (mongoose.models.Offer as mongoose.Model<IOffer>) ||
+  mongoose.model<IOffer>('Offer', OfferSchema);

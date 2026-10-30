@@ -9,7 +9,7 @@ import type {
   SupportTicketPublic, SupportMessagePublic, TicketCategory, TicketPriority,
 } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
-import { LifeBuoy, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 export function HelpSupportPage() {
   const user = useAuthStore((s) => s.user);
@@ -65,14 +65,14 @@ export function HelpSupportPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <ModuleHeader title="Support & Helpdesk" subtitle="Tickets, grievances and counseling requests" icon={LifeBuoy} />
+        <ModuleHeader title="Support & Helpdesk" subtitle="Tickets, grievances and counseling requests" />
         <div className="flex justify-end">
           <button type="button" onClick={() => setShowCreate(true)} className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-[#165239] text-white text-sm font-semibold">
             <Plus className="w-4 h-4" /> New ticket
           </button>
         </div>
         {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm px-4 py-3">{error}</div>}
-        {loading ? <div className="text-sm text-slate-500">Loading…</div> : <DataTable columns={columns} data={tickets} keyField="id" />}
+        {loading ? <div className="text-sm text-slate-500">Loading…</div> : <DataTable columns={columns} data={tickets} keyExtractor={(t) => t.id} />}
       </div>
 
       {selected && (

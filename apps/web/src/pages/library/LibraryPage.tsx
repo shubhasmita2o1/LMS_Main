@@ -20,7 +20,7 @@ import type {
   LibraryReservationPublic,
 } from '@university-lms/shared';
 import { useAuthStore } from '../../stores/authStore';
-import { BookOpen, Plus, RotateCcw, Search } from 'lucide-react';
+import { Plus, RotateCcw, Search } from 'lucide-react';
 
 type Tab = 'catalog' | 'loans' | 'fines' | 'reservations';
 
@@ -282,13 +282,33 @@ export function LibraryPage() {
     },
   ];
 
+  const reservationColumns: Column<LibraryReservationPublic>[] = [
+    {
+      key: 'item',
+      header: 'Item',
+      render: (r: LibraryReservationPublic) => (
+        <span className="text-sm font-medium">{r.item?.title || r.itemId}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (r: LibraryReservationPublic) => <span className="text-xs capitalize">{r.status}</span>,
+    },
+    {
+      key: 'queuedAt',
+      header: 'Queued',
+      render: (r: LibraryReservationPublic) => (
+        <span className="text-xs">{new Date(r.queuedAt).toLocaleString()}</span>
+      ),
+    },
+  ];
   return (
     <AppLayout>
       <div className="space-y-6">
         <ModuleHeader
           title="Library"
           subtitle="Catalog, circulation, reservations & fines (payment in Phase 15)"
-          icon={BookOpen}
         />
         <div className="flex flex-wrap gap-2 items-center">
           {(['catalog', 'loans', 'fines', 'reservations'] as Tab[]).map((t) => (
@@ -333,37 +353,13 @@ export function LibraryPage() {
         {loading ? (
           <div className="text-sm text-slate-500">Loading…</div>
         ) : tab === 'catalog' ? (
-          <DataTable columns={catalogColumns} data={items} keyField="id" />
+          <DataTable columns={catalogColumns} data={items} keyExtractor={(b) => b.id} />
         ) : tab === 'loans' ? (
-          <DataTable columns={loanColumns} data={loans} keyField="id" />
+          <DataTable columns={loanColumns} data={loans} keyExtractor={(l) => l.id} />
         ) : tab === 'fines' ? (
-          <DataTable columns={fineColumns} data={fines} keyField="id" />
+          <DataTable columns={fineColumns} data={fines} keyExtractor={(f) => f.id} />
         ) : (
-          <DataTable
-            columns={[
-              {
-                key: 'item',
-                header: 'Item',
-                render: (r: LibraryReservationPublic) => (
-                  <span className="text-sm font-medium">{r.item?.title || r.itemId}</span>
-                ),
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (r: LibraryReservationPublic) => <span className="text-xs capitalize">{r.status}</span>,
-              },
-              {
-                key: 'queuedAt',
-                header: 'Queued',
-                render: (r: LibraryReservationPublic) => (
-                  <span className="text-xs">{new Date(r.queuedAt).toLocaleString()}</span>
-                ),
-              },
-            ]}
-            data={reservations}
-            keyField="id"
-          />
+          <DataTable columns={reservationColumns} data={reservations} keyExtractor={(r) => r.id} />
         )}
       </div>
 

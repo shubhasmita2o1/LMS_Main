@@ -187,12 +187,15 @@ const LibraryFineSchema = new Schema<ILibraryFine>(
 
 LibraryFineSchema.index({ tenantId: 1, studentId: 1, status: 1 });
 
-export const LibraryItem =
-  mongoose.models.LibraryItem || mongoose.model<ILibraryItem>('LibraryItem', LibraryItemSchema);
-export const LibraryLoan =
-  mongoose.models.LibraryLoan || mongoose.model<ILibraryLoan>('LibraryLoan', LibraryLoanSchema);
-export const LibraryReservation =
-  mongoose.models.LibraryReservation ||
+export const LibraryItem: mongoose.Model<ILibraryItem> =
+  (mongoose.models.LibraryItem as mongoose.Model<ILibraryItem>) ||
+  mongoose.model<ILibraryItem>('LibraryItem', LibraryItemSchema);
+export const LibraryLoan: mongoose.Model<ILibraryLoan> =
+  (mongoose.models.LibraryLoan as mongoose.Model<ILibraryLoan>) ||
+  mongoose.model<ILibraryLoan>('LibraryLoan', LibraryLoanSchema);
+export const LibraryReservation: mongoose.Model<ILibraryReservation> =
+  (mongoose.models.LibraryReservation as mongoose.Model<ILibraryReservation>) ||
   mongoose.model<ILibraryReservation>('LibraryReservation', LibraryReservationSchema);
-export const LibraryFine =
-  mongoose.models.LibraryFine || mongoose.model<ILibraryFine>('LibraryFine', LibraryFineSchema);
+export const LibraryFine: mongoose.Model<ILibraryFine> =
+  (mongoose.models.LibraryFine as mongoose.Model<ILibraryFine>) ||
+  mongoose.model<ILibraryFine>('LibraryFine', LibraryFineSchema);
