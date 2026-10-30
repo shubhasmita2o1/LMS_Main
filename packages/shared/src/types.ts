@@ -50,7 +50,9 @@ export type PermissionAction =
   | 'attempt'
   | 'moderate'
   | 'issue'
-  | 'verify';
+  | 'verify'
+  | 'circulate'
+  | 'apply';
 
 /** Resource types for fine-grained RBAC */
 export type ResourceType =
@@ -2262,4 +2264,230 @@ export interface VerificationPublicResult {
     totalCredits?: number | null;
     lineCount?: number;
   } | null;
+}
+
+// ─── Phase 16: Library, Placement, Support ───────────────────────────────────
+
+export type LibraryItemType = 'book' | 'journal' | 'ebook' | 'media' | 'other';
+export type LibraryItemStatus = 'active' | 'retired';
+export type LoanStatus = 'active' | 'returned' | 'overdue' | 'lost';
+export type ReservationStatus = 'active' | 'fulfilled' | 'cancelled' | 'expired';
+export type FineStatus = 'pending' | 'waived' | 'settled_external';
+
+export type CompanyStatus = 'active' | 'inactive' | 'blacklisted';
+export type DriveStatus = 'draft' | 'open' | 'closed' | 'completed';
+export type JobType = 'placement' | 'internship';
+export type ApplicationStatus =
+  | 'draft'
+  | 'applied'
+  | 'shortlisted'
+  | 'interview'
+  | 'offered'
+  | 'accepted'
+  | 'rejected'
+  | 'withdrawn';
+export type OfferStatus = 'pending' | 'accepted' | 'declined' | 'expired' | 'withdrawn';
+export type InterviewMode = 'online' | 'offline' | 'hybrid';
+export type InterviewResult = 'pending' | 'passed' | 'failed' | 'no_show' | 'rescheduled';
+
+export type TicketStatus =
+  | 'open'
+  | 'in_progress'
+  | 'waiting_student'
+  | 'resolved'
+  | 'closed';
+export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TicketCategory =
+  | 'academic'
+  | 'technical'
+  | 'hostel'
+  | 'finance_query'
+  | 'grievance'
+  | 'counseling'
+  | 'other';
+
+export interface DriveEligibility {
+  minCgpa?: number | null;
+  programs?: string[] | null;
+  maxBacklogs?: number | null;
+  batchYears?: number[] | null;
+}
+
+export interface LibraryItemPublic {
+  id: string;
+  tenantId: string;
+  isbn?: string | null;
+  title: string;
+  authors: string[];
+  type: LibraryItemType;
+  categoryTags: string[];
+  totalCopies: number;
+  availableCopies: number;
+  digitalUrl?: string | null;
+  location?: string | null;
+  shelf?: string | null;
+  status: LibraryItemStatus;
+  description?: string | null;
+  publisher?: string | null;
+  publishedYear?: number | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface LibraryLoanPublic {
+  id: string;
+  tenantId: string;
+  itemId: string;
+  studentId: string;
+  copyBarcode?: string | null;
+  borrowedAt: Date | string;
+  dueAt: Date | string;
+  returnedAt?: Date | string | null;
+  status: LoanStatus;
+  item?: Partial<LibraryItemPublic> | null;
+  studentName?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface LibraryReservationPublic {
+  id: string;
+  tenantId: string;
+  itemId: string;
+  studentId: string;
+  status: ReservationStatus;
+  queuedAt: Date | string;
+  expiresAt?: Date | string | null;
+  item?: Partial<LibraryItemPublic> | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface LibraryFinePublic {
+  id: string;
+  tenantId: string;
+  loanId: string;
+  studentId: string;
+  amountMinor: number;
+  currency: string;
+  reason: string;
+  status: FineStatus;
+  waivedAt?: Date | string | null;
+  waivedBy?: string | null;
+  waivedReason?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface CompanyPublic {
+  id: string;
+  tenantId: string;
+  name: string;
+  industry?: string | null;
+  website?: string | null;
+  description?: string | null;
+  status: CompanyStatus;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  logoUrl?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface PlacementDrivePublic {
+  id: string;
+  tenantId: string;
+  companyId: string;
+  title: string;
+  jobType: JobType;
+  description?: string | null;
+  packageMin?: number | null;
+  packageMax?: number | null;
+  location?: string | null;
+  eligibility?: DriveEligibility | null;
+  applicationOpenAt?: Date | string | null;
+  applicationCloseAt?: Date | string | null;
+  status: DriveStatus;
+  company?: Partial<CompanyPublic> | null;
+  applicationCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface PlacementApplicationPublic {
+  id: string;
+  tenantId: string;
+  driveId: string;
+  studentId: string;
+  status: ApplicationStatus;
+  resumeFileKey?: string | null;
+  coverNote?: string | null;
+  timeline?: Array<{ at: Date | string; status: string; note?: string }>;
+  drive?: Partial<PlacementDrivePublic> | null;
+  studentName?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface InterviewPublic {
+  id: string;
+  tenantId: string;
+  applicationId: string;
+  scheduledAt: Date | string;
+  mode: InterviewMode;
+  locationOrLink?: string | null;
+  result?: InterviewResult | null;
+  notes?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface OfferPublic {
+  id: string;
+  tenantId: string;
+  applicationId: string;
+  studentId: string;
+  companyId: string;
+  packageAmount?: number | null;
+  currency: string;
+  roleTitle: string;
+  status: OfferStatus;
+  offeredAt: Date | string;
+  acceptedAt?: Date | string | null;
+  expiresAt?: Date | string | null;
+  notes?: string | null;
+  company?: Partial<CompanyPublic> | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface SupportTicketPublic {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  category: TicketCategory;
+  subject: string;
+  description: string;
+  priority: TicketPriority;
+  status: TicketStatus;
+  assigneeId?: string | null;
+  assigneeName?: string | null;
+  attachments?: Array<{ fileKey: string; fileName: string; mimeType?: string }>;
+  escalationLevel: number;
+  studentName?: string | null;
+  lastMessageAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface SupportMessagePublic {
+  id: string;
+  tenantId: string;
+  ticketId: string;
+  authorId: string;
+  authorName?: string | null;
+  body: string;
+  isInternalNote: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }

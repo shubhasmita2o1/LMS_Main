@@ -5,7 +5,7 @@
 import type { PlanTier, TenantFeatureFlags, TenantLimits } from './types';
 
 export const APP_NAME = 'University LMS';
-export const APP_VERSION = '0.11.0';
+export const APP_VERSION = '0.16.0';
 
 /** Default pagination */
 export const DEFAULT_PAGE = 1;
@@ -249,6 +249,14 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'certificate', action: 'read' },
     { resource: 'certificate', action: 'manage' },
     { resource: 'certificate', action: 'issue' },
+    { resource: 'library', action: 'read' },
+    { resource: 'library', action: 'manage' },
+    { resource: 'library', action: 'circulate' },
+    { resource: 'placement', action: 'read' },
+    { resource: 'placement', action: 'manage' },
+    { resource: 'support', action: 'read' },
+    { resource: 'support', action: 'manage' },
+    { resource: 'support', action: 'create' },
     { resource: 'tenant', action: 'read' },
     { resource: 'tenant', action: 'update' },
     { resource: 'billing', action: 'read' },
@@ -296,6 +304,14 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'certificate', action: 'read' },
     { resource: 'certificate', action: 'manage' },
     { resource: 'certificate', action: 'issue' },
+    { resource: 'library', action: 'read' },
+    { resource: 'library', action: 'manage' },
+    { resource: 'library', action: 'circulate' },
+    { resource: 'placement', action: 'read' },
+    { resource: 'placement', action: 'manage' },
+    { resource: 'support', action: 'read' },
+    { resource: 'support', action: 'manage' },
+    { resource: 'support', action: 'create' },
   ],
   faculty: [
     { resource: 'faculty', action: 'read' },
@@ -324,6 +340,10 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'room', action: 'read' },
     { resource: 'transcript', action: 'read' },
     { resource: 'certificate', action: 'read' },
+    { resource: 'library', action: 'read' },
+    { resource: 'placement', action: 'read' },
+    { resource: 'support', action: 'read' },
+    { resource: 'support', action: 'create' },
   ],
   student: [
     { resource: 'student', action: 'read' },
@@ -346,8 +366,27 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<
     { resource: 'timetable', action: 'read' },
     { resource: 'transcript', action: 'read' },
     { resource: 'certificate', action: 'read' },
+    { resource: 'library', action: 'read' },
+    { resource: 'placement', action: 'read' },
+    { resource: 'placement', action: 'apply' },
+    { resource: 'support', action: 'read' },
+    { resource: 'support', action: 'create' },
   ],
-  staff: [{ resource: 'user', action: 'read' }],
+  staff: [
+    { resource: 'user', action: 'read' },
+    { resource: 'library', action: 'read' },
+    { resource: 'library', action: 'circulate' },
+    { resource: 'placement', action: 'read' },
+    { resource: 'support', action: 'read' },
+    { resource: 'support', action: 'manage' },
+    { resource: 'support', action: 'create' },
+  ],
+  librarian: [
+    { resource: 'library', action: 'read' },
+    { resource: 'library', action: 'manage' },
+    { resource: 'library', action: 'circulate' },
+    { resource: 'student', action: 'read' },
+  ],
   parent: [{ resource: 'student', action: 'read' }],
   guest: [],
 };
@@ -595,3 +634,54 @@ export const LAB_MAX_TIMEOUT_SEC = 60;
 export const LAB_MAX_MEMORY_MB = 512;
 export const LAB_MAX_CODE_LENGTH = 100_000;
 export const LAB_MAX_ATTEMPTS_DEFAULT = 10;
+
+
+// ─── Phase 16: Library, Placement, Support ───────────────────────────────────
+
+export const LIBRARY_ITEM_TYPES = ['book', 'journal', 'ebook', 'media', 'other'] as const;
+export const LIBRARY_ITEM_STATUSES = ['active', 'retired'] as const;
+export const LOAN_STATUSES = ['active', 'returned', 'overdue', 'lost'] as const;
+export const RESERVATION_STATUSES = ['active', 'fulfilled', 'cancelled', 'expired'] as const;
+export const FINE_STATUSES = ['pending', 'waived', 'settled_external'] as const;
+
+export const COMPANY_STATUSES = ['active', 'inactive', 'blacklisted'] as const;
+export const DRIVE_STATUSES = ['draft', 'open', 'closed', 'completed'] as const;
+export const JOB_TYPES = ['placement', 'internship'] as const;
+export const APPLICATION_STATUSES = [
+  'draft',
+  'applied',
+  'shortlisted',
+  'interview',
+  'offered',
+  'accepted',
+  'rejected',
+  'withdrawn',
+] as const;
+export const OFFER_STATUSES = ['pending', 'accepted', 'declined', 'expired', 'withdrawn'] as const;
+export const INTERVIEW_MODES = ['online', 'offline', 'hybrid'] as const;
+export const INTERVIEW_RESULTS = ['pending', 'passed', 'failed', 'no_show', 'rescheduled'] as const;
+
+export const TICKET_STATUSES = [
+  'open',
+  'in_progress',
+  'waiting_student',
+  'resolved',
+  'closed',
+] as const;
+export const TICKET_PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
+export const TICKET_CATEGORIES = [
+  'academic',
+  'technical',
+  'hostel',
+  'finance_query',
+  'grievance',
+  'counseling',
+  'other',
+] as const;
+
+/** Default loan period in days */
+export const LIBRARY_DEFAULT_LOAN_DAYS = 14;
+/** Default reservation hold hours */
+export const LIBRARY_RESERVATION_HOLD_HOURS = 48;
+/** Default fine per overdue day in minor units (e.g. paise) */
+export const LIBRARY_DEFAULT_FINE_PER_DAY_MINOR = 500;

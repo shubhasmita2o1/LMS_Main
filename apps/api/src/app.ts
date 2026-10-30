@@ -35,6 +35,9 @@ import {
   certificateRouter,
   publicVerifyRouter,
 } from './modules/transcripts/transcript.routes';
+import { libraryRouter } from './modules/library/library.routes';
+import { placementRouter } from './modules/placement/placement.routes';
+import { supportRouter } from './modules/support/support.routes';
 import { env } from './config/env';
 import path from 'path';
 
@@ -90,8 +93,8 @@ export function createApp() {
     res.json({
       success: true,
       message: 'University LMS API v1',
-      version: '0.11.0',
-      phase: 11,
+      version: '0.16.0',
+      phase: 16,
       docs: '/api/v1 (OpenAPI coming in later phases)',
     });
   });
@@ -148,6 +151,11 @@ export function createApp() {
   app.use('/api/v1/transcripts', transcriptRouter);
   app.use('/api/v1/certificates', certificateRouter);
   app.use('/api/v1/public/verify', publicVerifyRouter);
+
+  // Phase 16 — Library, Placement, Support
+  app.use('/api/v1/library', libraryRouter);
+  app.use('/api/v1/placement', placementRouter);
+  app.use('/api/v1/support', supportRouter);
 
   // 404 & error handlers (must be last)
   app.use(notFoundHandler);

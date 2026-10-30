@@ -169,6 +169,14 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           ],
         },
         {
+          groupName: 'Campus Services',
+          items: [
+            { to: '/library', label: 'Library', icon: Library },
+            { to: '/placement', label: 'Placement', icon: Briefcase },
+            { to: '/support', label: 'Support & Helpdesk', icon: LifeBuoy },
+          ],
+        },
+        {
           groupName: 'Governance',
           items: [
             { to: '/users', label: 'User Directory & Approvals', icon: Users },
@@ -230,6 +238,14 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           ],
         },
         {
+          groupName: 'Campus Services',
+          items: [
+            { to: '/library', label: 'Library', icon: Library },
+            { to: '/placement', label: 'Placement', icon: Briefcase },
+            { to: '/support', label: 'Support & Helpdesk', icon: LifeBuoy },
+          ],
+        },
+        {
           groupName: 'Communication',
           items: [
             { to: '/communication', label: 'Announcements', icon: Megaphone },
@@ -262,6 +278,14 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
           ],
         },
         {
+          groupName: 'Campus Services',
+          items: [
+            { to: '/library', label: 'Library', icon: Library },
+            { to: '/placement', label: 'Placement', icon: Briefcase },
+            { to: '/support', label: 'Support & Helpdesk', icon: LifeBuoy },
+          ],
+        },
+        {
           groupName: 'Communication',
           items: [
             { to: '/communication', label: 'Announcements', icon: Megaphone },
@@ -289,8 +313,6 @@ export function AppLayout({ children, fullWidth = false }: AppLayoutProps) {
         items: [
           { to: '/admissions', label: 'Admissions', icon: UserPlus, badge: 'Soon' },
           { to: '/finance', label: 'Finance & Fees', icon: CreditCard, badge: 'Soon' },
-          { to: '/library', label: 'Library', icon: Library, badge: 'Soon' },
-          { to: '/placement', label: 'Placement', icon: Briefcase, badge: 'Soon' },
           { to: '/reports', label: 'Accreditation', icon: BarChart3, badge: 'Soon' },
         ],
       });

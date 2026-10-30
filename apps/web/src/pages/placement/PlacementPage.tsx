@@ -1,301 +1,188 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { ModuleHeader } from '../../components/common/ModuleHeader';
 import { DataTable, type Column } from '../../components/common/DataTable';
-import { DetailDrawer } from '../../components/common/DetailDrawer';
-import { MOCK_PLACEMENTS, type PlacementDrive } from '../../data/mockData';
 import {
-  Calendar,
-  Plus,
-  X,
-} from 'lucide-react';
+  listDrives, listCompanies, createCompany, createDrive, openDrive, closeDrive,
+  applyToDrive, listApplications, updateApplicationStatus, createOffer, listOffers, respondOffer,
+} from '../../lib/placementApi';
+import type {
+  PlacementDrivePublic, CompanyPublic, PlacementApplicationPublic, OfferPublic,
+} from '@university-lms/shared';
+import { useAuthStore } from '../../stores/authStore';
+import { Briefcase, Plus } from 'lucide-react';
+
+type Tab = 'drives' | 'companies' | 'applications' | 'offers';
 
 export function PlacementPage() {
-  const [drives, setDrives] = useState<PlacementDrive[]>(MOCK_PLACEMENTS);
-  const [selectedDrive, setSelectedDrive] = useState<PlacementDrive | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const roles = user?.roles || [];
+  const isStudent = roles.includes('student') && !roles.some((r) => ['tenant_admin', 'university_admin', 'staff'].includes(r));
+  const canManage = roles.some((r) => ['tenant_admin', 'university_admin', 'super_admin', 'staff'].includes(r));
 
-  const [formData, setFormData] = useState({
-    companyName: '',
-    role: '',
-    packageLPA: '$140,000 / yr',
-    minCGPA: 3.5,
-    driveDate: '2026-11-25',
+  const [tab, setTab] = useState<Tab>('drives');
+  const [drives, setDrives] = useState<PlacementDrivePublic[]>([]);
+  const [companies, setCompanies] = useState<CompanyPublic[]>([]);
+  const [applications, setApplications] = useState<PlacementApplicationPublic[]>([]);
+  const [offers, setOffers] = useState<OfferPublic[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showCompany, setShowCompany] = useState(false);
+  const [showDrive, setShowDrive] = useState(false);
+  const [companyForm, setCompanyForm] = useState({ name: '', industry: '', website: '' });
+  const [driveForm, setDriveForm] = useState({
+    companyId: '', title: '', jobType: 'placement' as 'placement' | 'internship',
+    packageMin: '', packageMax: '', minCgpa: '',
   });
 
-  const columns: Column<PlacementDrive>[] = [
-    {
-      key: 'companyName',
-      header: 'Company & Role',
-      sortable: true,
-      render: (d) => (
-        <div className="flex items-center gap-3">
-          <img
-            src={d.logo}
-            alt={d.companyName}
-            className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
-          />
-          <div className="min-w-0">
-            <span className="font-bold text-slate-900 block truncate">{d.companyName}</span>
-            <span className="text-xs text-slate-500 truncate block">{d.role}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'packageLPA',
-      header: 'Compensation Package',
-      sortable: true,
-      render: (d) => (
-        <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-          {d.packageLPA}
-        </span>
-      ),
-    },
-    {
-      key: 'minCGPA',
-      header: 'Eligibility Criteria',
-      sortable: true,
-      render: (d) => (
-        <div>
-          <span className="text-xs font-semibold text-slate-800">Min {d.minCGPA} CGPA</span>
-          <span className="text-[10px] text-slate-400 block">{d.eligiblePrograms.join(', ')}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'driveDate',
-      header: 'Recruitment Date',
-      sortable: true,
-      render: (d) => (
-        <div className="text-xs text-slate-600 flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-          <span>{d.driveDate}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'registeredStudents',
-      header: 'Registered / Offers',
-      sortable: true,
-      render: (d) => (
-        <div>
-          <span className="text-xs font-bold text-slate-900">{d.registeredStudents} Applied</span>
-          <span className="text-[10px] text-emerald-600 font-bold block">{d.selectedCount} Offers Extended</span>
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Drive Status',
-      sortable: true,
-      render: (d) => (
-        <span
-          className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-            d.status === 'Ongoing'
-              ? 'bg-amber-50 text-amber-700 border border-amber-200 animate-pulse'
-              : d.status === 'Upcoming'
-              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-          }`}
-        >
-          {d.status}
-        </span>
-      ),
-    },
+  const load = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      if (tab === 'drives') setDrives((await listDrives()).items);
+      else if (tab === 'companies') setCompanies((await listCompanies()).items);
+      else if (tab === 'applications') setApplications((await listApplications()).items);
+      else setOffers((await listOffers()).items);
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e.message || 'Failed to load');
+    } finally { setLoading(false); }
+  }, [tab]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const driveColumns: Column<PlacementDrivePublic>[] = [
+    { key: 'title', header: 'Drive', render: (d) => (
+      <div><span className="font-bold text-slate-900 block">{d.title}</span>
+      <span className="text-xs text-slate-500">{d.company?.name || d.companyId} · {d.jobType}</span></div>
+    )},
+    { key: 'status', header: 'Status', render: (d) => (
+      <span className="text-xs font-semibold capitalize px-2 py-0.5 rounded-full bg-slate-100">{d.status}</span>
+    )},
+    { key: 'applicationCount', header: 'Apps', render: (d) => <span className="text-xs font-bold">{d.applicationCount ?? 0}</span> },
+    { key: 'actions', header: '', render: (d) => (
+      <div className="flex gap-2 flex-wrap">
+        {isStudent && d.status === 'open' && (
+          <button type="button" className="text-xs font-semibold text-emerald-700 hover:underline"
+            onClick={async () => { try { await applyToDrive({ driveId: d.id }); alert('Applied'); setTab('applications'); } catch (e: any) { alert(e?.response?.data?.message || e.message); } }}>Apply</button>
+        )}
+        {canManage && d.status === 'draft' && (
+          <button type="button" className="text-xs font-semibold text-sky-700 hover:underline" onClick={async () => { await openDrive(d.id); load(); }}>Open</button>
+        )}
+        {canManage && d.status === 'open' && (
+          <button type="button" className="text-xs font-semibold text-amber-700 hover:underline" onClick={async () => { await closeDrive(d.id); load(); }}>Close</button>
+        )}
+      </div>
+    )},
   ];
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newDrive: PlacementDrive = {
-      id: `plc-${Date.now()}`,
-      companyName: formData.companyName,
-      logo: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=100&auto=format&fit=crop&q=80',
-      role: formData.role,
-      packageLPA: formData.packageLPA,
-      eligiblePrograms: ['B.Tech CSE', 'B.Tech AIML'],
-      minCGPA: Number(formData.minCGPA),
-      driveDate: formData.driveDate,
-      registeredStudents: 45,
-      selectedCount: 0,
-      status: 'Upcoming',
-    };
-    setDrives([newDrive, ...drives]);
-    setIsCreateOpen(false);
-  };
+  const appColumns: Column<PlacementApplicationPublic>[] = [
+    { key: 'drive', header: 'Drive', render: (a) => <span className="text-sm font-medium">{a.drive?.title || a.driveId}</span> },
+    { key: 'status', header: 'Status', render: (a) => <span className="text-xs font-semibold capitalize px-2 py-0.5 rounded-full bg-slate-100">{a.status}</span> },
+    { key: 'actions', header: '', render: (a) => canManage ? (
+      <div className="flex gap-2 flex-wrap">
+        {a.status === 'applied' && <button type="button" className="text-xs font-semibold text-sky-700 hover:underline" onClick={async () => { await updateApplicationStatus(a.id, 'shortlisted'); load(); }}>Shortlist</button>}
+        {(a.status === 'shortlisted' || a.status === 'interview') && (
+          <button type="button" className="text-xs font-semibold text-emerald-700 hover:underline" onClick={async () => {
+            const role = prompt('Role title?') || 'Offer';
+            await createOffer({ applicationId: a.id, roleTitle: role });
+            load();
+          }}>Offer</button>
+        )}
+        {!['rejected', 'accepted', 'withdrawn'].includes(a.status) && (
+          <button type="button" className="text-xs font-semibold text-red-700 hover:underline" onClick={async () => { await updateApplicationStatus(a.id, 'rejected'); load(); }}>Reject</button>
+        )}
+      </div>
+    ) : null },
+  ];
+
+  const offerColumns: Column<OfferPublic>[] = [
+    { key: 'roleTitle', header: 'Role', render: (o) => (
+      <div><span className="font-bold block">{o.roleTitle}</span>
+      <span className="text-xs text-slate-500">{o.company?.name || o.companyId}</span></div>
+    )},
+    { key: 'packageAmount', header: 'Package', render: (o) => <span className="text-xs font-mono">{o.packageAmount != null ? `${o.packageAmount} ${o.currency}` : '—'}</span> },
+    { key: 'status', header: 'Status', render: (o) => <span className="text-xs font-semibold capitalize">{o.status}</span> },
+    { key: 'actions', header: '', render: (o) => isStudent && o.status === 'pending' ? (
+      <div className="flex gap-2">
+        <button type="button" className="text-xs font-semibold text-emerald-700 hover:underline" onClick={async () => { await respondOffer(o.id, true); load(); }}>Accept</button>
+        <button type="button" className="text-xs font-semibold text-red-700 hover:underline" onClick={async () => { await respondOffer(o.id, false); load(); }}>Decline</button>
+      </div>
+    ) : null },
+  ];
 
   return (
     <AppLayout>
-      <ModuleHeader
-        title="Placement, Internship & Career Cell"
-        subtitle="Manage company campus recruitment drives, student shortlist interviews, and job offer letters"
-        breadcrumbs={[{ label: 'Home', href: '/dashboard' }, { label: 'Placement' }]}
-        stats={[
-          { label: 'Highest Package', value: '$170,000 / yr', variant: 'success' },
-          { label: 'Median Package', value: '$122,000 / yr', variant: 'primary' },
-          { label: 'Placement Rate', value: '94.2%', variant: 'default' },
-        ]}
-        primaryAction={{
-          label: 'Schedule Placement Drive',
-          onClick: () => setIsCreateOpen(true),
-          icon: <Plus className="w-4 h-4" />,
-        }}
-      />
+      <div className="space-y-6">
+        <ModuleHeader title="Placement & Internship" subtitle="Companies, drives, applications and offers" icon={Briefcase} />
+        <div className="flex flex-wrap gap-2 items-center">
+          {(['drives', 'companies', 'applications', 'offers'] as Tab[]).map((t) => (
+            <button key={t} type="button" onClick={() => setTab(t)}
+              className={`px-3 py-1.5 rounded-full text-sm font-semibold capitalize ${tab === t ? 'bg-[#165239] text-white' : 'bg-white border border-slate-200 text-slate-700'}`}>{t}</button>
+          ))}
+          {canManage && tab === 'companies' && (
+            <button type="button" onClick={() => setShowCompany(true)} className="ml-auto inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-[#165239] text-white text-sm font-semibold"><Plus className="w-4 h-4" /> Company</button>
+          )}
+          {canManage && tab === 'drives' && (
+            <button type="button" onClick={async () => { if (!companies.length) setCompanies((await listCompanies()).items); setShowDrive(true); }}
+              className="ml-auto inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-[#165239] text-white text-sm font-semibold"><Plus className="w-4 h-4" /> Drive</button>
+          )}
+        </div>
+        {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm px-4 py-3">{error}</div>}
+        {loading ? <div className="text-sm text-slate-500">Loading…</div>
+          : tab === 'drives' ? <DataTable columns={driveColumns} data={drives} keyField="id" />
+          : tab === 'companies' ? <DataTable columns={[
+              { key: 'name', header: 'Company', render: (c: CompanyPublic) => <div><span className="font-bold block">{c.name}</span><span className="text-xs text-slate-500">{c.industry || '—'}</span></div> },
+              { key: 'status', header: 'Status', render: (c: CompanyPublic) => <span className="text-xs capitalize">{c.status}</span> },
+            ]} data={companies} keyField="id" />
+          : tab === 'applications' ? <DataTable columns={appColumns} data={applications} keyField="id" />
+          : <DataTable columns={offerColumns} data={offers} keyField="id" />}
+      </div>
 
-      <DataTable
-        data={drives}
-        columns={columns}
-        keyExtractor={(d) => d.id}
-        searchPlaceholder="Search placement drives by company or role..."
-        exportTitle="placement_drives"
-        onRowClick={(d) => {
-          setSelectedDrive(d);
-          setIsDetailOpen(true);
-        }}
-      />
-
-      {/* Placement Detail Drawer */}
-      {selectedDrive && (
-        <DetailDrawer
-          isOpen={isDetailOpen}
-          onClose={() => setIsDetailOpen(false)}
-          title={selectedDrive.companyName}
-          subtitle={`${selectedDrive.role} • ${selectedDrive.packageLPA}`}
-          badge={
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary-100 text-primary-800">
-              {selectedDrive.status}
-            </span>
-          }
-        >
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block">Minimum Cutoff CGPA</span>
-                <span className="font-bold text-slate-900 mt-0.5 block">{selectedDrive.minCGPA} / 4.0</span>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block">Drive Date</span>
-                <span className="font-bold text-slate-900 mt-0.5 block">{selectedDrive.driveDate}</span>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Recruitment Rounds Pipeline
-              </h4>
-              <div className="space-y-2 text-xs">
-                <div className="p-2.5 rounded-lg bg-slate-50 flex items-center justify-between">
-                  <span>Round 1: Online Coding & Cognitive Assessment</span>
-                  <span className="font-bold text-emerald-600">Completed (48 Cleared)</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-50 flex items-center justify-between">
-                  <span>Round 2: Systems Architecture & Technical Interview</span>
-                  <span className="font-bold text-amber-600">In Progress (18 Shortlisted)</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-50 flex items-center justify-between">
-                  <span>Round 3: Leadership & Cultural Fit HR Interview</span>
-                  <span className="font-bold text-slate-400">Scheduled for Tomorrow</span>
-                </div>
-              </div>
+      {showCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-3">
+            <h3 className="text-lg font-bold">Add company</h3>
+            <input className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Name" value={companyForm.name} onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })} />
+            <input className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Industry" value={companyForm.industry} onChange={(e) => setCompanyForm({ ...companyForm, industry: e.target.value })} />
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setShowCompany(false)} className="text-sm px-3">Cancel</button>
+              <button type="button" className="px-3 py-2 text-sm rounded-lg bg-[#165239] text-white font-semibold" onClick={async () => {
+                try { await createCompany({ name: companyForm.name, industry: companyForm.industry || undefined }); setShowCompany(false); load(); }
+                catch (e: any) { alert(e?.response?.data?.message || e.message); }
+              }}>Save</button>
             </div>
           </div>
-        </DetailDrawer>
+        </div>
       )}
 
-      {/* Schedule Drive Modal */}
-      {isCreateOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-scaleUp">
-            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Schedule Campus Recruitment Drive</h3>
-              <button
-                type="button"
-                onClick={() => setIsCreateOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
+      {showDrive && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-3">
+            <h3 className="text-lg font-bold">Create drive</h3>
+            <select className="w-full border rounded-lg px-3 py-2 text-sm" value={driveForm.companyId} onChange={(e) => setDriveForm({ ...driveForm, companyId: e.target.value })}>
+              <option value="">Select company</option>
+              {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <input className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Title" value={driveForm.title} onChange={(e) => setDriveForm({ ...driveForm, title: e.target.value })} />
+            <select className="w-full border rounded-lg px-3 py-2 text-sm" value={driveForm.jobType} onChange={(e) => setDriveForm({ ...driveForm, jobType: e.target.value as any })}>
+              <option value="placement">Placement</option>
+              <option value="internship">Internship</option>
+            </select>
+            <input className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Min CGPA (optional)" value={driveForm.minCgpa} onChange={(e) => setDriveForm({ ...driveForm, minCgpa: e.target.value })} />
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setShowDrive(false)} className="text-sm px-3">Cancel</button>
+              <button type="button" className="px-3 py-2 text-sm rounded-lg bg-[#165239] text-white font-semibold" onClick={async () => {
+                try {
+                  await createDrive({
+                    companyId: driveForm.companyId, title: driveForm.title, jobType: driveForm.jobType,
+                    eligibility: driveForm.minCgpa ? { minCgpa: Number(driveForm.minCgpa) } : undefined,
+                  });
+                  setShowDrive(false); load();
+                } catch (e: any) { alert(e?.response?.data?.message || e.message); }
+              }}>Create</button>
             </div>
-
-            <form onSubmit={handleCreateSubmit} className="p-5 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Company Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  placeholder="e.g. Apple Inc. / Amazon"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Job Designation</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  placeholder="e.g. Cloud Infrastructure Engineer"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Package CTC</label>
-                  <input
-                    type="text"
-                    value={formData.packageLPA}
-                    onChange={(e) => setFormData({ ...formData, packageLPA: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Minimum CGPA</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={formData.minCGPA}
-                    onChange={(e) => setFormData({ ...formData, minCGPA: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Drive Date</label>
-                <input
-                  type="date"
-                  required
-                  value={formData.driveDate}
-                  onChange={(e) => setFormData({ ...formData, driveDate: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold shadow-md shadow-primary-500/20"
-                >
-                  Confirm Drive
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
     </AppLayout>
   );
 }
-export default PlacementPage;
