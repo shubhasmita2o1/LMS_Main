@@ -1,14 +1,16 @@
 /**
  * Single-institution context middleware.
  *
- * Replaces multi-tenant resolution (headers / subdomains / custom domains).
- * Loads the one Institution document and attaches:
- *   req.tenantId      = institution.tenantId (fixed value, same as institution._id)
- *   req.institutionId = institution._id
- *   req.institution   = lean institution object (optional, for convenience)
+ * Migration behaviour (Phase 01 follow-up):
+ * - If installation is NOT locked → pass through (legacy multi-tenant path still works).
+ * - If installation IS locked → load the single Institution and set:
+ *     req.tenantId      = institution.tenantId  (fixed value, equals institution._id)
+ *     req.institutionId = institution._id
+ *     req.institution   = lean summary
+ * - Setup, health, and root API paths always skip enforcement.
  *
- * Existing modules that already filter by req.tenantId continue to work
- * without change during the migration.
+ * Existing modules that filter by req.tenantId continue to work once locked.
+ * Old tenant.middleware.ts is intentionally kept until SaaS removal phase.
  */
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from './errorHandler';
@@ -16,9 +18,7 @@ import {
   getInstitutionWithOptionalPin,
   isInstallationLocked,
 } from '../modules/institution/institution.service';
-import { env } from '../config/env';
 
-// Extend Express Request (also declared in tenant middleware; keep compatible)
 declare global {
   namespace Express {
     interface Request {
@@ -38,9 +38,19 @@ declare global {
   }
 }
 
+function isExemptPath(path: string): boolean {
+  return (
+    path.startsWith('/api/v1/setup') ||
+    path.startsWith('/health') ||
+    path === '/api/v1' ||
+    path.startsWith('/api/v1/institution/installation-status') ||
+    path.startsWith('/api/v1/public/')
+  );
+}
+
 /**
- * Loads the single Institution and injects tenantId / institutionId.
- * Skips enforcement for public health and setup routes (caller decides).
+ * Soft institution resolver.
+ * Does not break legacy multi-tenant operation while installation is unlocked.
  */
 export async function resolveInstitution(
   req: Request,
@@ -48,27 +58,17 @@ export async function resolveInstitution(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Allow setup routes and health to proceed without an institution yet
     const path = req.path || req.originalUrl || '';
-    if (
-      path.startsWith('/api/v1/setup') ||
-      path.startsWith('/health') ||
-      path === '/api/v1'
-    ) {
+    if (isExemptPath(path)) {
       next();
       return;
     }
 
     const locked = await isInstallationLocked();
+
+    // Transition: installation not completed → do not force institution context
     if (!locked) {
-      // Installation not finished — only setup endpoints should be used
-      next(
-        new AppError(
-          503,
-          'Installation not completed. Run the first-run setup wizard.',
-          'INSTALLATION_REQUIRED'
-        )
-      );
+      next();
       return;
     }
 
@@ -100,7 +100,7 @@ export async function resolveInstitution(
 }
 
 /**
- * Requires that institution context has been resolved.
+ * Requires that institution context has been resolved (installation locked path).
  */
 export function requireInstitution(
   req: Request,

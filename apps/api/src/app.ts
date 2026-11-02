@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { defaultApiRateLimit } from './middleware/rateLimit';
+import { resolveInstitution } from './middleware/institution.middleware';
 import { healthRouter } from './modules/health/health.routes';
 import { authRouter } from './modules/auth/auth.routes';
 import { userRouter } from './modules/users/user.routes';
@@ -39,6 +40,7 @@ import { libraryRouter } from './modules/library/library.routes';
 import { placementRouter } from './modules/placement/placement.routes';
 import { supportRouter } from './modules/support/support.routes';
 import { institutionRouter } from './modules/institution/institution.routes';
+import { setupRouter } from './modules/setup/setup.routes';
 import { env } from './config/env';
 import path from 'path';
 
@@ -86,6 +88,12 @@ export function createApp() {
   // Global rate limit (skeleton — tighten per-route later)
   app.use(defaultApiRateLimit);
 
+  // ─── Stage 3: single-institution context (soft until installation locked) ──
+  // When installation is locked, injects fixed req.tenantId / req.institutionId.
+  // When not locked, passes through so legacy multi-tenant path still works.
+  // Old tenant.middleware remains until SaaS removal phase.
+  app.use(resolveInstitution);
+
   // Health check (no auth)
   app.use('/health', healthRouter);
 
@@ -94,8 +102,8 @@ export function createApp() {
     res.json({
       success: true,
       message: 'University LMS API v1',
-      version: '0.17.0-independent',
-      phase: 'stage3-migration',
+      version: '0.17.1-independent',
+      phase: 'stage3-phase01-followup',
       architecture: 'independent-self-hosted',
       docs: '/api/v1 (OpenAPI coming in later phases)',
     });
@@ -104,8 +112,10 @@ export function createApp() {
   // Local uploads static serve (dev)
   app.use('/uploads', express.static(path.resolve(env.STORAGE_LOCAL_PATH || './uploads')));
 
+  // ─── Stage 3: Setup (first-run only; locked after completion) ───────────────
+  app.use('/api/v1/setup', setupRouter);
+
   // ─── Stage 3: Institution (single-install) ─────────────────────────────────
-  // New institution routes. Tenant module kept until migration is proven.
   app.use('/api/v1/institution', institutionRouter);
 
   // Phase 2 modules
